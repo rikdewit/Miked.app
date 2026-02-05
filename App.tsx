@@ -20,6 +20,16 @@ const App: React.FC = () => {
     setData(prev => ({ ...prev, members: [...prev.members, newMember] }));
   };
 
+  const applyRockTemplate = () => {
+    const newMembers: BandMember[] = [
+      { id: Math.random().toString(36).substr(2, 9), name: 'Drummer', instrumentIds: ['drums'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instrumentIds: ['bass'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instrumentIds: ['gtr_elec'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Singer', instrumentIds: ['voc_lead'], notes: '' },
+    ];
+    setData(prev => ({ ...prev, members: newMembers }));
+  };
+
   const updateMemberName = (id: string, name: string) => {
     setData(prev => ({
       ...prev,
@@ -96,17 +106,10 @@ const App: React.FC = () => {
   useEffect(() => {
     if (step === 2) {
       // Logic to distribute members intelligently on the stage
-      // Only regenerate if we don't have 'person' items yet (legacy or first load) or if member count changed significantly
-      const hasPeople = data.stagePlot.some(i => i.type === 'person');
-      const currentMemberIds = new Set(data.members.map(m => m.id));
-      const plottedMemberIds = new Set(data.stagePlot.filter(i => i.memberId).map(i => i.memberId));
+      // We regenerate the layout when entering step 2 to ensure it matches current members.
+      // We attempt to preserve manual items if they don't conflict, but for this simpler version we rebuild member items.
       
-      // If we already have a good plot for these members, try to preserve it, but we need to ensure all members are present
-      // For this implementation, to satisfy the prompt "Distribute members...", we will regenerate the member layout if the counts mismatch or no people exist.
-      // We will keep manual items (power, extra monitors).
-
       const manualItems = data.stagePlot.filter(item => !item.memberId && item.type !== 'person');
-      
       const newItems: StageItem[] = [...manualItems];
       
       // 1. Sort Members by Role
@@ -114,7 +117,6 @@ const App: React.FC = () => {
       let drummer = members.find(m => getMemberRole(m) === 'drummer');
       let otherMembers = members.filter(m => m !== drummer);
       
-      // Separate into Back Row (Bass, Keys, Horns) and Front Row (Vocals, Guitars, Others)
       const backRow: BandMember[] = [];
       const frontRow: BandMember[] = [];
       
@@ -128,9 +130,6 @@ const App: React.FC = () => {
       });
 
       // 2. Assign Positions
-      // Coordinates: x (0-100 L-R), y (0-100 Back-Front)
-      // Standard depth: Back Row Y=30, Front Row Y=75
-      
       const assignments = new Map<string, {x: number, y: number}>();
       
       // Place Drummer (Center Back)
@@ -138,29 +137,19 @@ const App: React.FC = () => {
           assignments.set(drummer.id, { x: 50, y: 25 });
       }
 
-      // Distribute Back Row (Left/Right of drums)
-      // Alternating sides: Left (30), Right (70), Far Left (15), Far Right (85)
+      // Distribute Back Row
       const backSlots = [30, 70, 15, 85]; 
       backRow.forEach((m, i) => {
           assignments.set(m.id, { x: backSlots[i % backSlots.length] || 10 + (i*10), y: 30 });
       });
 
       // Distribute Front Row
-      // Center (50) is for Lead Singer if possible.
-      // Slots: 50, 30, 70, 15, 85
       const frontSlots = [50, 30, 70, 15, 85, 40, 60];
-      
-      // Find lead singer to put in center
       const leadSingerIndex = frontRow.findIndex(m => getMemberRole(m) === 'vocal');
       if (leadSingerIndex !== -1) {
-          // Move lead singer to start of array so they get slot 50
           const singer = frontRow.splice(leadSingerIndex, 1)[0];
           frontRow.unshift(singer);
-      } else if (!drummer && frontRow.length > 0) {
-          // If no drummer and no lead singer detected, just center the first person
-          // (Already sorted to front)
       }
-
       frontRow.forEach((m, i) => {
            assignments.set(m.id, { x: frontSlots[i % frontSlots.length] || 10 + (i*10), y: 75 });
       });
@@ -180,41 +169,89 @@ const App: React.FC = () => {
           });
 
           // B. Place Instruments
+          // Identify "Held" instrument (Guitar, Bass, Brass)
+          // Priority: First holdable instrument found is placed ON the person.
+          // Others are placed to the side.
+          const holdableTypes = [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS, InstrumentType.STRINGS];
+          const memberInstDefs = member.instrumentIds.map(id => INSTRUMENTS.find(i => i.id === id));
+          
+          // Find first holdable instrument index
+          const heldIndex = memberInstDefs.findIndex(def => def && holdableTypes.includes(def.type));
+
           member.instrumentIds.forEach((instId, idx) => {
               const instDef = INSTRUMENTS.find(i => i.id === instId);
               if (!instDef) return;
 
-              let instX = pos.x;
-              let instY = pos.y;
-              let label = instDef.name;
+              const isHeld = (idx === heldIndex);
 
-              // Offset logic based on instrument type
-              if (instDef.type === InstrumentType.DRUMS) {
-                  // Drums are usually the kit itself, can be at person position or slightly front
-                  instY = pos.y - 5; 
-                  label = "Kit";
-              } else if (instDef.type === InstrumentType.GUITAR || instDef.type === InstrumentType.BASS) {
-                  // Amps usually behind
-                  instY = pos.y - 15;
-                  instX = pos.x + (idx % 2 === 0 ? -5 : 5); // Slight stagger if multiple
-                  label = "Amp";
-              } else if (instDef.type === InstrumentType.VOCAL) {
-                  // Mic stand in front
-                  instY = pos.y + 5;
-                  label = "Mic";
-              } else if (instDef.type === InstrumentType.KEYS) {
-                  // Keys at position
-                  instX = pos.x + 5;
+              // Special handling for Electric Guitar and Bass (Amp + Instrument)
+              if (instDef.id === 'gtr_elec' || instDef.type === InstrumentType.BASS) {
+                  // Amp (Always Back)
+                  newItems.push({
+                      id: `amp-${member.id}-${idx}`,
+                      memberId: member.id,
+                      type: 'member',
+                      label: 'Amp',
+                      x: pos.x + (idx % 2 === 0 ? -10 : 10), 
+                      y: pos.y - 15 
+                  });
+                  
+                  // Instrument (Held or Side)
+                  newItems.push({
+                      id: `inst-${member.id}-${idx}`,
+                      memberId: member.id,
+                      type: 'member',
+                      label: instDef.type === InstrumentType.BASS ? 'Bass' : 'Gtr',
+                      x: isHeld ? pos.x + 2 : pos.x + 12, // Held: Overlap, Side: Offset
+                      y: isHeld ? pos.y + 2 : pos.y - 5     // Held: Overlap, Side: Offset
+                  });
+              } else {
+                  // Standard Instruments
+                  let instX = pos.x;
+                  let instY = pos.y;
+                  let label = instDef.name;
+
+                  if (isHeld) {
+                      // Place on top of person
+                      instX = pos.x + 2;
+                      instY = pos.y + 2;
+                      
+                      if (instDef.type === InstrumentType.BRASS) label = instDef.name; // Sax/Trumpet
+                  } else {
+                      // Non-held placement logic
+                      if (instDef.type === InstrumentType.DRUMS) {
+                          instY = pos.y; // Center on person (Drummer sits in kit)
+                          label = "Kit";
+                      } else if (instDef.type === InstrumentType.VOCAL) {
+                          instY = pos.y + 10; // Stand in front
+                          label = "Mic";
+                      } else if (instDef.type === InstrumentType.KEYS) {
+                          instX = pos.x + 6; // To side/front
+                          instY = pos.y + 4;
+                          label = "Keys";
+                      } else if (instDef.id === 'dj') {
+                          instY = pos.y + 5;
+                          label = "DJ";
+                      } else if (instDef.id === 'laptop') {
+                          instX = pos.x + 10;
+                          label = "Laptop";
+                      } else if (holdableTypes.includes(instDef.type)) {
+                           // Secondary holdable instrument (e.g. Acoustic guitar on stand)
+                           instX = pos.x + 12;
+                           instY = pos.y - 5;
+                           label = instDef.name.split(' ')[0]; // Shorten label
+                      }
+                  }
+
+                  newItems.push({
+                      id: `inst-${member.id}-${idx}`,
+                      memberId: member.id,
+                      type: 'member', 
+                      label: label,
+                      x: instX,
+                      y: instY
+                  });
               }
-
-              newItems.push({
-                  id: `inst-${member.id}-${idx}`,
-                  memberId: member.id,
-                  type: 'member', // Treated as equipment
-                  label: label,
-                  x: instX,
-                  y: instY
-              });
           });
 
           // C. Place Monitor (if needed)
@@ -309,6 +346,26 @@ const App: React.FC = () => {
         Instruments & Members
       </h2>
       
+      {data.members.length === 0 && (
+        <div className="mb-6 animate-fadeIn">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Start Templates</h3>
+          <button 
+            onClick={applyRockTemplate}
+            className="w-full sm:w-auto bg-gradient-to-r from-indigo-900 to-slate-800 border border-indigo-500/30 hover:border-indigo-500 p-4 rounded-xl text-left transition-all hover:shadow-lg hover:shadow-indigo-500/20 group"
+          >
+            <div className="flex items-center gap-3 mb-1">
+              <div className="bg-indigo-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                 <Music2 size={20} />
+              </div>
+              <span className="font-bold text-white text-lg">Rock Band</span>
+            </div>
+            <p className="text-slate-400 text-sm pl-[52px]">
+              Drums, Bass, Electric Guitar, Lead Vocals
+            </p>
+          </button>
+        </div>
+      )}
+
       <div className="bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700">
         <div className="space-y-4">
           {data.members.map((member, index) => (

@@ -19,12 +19,16 @@ const getIcon = (label: string, type: string) => {
     if (type === 'power') return Plug;
     
     const lowerLabel = label.toLowerCase();
-    if (lowerLabel.includes('drum')) return Drum;
+    
+    if (lowerLabel.includes('amp')) return Speaker;
+    if (lowerLabel.includes('drum') || lowerLabel.includes('kit')) return Drum;
     if (lowerLabel.includes('vocal') || lowerLabel.includes('mic')) return Mic;
-    if (lowerLabel.includes('guitar')) return Guitar;
-    if (lowerLabel.includes('bass')) return Speaker;
+    if (lowerLabel.includes('guitar') || lowerLabel.includes('gtr')) return Guitar;
+    if (lowerLabel.includes('bass')) return Guitar; // Bass guitar gets guitar icon
     if (lowerLabel.includes('keys')) return Music;
-    if (lowerLabel.includes('sax') || lowerLabel.includes('trumpet')) return Music;
+    if (lowerLabel.includes('sax') || lowerLabel.includes('trumpet') || lowerLabel.includes('horn')) return Music;
+    if (lowerLabel.includes('dj') || lowerLabel.includes('disc')) return Disc;
+    if (lowerLabel.includes('laptop')) return Laptop;
     
     return Music; // Default instrument icon
 };
@@ -94,7 +98,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
               top: `${item.y}%`,
               transform: 'translate(-50%, -50%)',
               cursor: editable ? (draggingId === item.id ? 'grabbing' : 'grab') : 'default',
-              zIndex: draggingId === item.id ? 100 : (isPerson ? 50 : 10)
+              // Person at 20, Instruments/Others at 30, Dragging at 100
+              zIndex: draggingId === item.id ? 100 : (isPerson ? 20 : 30)
             }}
             className={`absolute flex flex-col items-center group`}
             onMouseDown={(e) => handleMouseDown(e, item.id)}
