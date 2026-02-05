@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Box, Layers } from 'lucide-react';
+import React, { useState } from 'react';
+import { Box, Layers, ArrowRight, Trash2 } from 'lucide-react';
 import { RiderData, StageItem, BandMember, InstrumentType } from '../types';
 import { StagePlotCanvas } from './StagePlotCanvas';
 import { INSTRUMENTS } from '../constants';
+import { MemberPreview3D } from './MemberPreview3D';
 
 interface StepStagePlotProps {
   data: RiderData;
@@ -13,194 +14,202 @@ interface StepStagePlotProps {
 export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, updateStageItems }) => {
   const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('isometric');
 
-  // Helper to determine member role for layout
-  const getMemberRole = (member: BandMember) => {
-    const instruments = member.instrumentIds.map(id => INSTRUMENTS.find(i => i.id === id));
-    if (instruments.some(i => i?.type === InstrumentType.DRUMS)) return 'drummer';
-    if (instruments.some(i => i?.type === InstrumentType.BASS)) return 'bass';
-    if (instruments.some(i => i?.type === InstrumentType.KEYS)) return 'keys';
-    if (instruments.some(i => i?.type === InstrumentType.BRASS)) return 'horn';
-    if (instruments.some(i => i?.type === InstrumentType.VOCAL)) return 'vocal'; // Lead vocal priority if no other heavy instrument
-    return 'front'; // Guitars and others default to front
+  // Logic to generate individual items for a member (Person, Amps, Pedals, DIs)
+  const generateMemberItems = (member: BandMember, startX: number, startY: number): StageItem[] => {
+      const items: StageItem[] = [];
+      const baseId = `${member.id}-${Date.now()}`;
+
+      // 1. The Person
+      items.push({ 
+          id: `person-${baseId}`, 
+          memberId: member.id, 
+          type: 'person', 
+          label: member.name || 'Musician', 
+          x: startX, 
+          y: startY 
+      });
+
+      // 2. Instruments & Gear
+      let instrumentCount = 0;
+      let ampCount = 0;
+
+      member.instrumentIds.forEach((instId, idx) => {
+          const inst = INSTRUMENTS.find(i => i.id === instId);
+          if (!inst) return;
+
+          // Offsets to spread items around the person
+          const isRight = idx % 2 === 0;
+          const spreadX = isRight ? 8 : -8; 
+          
+          // DRUMS
+          if (inst.type === InstrumentType.DRUMS) {
+              items.push({ id: `drum-${baseId}`, memberId: member.id, type: 'member', label: 'Drum Kit', x: startX, y: startY - 15 });
+          }
+          
+          // KEYS
+          else if (inst.type === InstrumentType.KEYS) {
+              items.push({ id: `keys-${baseId}-${idx}`, memberId: member.id, type: 'member', label: inst.group, x: startX + spreadX, y: startY });
+          }
+
+          // AMPS
+          else if (instId.includes('amp') || instId.includes('combined')) {
+             const ampX = startX + (ampCount % 2 === 0 ? -12 : 12);
+             items.push({ id: `amp-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: ampX, y: startY - 10 });
+             ampCount++;
+          }
+
+          // INSTRUMENTS ON STANDS (Guitar/Bass/Brass)
+          if ([InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type)) {
+              // Instrument Body
+              items.push({ 
+                  id: `inst-${baseId}-${idx}`, 
+                  memberId: member.id, 
+                  type: 'member', 
+                  label: inst.type, // e.g. "Guitar"
+                  x: startX + spreadX, 
+                  y: startY - 5 
+              });
+
+              // Pedalboard / Modeler
+              if (instId.includes('modeler')) {
+                   items.push({ id: `mod-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Modeler', x: startX + spreadX, y: startY + 8 });
+              } else if (inst.type !== InstrumentType.BRASS && inst.id !== 'gtr_ac') {
+                   items.push({ id: `pedal-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Pedals', x: startX + spreadX, y: startY + 8 });
+              }
+              
+              // DI Box
+              if (inst.defaultDi || instId.includes('di')) {
+                   items.push({ id: `di-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'DI', x: startX + spreadX + (isRight?2:-2), y: startY + 5 });
+              }
+          }
+          
+          // MIC STAND (Vocals)
+          if (inst.type === InstrumentType.VOCAL) {
+               items.push({ id: `mic-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Mic', x: startX, y: startY + 5 });
+          }
+      });
+
+      // 3. Monitor (if needed)
+      if (member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor)) {
+          items.push({ id: `mon-${baseId}`, memberId: member.id, type: 'monitor', label: 'Mon', x: startX, y: startY + 12 });
+      }
+
+      return items;
   };
 
-  useEffect(() => {
-    setData(prev => {
-         // 1. Sync: Remove items for deleted members
-         const validMemberIds = new Set(prev.members.map(m => m.id));
-         let currentPlot = prev.stagePlot.filter(item => !item.memberId || validMemberIds.has(item.memberId));
-         
-         // Update labels of existing people (in case name changed)
-         currentPlot = currentPlot.map(item => {
-             if (item.type === 'person' && item.memberId) {
-                 const m = prev.members.find(mem => mem.id === item.memberId);
-                 if (m && m.name !== item.label) return { ...item, label: m.name };
-             }
-             return item;
-         });
+  const handlePlaceMember = (member: BandMember) => {
+      // Find a somewhat empty spot or center
+      const newItems = generateMemberItems(member, 50, 50);
+      updateStageItems([...data.stagePlot, ...newItems]);
+  };
 
-         // 2. Identify who is missing (Members who have NO items on stage)
-         const existingMemberIds = new Set(currentPlot.filter(i => i.memberId).map(i => i.memberId));
-         const membersToAdd = prev.members.filter(m => !existingMemberIds.has(m.id));
+  const isMemberPlaced = (memberId: string) => {
+      return data.stagePlot.some(item => item.memberId === memberId);
+  };
 
-         // If no new members to add and no deletions, return previous state to Preserve Positions
-         if (membersToAdd.length === 0) {
-             if (JSON.stringify(currentPlot) !== JSON.stringify(prev.stagePlot)) {
-                 return { ...prev, stagePlot: currentPlot };
-             }
-             return prev;
-         }
-
-         // 3. Generate Items for NEW members only
-         const newItems: StageItem[] = [];
-         const isFreshLayout = currentPlot.length === 0;
-         
-         const assignments = new Map<string, {x: number, y: number}>();
-         
-         if (isFreshLayout) {
-             // -- Full Layout Logic (Only runs on first visit or clear) --
-              let drummer = membersToAdd.find(m => getMemberRole(m) === 'drummer');
-              let otherMembers = membersToAdd.filter(m => m !== drummer);
-              
-              const backRow: BandMember[] = [];
-              const frontRow: BandMember[] = [];
-              otherMembers.forEach(m => {
-                const role = getMemberRole(m);
-                (['bass', 'keys', 'horn'].includes(role)) ? backRow.push(m) : frontRow.push(m);
-              });
-
-              if (drummer) assignments.set(drummer.id, { x: 50, y: 25 });
-              
-              const backSlots = [30, 70, 15, 85]; 
-              backRow.forEach((m, i) => assignments.set(m.id, { x: backSlots[i % backSlots.length] || 10 + (i*10), y: 30 }));
-              
-              const frontSlots = [50, 30, 70, 15, 85, 40, 60];
-              const leadSingerIndex = frontRow.findIndex(m => getMemberRole(m) === 'vocal');
-              if (leadSingerIndex !== -1) frontRow.unshift(frontRow.splice(leadSingerIndex, 1)[0]);
-              frontRow.forEach((m, i) => assignments.set(m.id, { x: frontSlots[i % frontSlots.length] || 10 + (i*10), y: 75 }));
-
-         } else {
-             // -- Append Mode (Preserve existing, add new to generic spots) --
-             membersToAdd.forEach((m, i) => {
-                 assignments.set(m.id, { x: 50 + (i % 2 === 0 ? (i+1)*5 : -(i+1)*5), y: 50 });
-             });
-         }
-
-         // Generate StageItems for new members
-         membersToAdd.forEach(member => {
-             const pos = assignments.get(member.id) || { x: 50, y: 50 };
-             
-             // Person
-             newItems.push({ id: `person-${member.id}`, memberId: member.id, type: 'person', label: member.name, x: pos.x, y: pos.y });
-             
-             // Instruments
-              const holdableTypes = [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS, InstrumentType.STRINGS];
-              const memberInstDefs = member.instrumentIds.map(id => INSTRUMENTS.find(i => i.id === id));
-              const heldIndex = memberInstDefs.findIndex(def => def && holdableTypes.includes(def.type));
-
-              member.instrumentIds.forEach((instId, idx) => {
-                  const instDef = INSTRUMENTS.find(i => i.id === instId);
-                  if (!instDef) return;
-                  const isHeld = (idx === heldIndex);
-
-                  // Logic for Electric Guitars & Bass (Amps)
-                  if (instDef.type === InstrumentType.GUITAR || instDef.type === InstrumentType.BASS) {
-                      // Only show AMP if it's an Amp or Combined type. Exclude Modeler/DI.
-                      const showAmp = instId.includes('amp') || instId.includes('combined');
-                      
-                      if (showAmp) {
-                        newItems.push({ id: `amp-${member.id}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: pos.x + (idx % 2 === 0 ? -10 : 10), y: pos.y - 15 });
-                      }
-                      
-                      // Label: "Bass" or "Gtr"
-                      const label = instDef.type === InstrumentType.BASS ? 'Bass' : 'Gtr';
-                      newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label: label, x: isHeld ? pos.x + 2 : pos.x + 12, y: isHeld ? pos.y + 2 : pos.y - 5 });
-                  } else {
-                      let instX = pos.x, instY = pos.y, label = instDef.group;
-                      
-                      if (isHeld) {
-                          instX = pos.x + 2; instY = pos.y + 2;
-                          // Shorten brass names
-                          if (instDef.type === InstrumentType.BRASS) label = instDef.group.substring(0, 3);
-                      } else {
-                          if (instDef.type === InstrumentType.DRUMS) { instY = pos.y; label = "Kit"; }
-                          else if (instDef.type === InstrumentType.VOCAL) { instY = pos.y + 10; label = "Mic"; }
-                          else if (instDef.type === InstrumentType.KEYS) { instX = pos.x + 6; instY = pos.y + 4; label = "Keys"; }
-                          else if (instDef.id === 'dj') { instY = pos.y + 5; label = "DJ"; }
-                          else if (instDef.id === 'laptop') { instX = pos.x + 10; label = "Laptop"; }
-                          else if (holdableTypes.includes(instDef.type)) { instX = pos.x + 12; instY = pos.y - 5; label = instDef.group.split(' ')[0]; }
-                      }
-                      newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label, x: instX, y: instY });
-                  }
-              });
-
-              // Monitor
-              // Check if any of the instruments require a monitor. 
-              // Note: Modelers often need monitors even if they are DI, so default requirement in constants handles this.
-              if (member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor)) {
-                  newItems.push({ id: `mon-${member.id}`, memberId: member.id, type: 'monitor', label: 'Mon', x: pos.x, y: pos.y + 15 });
-              }
-         });
-
-         return { ...prev, stagePlot: [...currentPlot, ...newItems] };
-      });
-  }, []); // Run once on mount when entering this step
+  const clearStage = () => {
+      if(window.confirm("Are you sure you want to clear the stage?")) {
+          updateStageItems([]);
+      }
+  }
 
   return (
-    <div className="max-w-6xl mx-auto w-full">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold flex items-center gap-3">
-            <span className="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg">2</span>
-            Stage Plot
-        </h2>
+    <div className="w-full h-[calc(100vh-140px)] flex gap-6">
         
-        {/* View Mode Toggle */}
-        <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
-            <button 
-                onClick={() => setStageViewMode('isometric')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-            >
-                <Box size={16} /> 3D View
-            </button>
-            <button 
-                onClick={() => setStageViewMode('top')}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
-            >
-                <Layers size={16} /> Top View
-            </button>
-        </div>
-      </div>
+        {/* SIDEBAR: Member List & Previews */}
+        <div className="w-[320px] shrink-0 flex flex-col bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
+            <div className="p-4 bg-slate-900 border-b border-slate-700">
+                <h3 className="font-bold text-lg text-white">Band Members</h3>
+                <p className="text-xs text-slate-400">Click to place on stage</p>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+                {data.members.map((member) => {
+                    const placed = isMemberPlaced(member.id);
+                    return (
+                        <div key={member.id} className={`bg-slate-700/50 rounded-lg p-2 transition-all ${placed ? 'opacity-50 grayscale' : 'hover:bg-slate-700'}`}>
+                            <div className="flex justify-between items-center mb-2 px-1">
+                                <span className="font-bold text-sm text-white truncate">{member.name}</span>
+                                {placed && <span className="text-[10px] bg-green-900 text-green-200 px-1.5 py-0.5 rounded">Placed</span>}
+                            </div>
+                            
+                            {/* Mini Preview */}
+                            <div className="h-[120px] w-full rounded bg-slate-900/50 mb-3 pointer-events-none">
+                                <MemberPreview3D member={member} />
+                            </div>
 
-      <p className="text-slate-400 mb-4">Drag instruments and monitors to their position on stage.</p>
-      
-      <div className="relative w-full rounded-xl overflow-hidden shadow-2xl border border-slate-700">
-        
-        {/* Overlay Menu */}
-        <div className="absolute top-4 right-4 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-700 p-3 rounded-lg shadow-xl">
-           <h3 className="font-bold text-white mb-2 text-xs uppercase tracking-wider text-center">Extras</h3>
-           <div className="flex flex-col gap-2">
-               <button 
-                 onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
-                 className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded hover:bg-slate-700 text-xs text-white transition-colors border border-slate-600 hover:border-slate-500"
-               >
-                 <div className="w-4 h-4 bg-slate-600 rounded-sm"></div>
-                 <span>Add Monitor</span>
-               </button>
-               <button 
-                 onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: '230V' }])}
-                 className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded hover:bg-slate-700 text-xs text-white transition-colors border border-slate-600 hover:border-slate-500"
-               >
-                 <div className="w-4 h-4 bg-yellow-600 rounded-full"></div>
-                 <span>Add Power</span>
-               </button>
-           </div>
-           <p className="text-[10px] text-slate-500 mt-2 text-center">Drag to move</p>
+                            <button 
+                                onClick={() => handlePlaceMember(member)}
+                                disabled={placed}
+                                className={`w-full py-2 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors ${
+                                    placed 
+                                    ? 'bg-slate-800 text-slate-500 cursor-not-allowed' 
+                                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg'
+                                }`}
+                            >
+                                {placed ? 'Already on Stage' : <>Place on Stage <ArrowRight size={12} /></>}
+                            </button>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
 
-        {/* 3D Canvas with View Mode */}
-        <StagePlotCanvas items={data.stagePlot} setItems={updateStageItems} editable={true} viewMode={stageViewMode} />
-        
-      </div>
+        {/* MAIN AREA: Canvas */}
+        <div className="flex-1 flex flex-col min-w-0">
+             <div className="flex justify-between items-center mb-4">
+                <div className="flex gap-2">
+                    <button 
+                        onClick={() => setStageViewMode('isometric')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                    >
+                        <Box size={16} /> 3D View
+                    </button>
+                    <button 
+                        onClick={() => setStageViewMode('top')}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                    >
+                        <Layers size={16} /> Top View
+                    </button>
+                </div>
+
+                <div className="flex gap-2">
+                     <button 
+                        onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
+                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
+                     >
+                        + Mon
+                     </button>
+                     <button 
+                        onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: '230V' }])}
+                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
+                     >
+                        + Power
+                     </button>
+                     <button 
+                        onClick={clearStage}
+                        className="px-3 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded text-xs flex items-center gap-1"
+                     >
+                        <Trash2 size={14} /> Clear
+                     </button>
+                </div>
+             </div>
+
+             <div className="flex-1 bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700 relative">
+                <StagePlotCanvas items={data.stagePlot} setItems={updateStageItems} editable={true} viewMode={stageViewMode} />
+                
+                {data.stagePlot.length === 0 && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div className="bg-slate-900/80 backdrop-blur-sm p-6 rounded-xl border border-slate-700 text-center max-w-sm">
+                            <Box size={48} className="mx-auto text-slate-500 mb-4" />
+                            <h3 className="text-white font-bold mb-2">The Stage is Empty</h3>
+                            <p className="text-slate-400 text-sm">Use the sidebar on the left to place your band members and their gear onto the stage.</p>
+                        </div>
+                    </div>
+                )}
+             </div>
+        </div>
+
     </div>
   );
 };
