@@ -3,11 +3,12 @@ import { INITIAL_RIDER_DATA, INSTRUMENTS } from './constants';
 import { RiderData, BandMember, StageItem, InstrumentType } from './types';
 import { StagePlotCanvas } from './components/StagePlotCanvas';
 import { InputList } from './components/InputList';
-import { Plus, Trash2, Mic, Info, ArrowRight, ArrowLeft, Download, Printer, Music2, X } from 'lucide-react';
+import { Plus, Trash2, Mic, Info, ArrowRight, ArrowLeft, Download, Printer, Music2, X, Box, Layers } from 'lucide-react';
 
 const App: React.FC = () => {
   const [step, setStep] = useState(0); // 0: Landing, 1: Instruments, 2: Stage, 3: Details, 4: Preview
   const [data, setData] = useState<RiderData>(INITIAL_RIDER_DATA);
+  const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('isometric');
 
   // --- Step 1 Handlers (Instruments) ---
   const addMember = () => {
@@ -459,10 +460,29 @@ const App: React.FC = () => {
 
   const renderStep2 = () => (
     <div className="max-w-6xl mx-auto w-full">
-      <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-        <span className="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg">2</span>
-        Stage Plot
-      </h2>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-3xl font-bold flex items-center gap-3">
+            <span className="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg">2</span>
+            Stage Plot
+        </h2>
+        
+        {/* View Mode Toggle */}
+        <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+            <button 
+                onClick={() => setStageViewMode('isometric')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+                <Box size={16} /> 3D View
+            </button>
+            <button 
+                onClick={() => setStageViewMode('top')}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-slate-200'}`}
+            >
+                <Layers size={16} /> Top View
+            </button>
+        </div>
+      </div>
+
       <p className="text-slate-400 mb-4">Drag instruments and monitors to their position on stage.</p>
       
       <div className="relative w-full rounded-xl overflow-hidden shadow-2xl border border-slate-700">
@@ -489,8 +509,8 @@ const App: React.FC = () => {
            <p className="text-[10px] text-slate-500 mt-2 text-center">Drag to move</p>
         </div>
 
-        {/* 3D Canvas */}
-        <StagePlotCanvas items={data.stagePlot} setItems={updateStageItems} editable={true} />
+        {/* 3D Canvas with View Mode */}
+        <StagePlotCanvas items={data.stagePlot} setItems={updateStageItems} editable={true} viewMode={stageViewMode} />
         
       </div>
     </div>
@@ -619,7 +639,8 @@ const App: React.FC = () => {
             <Music2 size={20} /> Stage Plot
           </h3>
           <div className="w-full max-w-[80%] mx-auto mt-4">
-             <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} />
+             {/* Force viewMode="top" for the rider export */}
+             <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" />
           </div>
           <p className="text-center text-xs text-slate-500 mt-2">Front of Stage (Audience)</p>
         </div>
