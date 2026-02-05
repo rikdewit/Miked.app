@@ -30,23 +30,23 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
       <table className="w-full text-sm text-left">
         <thead className="bg-slate-100 text-slate-700 print:bg-slate-200 print:text-black">
           <tr>
-            <th className="py-2 px-3 font-bold w-12 border-r border-b border-slate-300 print:border-black">CH</th>
-            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black">Member</th>
-            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black">Instrument</th>
-            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black">Mic / DI</th>
-            <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black hidden sm:table-cell">Stand</th>
-            <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black">Notes</th>
+            <th className="py-2 px-3 font-bold w-12 border-r border-b border-slate-300 print:border-black text-black">CH</th>
+            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Member</th>
+            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Instrument</th>
+            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Mic / DI</th>
+            <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black hidden sm:table-cell text-black">Stand</th>
+            <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black text-black">Notes</th>
           </tr>
         </thead>
         <tbody>
           {inputs.map((input) => (
             <tr key={input.channel} className="border-b border-slate-200 last:border-0 print:border-slate-400">
-              <td className="py-2 px-3 font-mono font-bold border-r border-slate-200 print:border-slate-400">{input.channel}</td>
-              <td className="py-2 px-3 border-r border-slate-200 print:border-slate-400">{input.source}</td>
-              <td className="py-2 px-3 border-r border-slate-200 print:border-slate-400">{input.instrument}</td>
-              <td className="py-2 px-3 border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
-               <td className="py-2 px-3 border-r border-slate-200 print:border-slate-400 hidden sm:table-cell">{input.stand}</td>
-              <td className="py-2 px-3 text-slate-500 italic print:text-black">{input.notes}</td>
+              <td className="py-2 px-3 font-mono font-bold text-black border-r border-slate-200 print:border-slate-400">{input.channel}</td>
+              <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.source}</td>
+              <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.instrument}</td>
+              <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
+               <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 hidden sm:table-cell">{input.stand}</td>
+              <td className="py-2 px-3 text-black italic print:text-black">{input.notes}</td>
             </tr>
           ))}
           {inputs.length === 0 && (

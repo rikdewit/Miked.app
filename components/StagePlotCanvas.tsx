@@ -4,20 +4,57 @@ import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
+// Extend JSX.IntrinsicElements to fix TypeScript errors related to R3F elements
+// We augment both global JSX and React module JSX to handle different TS/React versions
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      ambientLight: any;
+      boxGeometry: any;
+      cylinderGeometry: any;
+      directionalLight: any;
+      group: any;
+      mesh: any;
+      meshBasicMaterial: any;
+      meshStandardMaterial: any;
+      planeGeometry: any;
+    }
+  }
+}
+
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      ambientLight: any;
+      boxGeometry: any;
+      cylinderGeometry: any;
+      directionalLight: any;
+      group: any;
+      mesh: any;
+      meshBasicMaterial: any;
+      meshStandardMaterial: any;
+      planeGeometry: any;
+    }
+  }
+}
+
 interface StagePlotCanvasProps {
   items: StageItem[];
   setItems: (items: StageItem[]) => void;
   editable: boolean;
   viewMode?: 'isometric' | 'top';
+  showAudienceLabel?: boolean;
 }
 
 // --- Constants ---
-const STAGE_SIZE = 8; // 8 meters
-const GRID_DIVISIONS = 16; // 0.5 meter grid for 8m
+const STAGE_WIDTH = 7; // 7 meters wide
+const STAGE_DEPTH = 4; // 4 meters deep
 
-// --- Helpers to map Data (0-100%) to World (-4 to 4) ---
-const percentToWorld = (p: number) => ((p / 100) * STAGE_SIZE) - (STAGE_SIZE / 2);
-const worldToPercent = (w: number) => ((w + (STAGE_SIZE / 2)) / STAGE_SIZE) * 100;
+// --- Helpers to map Data (0-100%) to World ---
+const percentToX = (p: number) => ((p / 100) * STAGE_WIDTH) - (STAGE_WIDTH / 2);
+const percentToZ = (p: number) => ((p / 100) * STAGE_DEPTH) - (STAGE_DEPTH / 2);
+const xToPercent = (w: number) => ((w + (STAGE_WIDTH / 2)) / STAGE_WIDTH) * 100;
+const zToPercent = (w: number) => ((w + (STAGE_DEPTH / 2)) / STAGE_DEPTH) * 100;
 
 // --- 3D Components ---
 
@@ -25,37 +62,38 @@ const StagePlatform = () => {
   const thickness = 0.2;
   const legHeight = 1.0;
   const legRadius = 0.1;
-  const offset = STAGE_SIZE / 2 - 0.2; // Inset legs slightly
+  const offsetX = STAGE_WIDTH / 2 - 0.2; 
+  const offsetZ = STAGE_DEPTH / 2 - 0.2;
 
   return (
     <group position={[0, -thickness / 2, 0]}>
        {/* Main Slab */}
       <mesh receiveShadow position={[0, 0, 0]}>
-        <boxGeometry args={[STAGE_SIZE, thickness, STAGE_SIZE]} />
+        <boxGeometry args={[STAGE_WIDTH, thickness, STAGE_DEPTH]} />
         <meshStandardMaterial color="#cbd5e1" roughness={0.5} /> {/* Slate 300 - Light Gray Stage */}
       </mesh>
       
       {/* Side trim */}
       <mesh position={[0, 0, 0]}>
-         <boxGeometry args={[STAGE_SIZE + 0.05, thickness - 0.05, STAGE_SIZE + 0.05]} />
+         <boxGeometry args={[STAGE_WIDTH + 0.05, thickness - 0.05, STAGE_DEPTH + 0.05]} />
          <meshStandardMaterial color="#94a3b8" /> {/* Slate 400 */}
       </mesh>
 
       {/* Legs */}
       <group position={[0, -thickness/2 - legHeight/2, 0]}>
-          <mesh position={[offset, 0, offset]} castShadow receiveShadow>
+          <mesh position={[offsetX, 0, offsetZ]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
              <meshStandardMaterial color="#64748b" /> {/* Slate 500 */}
           </mesh>
-          <mesh position={[-offset, 0, offset]} castShadow receiveShadow>
+          <mesh position={[-offsetX, 0, offsetZ]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
              <meshStandardMaterial color="#64748b" />
           </mesh>
-          <mesh position={[offset, 0, -offset]} castShadow receiveShadow>
+          <mesh position={[offsetX, 0, -offsetZ]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
              <meshStandardMaterial color="#64748b" />
           </mesh>
-          <mesh position={[-offset, 0, -offset]} castShadow receiveShadow>
+          <mesh position={[-offsetX, 0, -offsetZ]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
              <meshStandardMaterial color="#64748b" />
           </mesh>
@@ -114,8 +152,8 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     yPos = height / 2;
   }
 
-  const x = percentToWorld(item.x);
-  const z = percentToWorld(item.y);
+  const x = percentToX(item.x);
+  const z = percentToZ(item.y);
   
   const isDragging = activeId === item.id;
 
@@ -153,7 +191,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   );
 };
 
-export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItems, editable, viewMode = 'isometric' }) => {
+export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItems, editable, viewMode = 'isometric', showAudienceLabel = true }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
@@ -176,8 +214,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
     e.stopPropagation();
     
     // Convert intersection point to percentages
-    const newX = worldToPercent(e.point.x);
-    const newY = worldToPercent(e.point.z);
+    const newX = xToPercent(e.point.x);
+    const newY = zToPercent(e.point.z);
 
     // Clamp values
     const clampedX = Math.max(0, Math.min(100, newX));
@@ -201,7 +239,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
   //   +Y moves camera Up.
   //   This points the camera at the Front-Left corner of the stage.
   const camPosition: [number, number, number] = isTopView ? [0, 50, 0] : [-20, 30, 20];
-  const camZoom = isTopView ? 28 : 50; 
+  const camZoom = isTopView ? 50 : 50; 
   
   return (
     <div className="w-full aspect-video bg-white rounded-lg overflow-hidden border-2 border-slate-300 print:border-black shadow-inner">
@@ -244,7 +282,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
           {/* Floor Grid */}
           <Grid 
             position={[0, 0.01, 0]} 
-            args={[STAGE_SIZE, STAGE_SIZE]} 
+            args={[STAGE_WIDTH, STAGE_DEPTH]} 
             cellSize={0.5} 
             cellThickness={0.6} 
             cellColor="#94a3b8" 
@@ -256,16 +294,18 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
           />
           
           {/* Audience Label */}
-          <Text 
-            position={[0, 0.05, STAGE_SIZE / 2 + 1.2]} 
-            rotation={[-Math.PI / 2, 0, 0]}
-            fontSize={1}
-            color="#64748b"
-            anchorX="center"
-            anchorY="middle"
-          >
-            AUDIENCE
-          </Text>
+          {showAudienceLabel && (
+            <Text 
+              position={[0, 0.05, STAGE_DEPTH / 2 + 1.2]} 
+              rotation={[-Math.PI / 2, 0, 0]}
+              fontSize={1}
+              color="#64748b"
+              anchorX="center"
+              anchorY="middle"
+            >
+              AUDIENCE
+            </Text>
+          )}
 
           {/* Invisible Plane for Dragging */}
           <mesh 
@@ -274,7 +314,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             onPointerMove={handlePlaneMove}
             onPointerUp={handlePointerUp}
           >
-            <planeGeometry args={[STAGE_SIZE * 2, STAGE_SIZE * 2]} />
+            <planeGeometry args={[STAGE_WIDTH * 2, STAGE_DEPTH * 2]} />
             <meshBasicMaterial visible={false} />
           </mesh>
 

@@ -1,14 +1,18 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { INITIAL_RIDER_DATA, INSTRUMENTS } from './constants';
 import { RiderData, BandMember, StageItem, InstrumentType } from './types';
 import { StagePlotCanvas } from './components/StagePlotCanvas';
 import { InputList } from './components/InputList';
-import { Plus, Trash2, Mic, Info, ArrowRight, ArrowLeft, Download, Printer, Music2, X, Box, Layers } from 'lucide-react';
+import { Plus, Trash2, Mic, Info, ArrowRight, ArrowLeft, Download, Printer, Music2, X, Box, Layers, Loader2 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 const App: React.FC = () => {
   const [step, setStep] = useState(0); // 0: Landing, 1: Instruments, 2: Stage, 3: Details, 4: Preview
   const [data, setData] = useState<RiderData>(INITIAL_RIDER_DATA);
   const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('isometric');
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // --- Step 1 Handlers (Instruments) ---
   const addMember = () => {
@@ -106,172 +110,114 @@ const App: React.FC = () => {
 
   useEffect(() => {
     if (step === 2) {
-      // Logic to distribute members intelligently on the stage
-      // We regenerate the layout when entering step 2 to ensure it matches current members.
-      // We attempt to preserve manual items if they don't conflict, but for this simpler version we rebuild member items.
-      
-      const manualItems = data.stagePlot.filter(item => !item.memberId && item.type !== 'person');
-      const newItems: StageItem[] = [...manualItems];
-      
-      // 1. Sort Members by Role
-      const members = [...data.members];
-      let drummer = members.find(m => getMemberRole(m) === 'drummer');
-      let otherMembers = members.filter(m => m !== drummer);
-      
-      const backRow: BandMember[] = [];
-      const frontRow: BandMember[] = [];
-      
-      otherMembers.forEach(m => {
-        const role = getMemberRole(m);
-        if (['bass', 'keys', 'horn'].includes(role)) {
-            backRow.push(m);
-        } else {
-            frontRow.push(m);
-        }
-      });
+      setData(prev => {
+         // 1. Sync: Remove items for deleted members
+         const validMemberIds = new Set(prev.members.map(m => m.id));
+         let currentPlot = prev.stagePlot.filter(item => !item.memberId || validMemberIds.has(item.memberId));
+         
+         // Update labels of existing people (in case name changed)
+         currentPlot = currentPlot.map(item => {
+             if (item.type === 'person' && item.memberId) {
+                 const m = prev.members.find(mem => mem.id === item.memberId);
+                 if (m && m.name !== item.label) return { ...item, label: m.name };
+             }
+             return item;
+         });
 
-      // 2. Assign Positions
-      const assignments = new Map<string, {x: number, y: number}>();
-      
-      // Place Drummer (Center Back)
-      if (drummer) {
-          assignments.set(drummer.id, { x: 50, y: 25 });
-      }
+         // 2. Identify who is missing (Members who have NO items on stage)
+         const existingMemberIds = new Set(currentPlot.filter(i => i.memberId).map(i => i.memberId));
+         const membersToAdd = prev.members.filter(m => !existingMemberIds.has(m.id));
 
-      // Distribute Back Row
-      const backSlots = [30, 70, 15, 85]; 
-      backRow.forEach((m, i) => {
-          assignments.set(m.id, { x: backSlots[i % backSlots.length] || 10 + (i*10), y: 30 });
-      });
+         // If no new members to add and no deletions, return previous state to Preserve Positions
+         if (membersToAdd.length === 0) {
+             if (JSON.stringify(currentPlot) !== JSON.stringify(prev.stagePlot)) {
+                 return { ...prev, stagePlot: currentPlot };
+             }
+             return prev;
+         }
 
-      // Distribute Front Row
-      const frontSlots = [50, 30, 70, 15, 85, 40, 60];
-      const leadSingerIndex = frontRow.findIndex(m => getMemberRole(m) === 'vocal');
-      if (leadSingerIndex !== -1) {
-          const singer = frontRow.splice(leadSingerIndex, 1)[0];
-          frontRow.unshift(singer);
-      }
-      frontRow.forEach((m, i) => {
-           assignments.set(m.id, { x: frontSlots[i % frontSlots.length] || 10 + (i*10), y: 75 });
-      });
-
-      // 3. Generate Items based on assignments
-      data.members.forEach(member => {
-          const pos = assignments.get(member.id) || { x: 50, y: 50 };
-          
-          // A. Place Person
-          newItems.push({
-              id: `person-${member.id}`,
-              memberId: member.id,
-              type: 'person',
-              label: member.name,
-              x: pos.x,
-              y: pos.y
-          });
-
-          // B. Place Instruments
-          // Identify "Held" instrument (Guitar, Bass, Brass)
-          // Priority: First holdable instrument found is placed ON the person.
-          // Others are placed to the side.
-          const holdableTypes = [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS, InstrumentType.STRINGS];
-          const memberInstDefs = member.instrumentIds.map(id => INSTRUMENTS.find(i => i.id === id));
-          
-          // Find first holdable instrument index
-          const heldIndex = memberInstDefs.findIndex(def => def && holdableTypes.includes(def.type));
-
-          member.instrumentIds.forEach((instId, idx) => {
-              const instDef = INSTRUMENTS.find(i => i.id === instId);
-              if (!instDef) return;
-
-              const isHeld = (idx === heldIndex);
-
-              // Special handling for Electric Guitar and Bass (Amp + Instrument)
-              if (instDef.id === 'gtr_elec' || instDef.type === InstrumentType.BASS) {
-                  // Amp (Always Back)
-                  newItems.push({
-                      id: `amp-${member.id}-${idx}`,
-                      memberId: member.id,
-                      type: 'member',
-                      label: 'Amp',
-                      x: pos.x + (idx % 2 === 0 ? -10 : 10), 
-                      y: pos.y - 15 
-                  });
-                  
-                  // Instrument (Held or Side)
-                  newItems.push({
-                      id: `inst-${member.id}-${idx}`,
-                      memberId: member.id,
-                      type: 'member',
-                      label: instDef.type === InstrumentType.BASS ? 'Bass' : 'Gtr',
-                      x: isHeld ? pos.x + 2 : pos.x + 12, // Held: Overlap, Side: Offset
-                      y: isHeld ? pos.y + 2 : pos.y - 5     // Held: Overlap, Side: Offset
-                  });
-              } else {
-                  // Standard Instruments
-                  let instX = pos.x;
-                  let instY = pos.y;
-                  let label = instDef.name;
-
-                  if (isHeld) {
-                      // Place on top of person
-                      instX = pos.x + 2;
-                      instY = pos.y + 2;
-                      
-                      if (instDef.type === InstrumentType.BRASS) label = instDef.name; // Sax/Trumpet
-                  } else {
-                      // Non-held placement logic
-                      if (instDef.type === InstrumentType.DRUMS) {
-                          instY = pos.y; // Center on person (Drummer sits in kit)
-                          label = "Kit";
-                      } else if (instDef.type === InstrumentType.VOCAL) {
-                          instY = pos.y + 10; // Stand in front
-                          label = "Mic";
-                      } else if (instDef.type === InstrumentType.KEYS) {
-                          instX = pos.x + 6; // To side/front
-                          instY = pos.y + 4;
-                          label = "Keys";
-                      } else if (instDef.id === 'dj') {
-                          instY = pos.y + 5;
-                          label = "DJ";
-                      } else if (instDef.id === 'laptop') {
-                          instX = pos.x + 10;
-                          label = "Laptop";
-                      } else if (holdableTypes.includes(instDef.type)) {
-                           // Secondary holdable instrument (e.g. Acoustic guitar on stand)
-                           instX = pos.x + 12;
-                           instY = pos.y - 5;
-                           label = instDef.name.split(' ')[0]; // Shorten label
-                      }
-                  }
-
-                  newItems.push({
-                      id: `inst-${member.id}-${idx}`,
-                      memberId: member.id,
-                      type: 'member', 
-                      label: label,
-                      x: instX,
-                      y: instY
-                  });
-              }
-          });
-
-          // C. Place Monitor (if needed)
-          const needsMonitor = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor);
-          if (needsMonitor) {
-              newItems.push({
-                  id: `mon-${member.id}`,
-                  memberId: member.id,
-                  type: 'monitor',
-                  label: 'Mon',
-                  x: pos.x,
-                  y: pos.y + 15 // In front of person
+         // 3. Generate Items for NEW members only
+         const newItems: StageItem[] = [];
+         const isFreshLayout = currentPlot.length === 0;
+         
+         const assignments = new Map<string, {x: number, y: number}>();
+         
+         if (isFreshLayout) {
+             // -- Full Layout Logic (Only runs on first visit or clear) --
+              let drummer = membersToAdd.find(m => getMemberRole(m) === 'drummer');
+              let otherMembers = membersToAdd.filter(m => m !== drummer);
+              
+              const backRow: BandMember[] = [];
+              const frontRow: BandMember[] = [];
+              otherMembers.forEach(m => {
+                const role = getMemberRole(m);
+                (['bass', 'keys', 'horn'].includes(role)) ? backRow.push(m) : frontRow.push(m);
               });
-          }
-      });
 
-      setData(prev => ({ ...prev, stagePlot: newItems }));
+              if (drummer) assignments.set(drummer.id, { x: 50, y: 25 });
+              
+              const backSlots = [30, 70, 15, 85]; 
+              backRow.forEach((m, i) => assignments.set(m.id, { x: backSlots[i % backSlots.length] || 10 + (i*10), y: 30 }));
+              
+              const frontSlots = [50, 30, 70, 15, 85, 40, 60];
+              const leadSingerIndex = frontRow.findIndex(m => getMemberRole(m) === 'vocal');
+              if (leadSingerIndex !== -1) frontRow.unshift(frontRow.splice(leadSingerIndex, 1)[0]);
+              frontRow.forEach((m, i) => assignments.set(m.id, { x: frontSlots[i % frontSlots.length] || 10 + (i*10), y: 75 }));
+
+         } else {
+             // -- Append Mode (Preserve existing, add new to generic spots) --
+             membersToAdd.forEach((m, i) => {
+                 assignments.set(m.id, { x: 50 + (i % 2 === 0 ? (i+1)*5 : -(i+1)*5), y: 50 });
+             });
+         }
+
+         // Generate StageItems for new members
+         membersToAdd.forEach(member => {
+             const pos = assignments.get(member.id) || { x: 50, y: 50 };
+             
+             // Person
+             newItems.push({ id: `person-${member.id}`, memberId: member.id, type: 'person', label: member.name, x: pos.x, y: pos.y });
+             
+             // Instruments
+              const holdableTypes = [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS, InstrumentType.STRINGS];
+              const memberInstDefs = member.instrumentIds.map(id => INSTRUMENTS.find(i => i.id === id));
+              const heldIndex = memberInstDefs.findIndex(def => def && holdableTypes.includes(def.type));
+
+              member.instrumentIds.forEach((instId, idx) => {
+                  const instDef = INSTRUMENTS.find(i => i.id === instId);
+                  if (!instDef) return;
+                  const isHeld = (idx === heldIndex);
+
+                  if (instDef.id === 'gtr_elec' || instDef.type === InstrumentType.BASS) {
+                      newItems.push({ id: `amp-${member.id}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: pos.x + (idx % 2 === 0 ? -10 : 10), y: pos.y - 15 });
+                      newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label: instDef.type === InstrumentType.BASS ? 'Bass' : 'Gtr', x: isHeld ? pos.x + 2 : pos.x + 12, y: isHeld ? pos.y + 2 : pos.y - 5 });
+                  } else {
+                      let instX = pos.x, instY = pos.y, label = instDef.name;
+                      if (isHeld) {
+                          instX = pos.x + 2; instY = pos.y + 2;
+                          if (instDef.type === InstrumentType.BRASS) label = instDef.name;
+                      } else {
+                          if (instDef.type === InstrumentType.DRUMS) { instY = pos.y; label = "Kit"; }
+                          else if (instDef.type === InstrumentType.VOCAL) { instY = pos.y + 10; label = "Mic"; }
+                          else if (instDef.type === InstrumentType.KEYS) { instX = pos.x + 6; instY = pos.y + 4; label = "Keys"; }
+                          else if (instDef.id === 'dj') { instY = pos.y + 5; label = "DJ"; }
+                          else if (instDef.id === 'laptop') { instX = pos.x + 10; label = "Laptop"; }
+                          else if (holdableTypes.includes(instDef.type)) { instX = pos.x + 12; instY = pos.y - 5; label = instDef.name.split(' ')[0]; }
+                      }
+                      newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label, x: instX, y: instY });
+                  }
+              });
+
+              // Monitor
+              if (member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor)) {
+                  newItems.push({ id: `mon-${member.id}`, memberId: member.id, type: 'monitor', label: 'Mon', x: pos.x, y: pos.y + 15 });
+              }
+         });
+
+         return { ...prev, stagePlot: [...currentPlot, ...newItems] };
+      });
     }
-  }, [step, data.members]);
+  }, [step]);
 
   const updateStageItems = useCallback((newItems: StageItem[]) => {
     setData(prev => ({ ...prev, stagePlot: newItems }));
@@ -301,6 +247,111 @@ const App: React.FC = () => {
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!previewRef.current) return;
+    setIsGeneratingPdf(true);
+    
+    // Cleanup any existing spacers from failed runs
+    document.querySelectorAll('.pdf-spacer').forEach(s => s.remove());
+
+    try {
+      // Wait for React to render any pending updates
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const element = previewRef.current;
+      const computedStyle = window.getComputedStyle(element);
+      const width = element.offsetWidth;
+      // Calculate A4 Page Height in pixels based on the rendered width (A4 is 210mm x 297mm)
+      // We assume the rendered width corresponds to 210mm minus margins, but HTML2Canvas captures the whole element.
+      // If the CSS width is 210mm, then aspect ratio 1.414 gives height.
+      const pageHeight = width * 1.414; 
+      
+      const breakAvoidElements = element.querySelectorAll('.break-inside-avoid');
+      const spacers: HTMLDivElement[] = [];
+      const containerTop = element.getBoundingClientRect().top;
+
+      // Logic: Iterate over 'break-inside-avoid' elements.
+      // If an element crosses a page boundary, insert a spacer before it to push it to the next page.
+      breakAvoidElements.forEach((el) => {
+          const rect = el.getBoundingClientRect();
+          // Calculate position relative to the top of the preview container
+          // We must re-calculate rect here because previous loop iterations might have shifted the DOM
+          const currentRect = el.getBoundingClientRect();
+          const elTop = currentRect.top - containerTop;
+          const elBottom = elTop + currentRect.height;
+          
+          const startPage = Math.floor(elTop / pageHeight);
+          const endPage = Math.floor(elBottom / pageHeight);
+          
+          if (startPage !== endPage) {
+              // The element crosses a page break.
+              // Push it to the start of the next page.
+              const nextPageStart = (startPage + 1) * pageHeight;
+              const spacerHeight = nextPageStart - elTop + 20; // +20px buffer
+              
+              const spacer = document.createElement('div');
+              spacer.style.height = `${spacerHeight}px`;
+              spacer.style.width = '100%';
+              spacer.className = 'pdf-spacer';
+              
+              if (el.parentNode) {
+                  el.parentNode.insertBefore(spacer, el);
+                  spacers.push(spacer);
+              }
+          }
+      });
+
+      // Allow DOM to update layout with spacers
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      const canvas = await html2canvas(element, {
+        scale: 2, // Higher quality
+        useCORS: true,
+        logging: false,
+        windowWidth: 1200, // Force specific width to ensure layout consistency
+      });
+
+      // Restore DOM immediately after capture
+      spacers.forEach(s => s.remove());
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      
+      // We calculate the image width/height based on the PDF width
+      const imgWidth = pdfWidth;
+      const totalImgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = totalImgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, totalImgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position -= pdfHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, totalImgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      const safeName = data.details.bandName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'rider';
+      pdf.save(`${safeName}_technical_rider.pdf`);
+    } catch (err) {
+      console.error(err);
+      alert('Could not generate PDF automatically. You can try the "System Print" option instead.');
+    } finally {
+      document.querySelectorAll('.pdf-spacer').forEach(s => s.remove());
+      setIsGeneratingPdf(false);
+    }
   };
 
   // --- Render Steps ---
@@ -584,21 +635,25 @@ const App: React.FC = () => {
 
   const renderPreview = () => (
     <div className="w-full flex flex-col items-center">
-      <div className="no-print w-full max-w-4xl mb-6 flex justify-between items-center bg-slate-800 p-4 rounded-lg">
+      <div className="no-print w-full max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
          <div>
            <h2 className="text-xl font-bold text-white">Your Rider is ready!</h2>
-           <p className="text-slate-400 text-sm">Check the details below.</p>
+           <p className="text-slate-400 text-sm">Review it below or download it now.</p>
          </div>
-         <button 
-           onClick={handlePrint}
-           className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all"
-         >
-           <Download size={20} /> Download PDF
-         </button>
+         <div className="flex gap-3">
+            <button 
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPdf}
+                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-wait text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all min-w-[180px] justify-center"
+            >
+                {isGeneratingPdf ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />} 
+                {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
+            </button>
+         </div>
       </div>
 
       {/* A4 PAPER PREVIEW */}
-      <div className="a4-page bg-white text-black w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-2xl mx-auto relative flex flex-col gap-8">
+      <div ref={previewRef} className="a4-page bg-white text-black w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-2xl mx-auto relative flex flex-col gap-8">
         
         {/* Header */}
         <div className="flex justify-between items-start border-b-2 border-black pb-6">
@@ -634,15 +689,28 @@ const App: React.FC = () => {
         </div>
 
         {/* Stageplot */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-0">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Music2 size={20} /> Stage Plot
           </h3>
-          <div className="w-full max-w-[80%] mx-auto mt-4">
-             {/* Force viewMode="top" for the rider export */}
-             <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" />
+          
+          <div className="grid grid-cols-1 gap-6 mt-4">
+              {/* Top View */}
+              <div className="break-inside-avoid relative w-full max-w-[80%] mx-auto">
+                <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
+                   <Layers size={24} className="text-black" />
+                </div>
+                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} />
+              </div>
+
+              {/* 3D View */}
+              <div className="break-inside-avoid relative w-full max-w-[80%] mx-auto">
+                <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
+                   <Box size={24} className="text-black" />
+                </div>
+                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} />
+              </div>
           </div>
-          <p className="text-center text-xs text-slate-500 mt-2">Front of Stage (Audience)</p>
         </div>
 
         {/* Footer */}
@@ -654,7 +722,7 @@ const App: React.FC = () => {
       </div>
       
       <div className="no-print mt-8 text-center text-slate-500 text-sm">
-        <p>Tip: When printing, choose "Save as PDF" and enable "Background graphics" if needed.</p>
+        <p>Tip: You can customize the stage positions in step 2 before downloading.</p>
       </div>
     </div>
   );
