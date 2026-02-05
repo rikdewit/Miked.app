@@ -96,12 +96,16 @@ interface DraggableItemProps {
   item: StageItem;
   activeId: string | null;
   onDown: (e: ThreeEvent<PointerEvent>, id: string) => void;
+  onMove: (e: ThreeEvent<PointerEvent>) => void;
+  onUp: (e: ThreeEvent<PointerEvent>) => void;
 }
 
 const DraggableItem: React.FC<DraggableItemProps> = ({ 
   item, 
   activeId, 
-  onDown 
+  onDown,
+  onMove,
+  onUp
 }) => {
   const { width, height, depth, color } = getItemConfig(item);
   const isMonitor = item.type === 'monitor';
@@ -123,6 +127,8 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
       <mesh 
         position={[0, yPos, 0]} 
         onPointerDown={(e) => onDown(e, item.id)}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
         castShadow 
         receiveShadow
       >
@@ -194,6 +200,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     const activeItem = items.find(i => i.id === activeId);
     if (!activeItem) return;
 
+    // IMPORTANT: Ignore e.point (which hits whatever object is under cursor)
+    // Always project the ray to the floor plane (y=0) to ensure 1:1 movement stability
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const pointOnPlane = new THREE.Vector3();
+    e.ray.intersectPlane(plane, pointOnPlane);
+
     // Get dimensions of the active item
     const { width, depth } = getItemConfig(activeItem);
 
@@ -202,8 +214,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     const marginY = ((depth / 2) / STAGE_DEPTH) * 100;
 
     // Apply offset to get target world position
-    const targetWorldX = e.point.x + dragOffset.current.x;
-    const targetWorldZ = e.point.z + dragOffset.current.z;
+    const targetWorldX = pointOnPlane.x + dragOffset.current.x;
+    const targetWorldZ = pointOnPlane.z + dragOffset.current.z;
 
     // Convert target world position to percentages
     const newX = xToPercent(targetWorldX);
@@ -334,7 +346,9 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             key={item.id} 
             item={item} 
             activeId={activeId} 
-            onDown={handlePointerDown} 
+            onDown={handlePointerDown}
+            onMove={handlePlaneMove} 
+            onUp={handlePointerUp}
           />
         ))}
 
