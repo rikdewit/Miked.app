@@ -56,6 +56,28 @@ const percentToZ = (p: number) => ((p / 100) * STAGE_DEPTH) - (STAGE_DEPTH / 2);
 const xToPercent = (w: number) => ((w + (STAGE_WIDTH / 2)) / STAGE_WIDTH) * 100;
 const zToPercent = (w: number) => ((w + (STAGE_DEPTH / 2)) / STAGE_DEPTH) * 100;
 
+// --- Config Helper ---
+const getItemConfig = (item: StageItem) => {
+  const isPerson = item.type === 'person';
+  const isMonitor = item.type === 'monitor';
+  const label = item.label || '';
+  const isAmp = label.toLowerCase().includes('amp');
+  const isDrum = label.toLowerCase().includes('kit') || label.toLowerCase().includes('drum');
+
+  if (isPerson) {
+    return { width: 0.4, depth: 0.4, height: 1.6, color: '#3b82f6' }; // Blue 500
+  } else if (isAmp) {
+    return { width: 0.6, depth: 0.4, height: 0.6, color: '#1e293b' }; // Slate 800
+  } else if (isDrum) {
+    return { width: 1.5, depth: 1.2, height: 0.8, color: '#ef4444' }; // Red 500
+  } else if (isMonitor) {
+    return { width: 0.5, depth: 0.4, height: 0.3, color: '#111827' }; // Gray 900
+  } else {
+    // Generic Instrument
+    return { width: 0.2, depth: 0.2, height: 0.8, color: '#8b5cf6' }; // Violet 500
+  }
+};
+
 // --- 3D Components ---
 
 const StagePlatform = () => {
@@ -118,40 +140,10 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   activeId, 
   onDown 
 }) => {
-  const isPerson = item.type === 'person';
+  const { width, height, depth, color } = getItemConfig(item);
   const isMonitor = item.type === 'monitor';
-  const isAmp = item.label.toLowerCase().includes('amp');
-  const isDrum = item.label.toLowerCase().includes('kit') || item.label.toLowerCase().includes('drum');
   
-  // Dimensions based on type
-  let width = 0.4, height = 0.4, depth = 0.4;
-  let color = '#ffffff';
-  let yPos = height / 2;
-
-  // Brighter colors for objects
-  if (isPerson) {
-    width = 0.4; depth = 0.4; height = 1.6;
-    color = '#3b82f6'; // Bright Blue (Blue 500)
-    yPos = height / 2;
-  } else if (isAmp) {
-    width = 0.6; depth = 0.4; height = 0.6;
-    color = '#1e293b'; // Slate 800 (Amps stay dark)
-    yPos = height / 2;
-  } else if (isDrum) {
-    width = 1.5; depth = 1.2; height = 0.8;
-    color = '#ef4444'; // Bright Red (Red 500)
-    yPos = height / 2;
-  } else if (isMonitor) {
-    width = 0.5; depth = 0.4; height = 0.3;
-    color = '#111827'; // Near Black (Gray 900)
-    yPos = height / 2;
-  } else {
-    // Generic Instrument
-    width = 0.2; depth = 0.2; height = 0.8; // Stand-like
-    color = '#8b5cf6'; // Bright Violet (Violet 500)
-    yPos = height / 2;
-  }
-
+  const yPos = height / 2;
   const x = percentToX(item.x);
   const z = percentToZ(item.y);
   
@@ -213,13 +205,25 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
     if (!activeId || !editable) return;
     e.stopPropagation();
     
+    const activeItem = items.find(i => i.id === activeId);
+    if (!activeItem) return;
+
+    // Get dimensions of the active item
+    const { width, depth } = getItemConfig(activeItem);
+
+    // Calculate margins in percentage terms to prevent overhang
+    // width/depth are in meters. STAGE_WIDTH/STAGE_DEPTH are in meters.
+    // Half-width in meters / Total Width * 100 = Margin percentage
+    const marginX = ((width / 2) / STAGE_WIDTH) * 100;
+    const marginY = ((depth / 2) / STAGE_DEPTH) * 100;
+
     // Convert intersection point to percentages
     const newX = xToPercent(e.point.x);
     const newY = zToPercent(e.point.z);
 
-    // Clamp values
-    const clampedX = Math.max(0, Math.min(100, newX));
-    const clampedY = Math.max(0, Math.min(100, newY));
+    // Clamp values with margins
+    const clampedX = Math.max(marginX, Math.min(100 - marginX, newX));
+    const clampedY = Math.max(marginY, Math.min(100 - marginY, newY));
 
     setItems(items.map(item => 
       item.id === activeId 
