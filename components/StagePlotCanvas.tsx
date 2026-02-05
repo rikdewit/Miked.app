@@ -11,7 +11,7 @@ interface StagePlotCanvasProps {
 }
 
 // --- Constants ---
-const STAGE_SIZE = 8; // 8 meters (Increased from 5)
+const STAGE_SIZE = 8; // 8 meters
 const GRID_DIVISIONS = 16; // 0.5 meter grid for 8m
 
 // --- Helpers to map Data (0-100%) to World (-4 to 4) ---
@@ -19,6 +19,54 @@ const percentToWorld = (p: number) => ((p / 100) * STAGE_SIZE) - (STAGE_SIZE / 2
 const worldToPercent = (w: number) => ((w + (STAGE_SIZE / 2)) / STAGE_SIZE) * 100;
 
 // --- 3D Components ---
+
+const StagePlatform = () => {
+  const thickness = 0.2;
+  const legHeight = 1.0;
+  const legRadius = 0.1;
+  const offset = STAGE_SIZE / 2 - 0.2; // Inset legs slightly
+
+  return (
+    <group position={[0, -thickness / 2, 0]}>
+       {/* Main Slab */}
+      <mesh receiveShadow position={[0, 0, 0]}>
+        <boxGeometry args={[STAGE_SIZE, thickness, STAGE_SIZE]} />
+        <meshStandardMaterial color="#1e293b" roughness={0.9} /> {/* Slate 800 - Stage floor color */}
+      </mesh>
+      
+      {/* Side trim (optional, to make it look constructed) */}
+      <mesh position={[0, 0, 0]}>
+         <boxGeometry args={[STAGE_SIZE + 0.05, thickness - 0.05, STAGE_SIZE + 0.05]} />
+         <meshStandardMaterial color="#0f172a" /> {/* Darker Slate 900 for edges */}
+      </mesh>
+
+      {/* Legs */}
+      <group position={[0, -thickness/2 - legHeight/2, 0]}>
+          <mesh position={[offset, 0, offset]} castShadow receiveShadow>
+             <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
+             <meshStandardMaterial color="#475569" /> {/* Metal/Slate 600 */}
+          </mesh>
+          <mesh position={[-offset, 0, offset]} castShadow receiveShadow>
+             <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
+             <meshStandardMaterial color="#475569" />
+          </mesh>
+          <mesh position={[offset, 0, -offset]} castShadow receiveShadow>
+             <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
+             <meshStandardMaterial color="#475569" />
+          </mesh>
+          <mesh position={[-offset, 0, -offset]} castShadow receiveShadow>
+             <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
+             <meshStandardMaterial color="#475569" />
+          </mesh>
+          {/* Center support */}
+          <mesh position={[0, 0, 0]} castShadow receiveShadow>
+             <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
+             <meshStandardMaterial color="#475569" />
+          </mesh>
+      </group>
+    </group>
+  );
+};
 
 interface DraggableItemProps {
   item: StageItem;
@@ -73,7 +121,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     <group position={[x, 0, z]}>
       {/* Label */}
       <Html position={[0, height + 0.2, 0]} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
-        <div className="text-[8px] font-bold text-slate-900 whitespace-nowrap select-none tracking-tight" style={{ textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
+        <div className="text-[8px] font-bold text-white whitespace-nowrap select-none tracking-tight" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.8)' }}>
           {item.label}
         </div>
       </Html>
@@ -165,9 +213,13 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
           shadow-mapSize={[1024, 1024]} 
         />
 
-        <group position={[0, -0.01, 0]}>
-          {/* Floor Grid */}
+        <group position={[0, 0, 0]}>
+          
+          <StagePlatform />
+
+          {/* Floor Grid - Lift slightly above platform surface */}
           <Grid 
+            position={[0, 0.01, 0]} 
             args={[STAGE_SIZE, STAGE_SIZE]} 
             cellSize={0.5} 
             cellThickness={0.6} 
@@ -189,10 +241,10 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             <planeGeometry args={[STAGE_SIZE * 2, STAGE_SIZE * 2]} />
             <meshBasicMaterial visible={false} />
           </mesh>
-        </group>
 
-        {/* Shadows on floor */}
-        <ContactShadows opacity={0.4} scale={15} blur={2} far={4} />
+          {/* Shadows on stage floor */}
+          <ContactShadows position={[0, 0.02, 0]} opacity={0.4} scale={15} blur={2} far={4} color="#000000" />
+        </group>
 
         {/* Stage Objects */}
         {items.map((item) => (
