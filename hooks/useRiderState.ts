@@ -18,9 +18,9 @@ export const useRiderState = () => {
   const applyRockTemplate = useCallback(() => {
     const newMembers: BandMember[] = [
       { id: Math.random().toString(36).substr(2, 9), name: 'Drummer', instrumentIds: ['drums'], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instrumentIds: ['bass'], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instrumentIds: ['gtr_elec'], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Singer', instrumentIds: ['voc_lead'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instrumentIds: ['bass_amp'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instrumentIds: ['gtr_amp'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Lead Singer', instrumentIds: ['voc_lead'], notes: '' },
     ];
     setData(prev => ({ ...prev, members: newMembers }));
   }, []);
