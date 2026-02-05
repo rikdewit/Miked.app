@@ -158,14 +158,14 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
 
         {/* Notes */}
         {data.details.generalNotes && (
-          <div className="bg-slate-50 p-4 border-l-4 border-black text-sm">
+          <div className="bg-slate-50 p-4 border-l-4 border-black text-sm break-inside-avoid">
              <h3 className="font-bold uppercase text-xs mb-2 text-slate-500">Notes</h3>
              <p className="whitespace-pre-wrap">{data.details.generalNotes}</p>
           </div>
         )}
 
         {/* Input List */}
-        <div>
+        <div className="break-inside-avoid">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Mic size={20} /> Input List
           </h3>
@@ -173,14 +173,14 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
         </div>
 
         {/* Stageplot */}
-        <div className="flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0 break-inside-avoid">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Music2 size={20} /> Stage Plot
           </h3>
           
           <div className="grid grid-cols-1 gap-6 mt-4">
               {/* Top View */}
-              <div className="break-inside-avoid relative w-full max-w-[80%] mx-auto">
+              <div className="relative w-full max-w-[80%] mx-auto">
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Layers size={24} className="text-black" />
                 </div>
@@ -188,7 +188,7 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
               </div>
 
               {/* 3D View */}
-              <div className="break-inside-avoid relative w-full max-w-[80%] mx-auto">
+              <div className="relative w-full max-w-[80%] mx-auto">
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Box size={24} className="text-black" />
                 </div>
