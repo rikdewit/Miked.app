@@ -5,7 +5,6 @@ import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-thr
 import * as THREE from 'three';
 
 // Extend JSX.IntrinsicElements to fix TypeScript errors related to R3F elements
-// We augment both global JSX and React module JSX to handle different TS/React versions
 declare global {
   namespace JSX {
     interface IntrinsicElements {
@@ -89,23 +88,20 @@ const StagePlatform = () => {
 
   return (
     <group position={[0, -thickness / 2, 0]}>
-       {/* Main Slab */}
       <mesh receiveShadow position={[0, 0, 0]}>
         <boxGeometry args={[STAGE_WIDTH, thickness, STAGE_DEPTH]} />
-        <meshStandardMaterial color="#cbd5e1" roughness={0.5} /> {/* Slate 300 - Light Gray Stage */}
+        <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
       </mesh>
       
-      {/* Side trim */}
       <mesh position={[0, 0, 0]}>
          <boxGeometry args={[STAGE_WIDTH + 0.05, thickness - 0.05, STAGE_DEPTH + 0.05]} />
-         <meshStandardMaterial color="#94a3b8" /> {/* Slate 400 */}
+         <meshStandardMaterial color="#94a3b8" />
       </mesh>
 
-      {/* Legs */}
       <group position={[0, -thickness/2 - legHeight/2, 0]}>
           <mesh position={[offsetX, 0, offsetZ]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
-             <meshStandardMaterial color="#64748b" /> {/* Slate 500 */}
+             <meshStandardMaterial color="#64748b" />
           </mesh>
           <mesh position={[-offsetX, 0, offsetZ]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
@@ -119,7 +115,6 @@ const StagePlatform = () => {
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
              <meshStandardMaterial color="#64748b" />
           </mesh>
-          {/* Center support */}
           <mesh position={[0, 0, 0]} castShadow receiveShadow>
              <cylinderGeometry args={[legRadius, legRadius, legHeight]} />
              <meshStandardMaterial color="#64748b" />
@@ -151,14 +146,12 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
 
   return (
     <group position={[x, 0, z]}>
-      {/* Label - Darker text for contrast against light stage if low, but these float */}
       <Html position={[0, height + 0.2, 0]} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
         <div className="text-[10px] font-black text-slate-800 whitespace-nowrap select-none tracking-tight" style={{ textShadow: '0 0 2px white' }}>
           {item.label}
         </div>
       </Html>
 
-      {/* The 3D Object */}
       <mesh 
         position={[0, yPos, 0]} 
         onPointerDown={(e) => onDown(e, item.id)}
@@ -167,12 +160,11 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
       >
         <boxGeometry args={[width, height, depth]} />
         <meshStandardMaterial 
-          color={isDragging ? '#fbbf24' : color} // Amber when dragging
+          color={isDragging ? '#fbbf24' : color}
           roughness={0.4}
         />
       </mesh>
       
-      {/* Monitor Wedge Shape tweak if monitor */}
       {isMonitor && (
          <mesh position={[0, yPos, 0.2]} rotation={[Math.PI / 4, 0, 0]}>
              <boxGeometry args={[width, 0.05, 0.1]} />
@@ -212,8 +204,6 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
     const { width, depth } = getItemConfig(activeItem);
 
     // Calculate margins in percentage terms to prevent overhang
-    // width/depth are in meters. STAGE_WIDTH/STAGE_DEPTH are in meters.
-    // Half-width in meters / Total Width * 100 = Margin percentage
     const marginX = ((width / 2) / STAGE_WIDTH) * 100;
     const marginY = ((depth / 2) / STAGE_DEPTH) * 100;
 
@@ -232,16 +222,9 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
     ));
   };
 
-  // Determine Camera Settings
   const isTopView = viewMode === 'top';
   
-  // Camera Logic:
-  // Top View: [0, 50, 0] looking at 0,0,0.
-  // Isometric/3D: [-20, 30, 20]. 
-  //   -X moves camera Left. 
-  //   +Z moves camera Front.
-  //   +Y moves camera Up.
-  //   This points the camera at the Front-Left corner of the stage.
+  // Camera Logic
   const camPosition: [number, number, number] = isTopView ? [0, 50, 0] : [-20, 30, 20];
   const camZoom = isTopView ? 50 : 50; 
   
@@ -262,10 +245,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             onUpdate={c => {
                 c.lookAt(0, 0, 0);
                 if (isTopView) {
-                    // Top View: Audience (Front) is at bottom of screen
                     c.up.set(0, 0, -1); 
                 } else {
-                    // 3D View: Standard up
                     c.up.set(0, 1, 0);
                 }
             }}
@@ -283,7 +264,6 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
           
           <StagePlatform />
 
-          {/* Floor Grid */}
           <Grid 
             position={[0, 0.01, 0]} 
             args={[STAGE_WIDTH, STAGE_DEPTH]} 
@@ -297,7 +277,6 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             fadeDistance={25}
           />
           
-          {/* Audience Label */}
           {showAudienceLabel && (
             <Text 
               position={[0, 0.05, STAGE_DEPTH / 2 + 1.2]} 
@@ -311,7 +290,6 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             </Text>
           )}
 
-          {/* Invisible Plane for Dragging */}
           <mesh 
             rotation={[-Math.PI / 2, 0, 0]} 
             position={[0, 0, 0]} 
@@ -322,11 +300,9 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             <meshBasicMaterial visible={false} />
           </mesh>
 
-          {/* Shadows on stage floor */}
           <ContactShadows position={[0, 0.02, 0]} opacity={0.3} scale={15} blur={2.5} far={4} color="#000000" />
         </group>
 
-        {/* Stage Objects */}
         {items.map((item) => (
           <DraggableItem 
             key={item.id} 
