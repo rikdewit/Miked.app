@@ -4,39 +4,6 @@ import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Extend JSX.IntrinsicElements to fix TypeScript errors related to R3F elements
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      ambientLight: any;
-      boxGeometry: any;
-      cylinderGeometry: any;
-      directionalLight: any;
-      group: any;
-      mesh: any;
-      meshBasicMaterial: any;
-      meshStandardMaterial: any;
-      planeGeometry: any;
-    }
-  }
-}
-
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      ambientLight: any;
-      boxGeometry: any;
-      cylinderGeometry: any;
-      directionalLight: any;
-      group: any;
-      mesh: any;
-      meshBasicMaterial: any;
-      meshStandardMaterial: any;
-      planeGeometry: any;
-    }
-  }
-}
-
 interface StagePlotCanvasProps {
   items: StageItem[];
   setItems: (items: StageItem[]) => void;
@@ -177,10 +144,28 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
 
 export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItems, editable, viewMode = 'isometric', showAudienceLabel = true }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
     if (!editable) return;
     e.stopPropagation();
+    
+    // Calculate intersection with the drag plane (y=0) to ensure smooth dragging without jumps.
+    // We project the click ray onto the y=0 plane because movement happens on this plane.
+    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const pointOnPlane = new THREE.Vector3();
+    e.ray.intersectPlane(plane, pointOnPlane);
+    
+    const item = items.find(i => i.id === id);
+    if (item) {
+        const currentX = percentToX(item.x);
+        const currentZ = percentToZ(item.y);
+        dragOffset.current = {
+            x: currentX - pointOnPlane.x,
+            z: currentZ - pointOnPlane.z
+        };
+    }
+
     setActiveId(id);
     // @ts-ignore - target setPointerCapture is available on the canvas event source
     e.target.setPointerCapture(e.pointerId);
@@ -189,6 +174,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     if (!editable) return;
     setActiveId(null);
+    dragOffset.current = { x: 0, z: 0 };
     // @ts-ignore
     e.target.releasePointerCapture(e.pointerId);
   };
@@ -207,9 +193,13 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
     const marginX = ((width / 2) / STAGE_WIDTH) * 100;
     const marginY = ((depth / 2) / STAGE_DEPTH) * 100;
 
-    // Convert intersection point to percentages
-    const newX = xToPercent(e.point.x);
-    const newY = zToPercent(e.point.z);
+    // Apply offset to get target world position
+    const targetWorldX = e.point.x + dragOffset.current.x;
+    const targetWorldZ = e.point.z + dragOffset.current.z;
+
+    // Convert target world position to percentages
+    const newX = xToPercent(targetWorldX);
+    const newY = zToPercent(targetWorldZ);
 
     // Clamp values with margins
     const clampedX = Math.max(marginX, Math.min(100 - marginX, newX));
@@ -252,12 +242,36 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             }}
         />
 
-        <ambientLight intensity={0.9} />
+        {/* --- Diffuse Lighting Setup --- */}
+        
+        {/* 1. Base Ambient Light: Reduced to allow Hemisphere to take over for atmosphere */}
+        <ambientLight intensity={0.5} />
+        
+        {/* 2. Hemisphere Light: Simulates sky/ground reflection for "diffuse" feel */}
+        <hemisphereLight 
+          color="#ffffff" 
+          groundColor="#cbd5e1" 
+          intensity={0.6} 
+        />
+
+        {/* 3. Main Key Light (Casts Shadows): Positioned away from camera as requested */}
         <directionalLight 
-          position={[-5, 10, 5]} 
-          intensity={1.2} 
+          position={[-15, 40, 25]} 
+          intensity={0.8} 
           castShadow 
-          shadow-mapSize={[1024, 1024]} 
+          shadow-mapSize={[1024, 1024]}
+          shadow-bias={-0.0001}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
+        />
+
+        {/* 4. Fill Light (No Shadows): Softens the dark side of objects */}
+        <directionalLight 
+          position={[15, 20, -15]} 
+          intensity={0.4} 
+          castShadow={false} 
         />
 
         <group position={[0, 0, 0]}>
@@ -300,7 +314,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
             <meshBasicMaterial visible={false} />
           </mesh>
 
-          <ContactShadows position={[0, 0.02, 0]} opacity={0.3} scale={15} blur={2.5} far={4} color="#000000" />
+          <ContactShadows position={[0, 0.02, 0]} opacity={0.4} scale={20} blur={4} far={4} color="#000000" />
         </group>
 
         {items.map((item) => (
