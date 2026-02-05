@@ -7,55 +7,102 @@ interface InputListProps {
 }
 
 export const InputList: React.FC<InputListProps> = ({ members }) => {
+  // Helper to get instrument names string for a member
+  const getMemberInstrumentString = (member: BandMember) => {
+    return member.instrumentIds
+      .map(id => INSTRUMENTS.find(i => i.id === id)?.name || 'Unknown')
+      .join(', ');
+  };
+
   // Generate inputs based on members and their instruments
   let channelCounter = 1;
-  
-  const inputs = members.flatMap((member) => {
-    return member.instrumentIds.map((instId) => {
-      const instrument = INSTRUMENTS.find(i => i.id === instId);
-      const inputDef = {
-        channel: channelCounter++,
-        source: member.name,
-        instrument: instrument?.name || 'Unknown',
-        micDi: instrument?.defaultDi ? 'DI' : (instrument?.defaultMic || 'Venue Tech'),
-        stand: instrument?.type === 'Vocal' ? 'Tall Boom' : (instrument?.name.includes('Amp') ? 'Short Boom' : ''),
-        notes: member.notes || ''
-      };
-      return inputDef;
+  const inputs: any[] = [];
+
+  members.forEach((member) => {
+    member.instrumentIds.forEach((instId) => {
+      // Handle Drums Splitting
+      if (instId === 'drums') {
+        const drumChannels = [
+          { name: 'Kick', mic: 'Beta52 / D112', stand: 'Short Boom' },
+          { name: 'Snare', mic: 'SM57', stand: 'Short Boom' },
+          { name: 'Tom 1', mic: 'e604 / Clip', stand: 'Clip' },
+          { name: 'Tom 2', mic: 'e604 / Clip', stand: 'Clip' },
+          { name: 'Floor Tom', mic: 'e604 / Clip', stand: 'Clip' },
+          { name: 'OH L', mic: 'Condenser', stand: 'Tall Boom' },
+          { name: 'OH R', mic: 'Condenser', stand: 'Tall Boom' },
+        ];
+
+        drumChannels.forEach((kitPiece, idx) => {
+          inputs.push({
+            channel: channelCounter++,
+            instrument: kitPiece.name,
+            micDi: kitPiece.mic,
+            stand: kitPiece.stand,
+            // Only show member notes on the Kick channel to avoid clutter
+            notes: idx === 0 ? member.notes : '' 
+          });
+        });
+      } else {
+        // Handle Standard Instruments
+        const instrument = INSTRUMENTS.find(i => i.id === instId);
+        if (instrument) {
+          inputs.push({
+            channel: channelCounter++,
+            instrument: instrument.name,
+            micDi: instrument.defaultDi ? 'DI' : (instrument.defaultMic || 'Venue Tech'),
+            stand: instrument.type === 'Vocal' ? 'Tall Boom' : (instrument.name.includes('Amp') ? 'Short Boom' : ''),
+            notes: member.notes || ''
+          });
+        }
+      }
     });
   });
 
   return (
-    <div className="w-full overflow-hidden rounded-lg border border-slate-200 print:border-black">
-      <table className="w-full text-sm text-left">
-        <thead className="bg-slate-100 text-slate-700 print:bg-slate-200 print:text-black">
-          <tr>
-            <th className="py-2 px-3 font-bold w-12 border-r border-b border-slate-300 print:border-black text-black">CH</th>
-            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Member</th>
-            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Instrument</th>
-            <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Mic / DI</th>
-            <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black hidden sm:table-cell text-black">Stand</th>
-            <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black text-black">Notes</th>
-          </tr>
-        </thead>
-        <tbody>
-          {inputs.map((input) => (
-            <tr key={input.channel} className="border-b border-slate-200 last:border-0 print:border-slate-400">
-              <td className="py-2 px-3 font-mono font-bold text-black border-r border-slate-200 print:border-slate-400">{input.channel}</td>
-              <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.source}</td>
-              <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.instrument}</td>
-              <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
-               <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 hidden sm:table-cell">{input.stand}</td>
-              <td className="py-2 px-3 text-black italic print:text-black">{input.notes}</td>
-            </tr>
+    <div className="w-full">
+      {/* Band Members Summary */}
+      <div className="mb-6 bg-slate-50 p-4 border border-slate-200 rounded-lg print:border-black break-inside-avoid">
+        <h4 className="font-bold text-black uppercase text-xs mb-3 border-b border-slate-200 pb-2">Band Members</h4>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2">
+          {members.map(member => (
+            <div key={member.id} className="text-sm text-black flex">
+              <span className="font-bold min-w-[80px]">{member.name}:</span>
+              <span className="italic text-slate-700">{getMemberInstrumentString(member)}</span>
+            </div>
           ))}
-          {inputs.length === 0 && (
-             <tr>
-               <td colSpan={6} className="py-4 text-center text-slate-400 italic">No instruments added yet.</td>
-             </tr>
-          )}
-        </tbody>
-      </table>
+        </div>
+      </div>
+
+      {/* Input List Table */}
+      <div className="w-full overflow-hidden rounded-lg border border-slate-200 print:border-black">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-slate-100 text-slate-700 print:bg-slate-200 print:text-black">
+            <tr>
+              <th className="py-2 px-3 font-bold w-12 border-r border-b border-slate-300 print:border-black text-black">CH</th>
+              <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Instrument</th>
+              <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Mic / DI</th>
+              <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black hidden sm:table-cell text-black">Stand</th>
+              <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black text-black">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {inputs.map((input) => (
+              <tr key={input.channel} className="border-b border-slate-200 last:border-0 print:border-slate-400">
+                <td className="py-2 px-3 font-mono font-bold text-black border-r border-slate-200 print:border-slate-400">{input.channel}</td>
+                <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 font-medium">{input.instrument}</td>
+                <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
+                <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 hidden sm:table-cell">{input.stand}</td>
+                <td className="py-2 px-3 text-black italic print:text-black">{input.notes}</td>
+              </tr>
+            ))}
+            {inputs.length === 0 && (
+               <tr>
+                 <td colSpan={5} className="py-4 text-center text-slate-400 italic">No instruments added yet.</td>
+               </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
