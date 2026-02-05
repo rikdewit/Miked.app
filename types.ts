@@ -1,3 +1,4 @@
+
 export enum InstrumentType {
   VOCAL = 'Vocal',
   GUITAR = 'Guitar',
@@ -29,7 +30,7 @@ export interface BandMember {
 export interface StageItem {
   id: string;
   memberId?: string; // If linked to a band member
-  type: 'member' | 'monitor' | 'power' | 'drumriser';
+  type: 'member' | 'monitor' | 'power' | 'drumriser' | 'person';
   x: number; // Percentage 0-100
   y: number; // Percentage 0-100
   label: string;

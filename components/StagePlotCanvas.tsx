@@ -14,16 +14,19 @@ const IconMap: Record<string, any> = {
 
 // Helper to get icon component
 const getIcon = (label: string, type: string) => {
-    // Simple heuristic for icons based on label content or type if specific mapping is missing
+    if (type === 'person') return User;
     if (type === 'monitor') return Monitor;
     if (type === 'power') return Plug;
-    if (label.toLowerCase().includes('drum')) return Drum;
-    if (label.toLowerCase().includes('vocal') || label.toLowerCase().includes('mic')) return Mic;
-    if (label.toLowerCase().includes('guitar')) return Guitar;
-    if (label.toLowerCase().includes('bass')) return Speaker;
-    if (label.toLowerCase().includes('keys')) return Music;
     
-    return User;
+    const lowerLabel = label.toLowerCase();
+    if (lowerLabel.includes('drum')) return Drum;
+    if (lowerLabel.includes('vocal') || lowerLabel.includes('mic')) return Mic;
+    if (lowerLabel.includes('guitar')) return Guitar;
+    if (lowerLabel.includes('bass')) return Speaker;
+    if (lowerLabel.includes('keys')) return Music;
+    if (lowerLabel.includes('sax') || lowerLabel.includes('trumpet')) return Music;
+    
+    return Music; // Default instrument icon
 };
 
 export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItems, editable }) => {
@@ -81,6 +84,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
 
       {items.map((item) => {
         const IconComponent = getIcon(item.label, item.type);
+        const isPerson = item.type === 'person';
         
         return (
           <div
@@ -89,25 +93,38 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
               left: `${item.x}%`, 
               top: `${item.y}%`,
               transform: 'translate(-50%, -50%)',
-              cursor: editable ? (draggingId === item.id ? 'grabbing' : 'grab') : 'default'
+              cursor: editable ? (draggingId === item.id ? 'grabbing' : 'grab') : 'default',
+              zIndex: draggingId === item.id ? 100 : (isPerson ? 50 : 10)
             }}
-            className={`absolute flex flex-col items-center group ${draggingId === item.id ? 'z-50' : 'z-10'}`}
+            className={`absolute flex flex-col items-center group`}
             onMouseDown={(e) => handleMouseDown(e, item.id)}
           >
             <div className={`
-              p-2 rounded-full border-2 
-              ${item.type === 'monitor' ? 'bg-slate-200 border-slate-500 rounded-none transform -skew-x-12' : 'bg-white border-black'}
-              ${editable ? 'hover:border-blue-500 shadow-sm' : ''}
-              print:border-black print:bg-white
+              flex items-center justify-center
+              ${isPerson 
+                ? 'w-10 h-10 bg-indigo-100 border-2 border-indigo-600 rounded-full text-indigo-800' 
+                : (item.type === 'monitor' 
+                    ? 'p-2 bg-slate-200 border-2 border-slate-500 rounded-none transform -skew-x-12' 
+                    : 'p-2 bg-white border-2 border-black rounded-lg')
+              }
+              ${editable ? 'hover:border-blue-500 hover:shadow-md' : ''}
+              print:bg-white print:border-black print:text-black
             `}>
-              <IconComponent size={24} className="text-slate-900" />
+              <IconComponent size={isPerson ? 20 : 24} className={isPerson ? "" : "text-slate-900"} />
             </div>
-            <span className="mt-1 text-[10px] font-bold bg-white/80 px-1 rounded whitespace-nowrap border border-transparent group-hover:border-slate-200 print:text-black print:bg-white">
+            
+            <span className={`
+              mt-1 text-[10px] font-bold px-1 rounded whitespace-nowrap border border-transparent 
+              ${isPerson ? 'bg-indigo-50 text-indigo-900' : 'bg-white/80'}
+              group-hover:border-slate-200 
+              print:text-black print:bg-white print:border-0
+            `}>
               {item.label}
             </span>
+            
             {editable && (
-               <div className="absolute -top-1 -right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                 <Move size={12} className="text-blue-500" />
+               <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-0.5 shadow border border-slate-200">
+                 <Move size={10} className="text-blue-500" />
                </div>
             )}
           </div>

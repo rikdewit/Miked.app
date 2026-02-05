@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { INITIAL_RIDER_DATA, INSTRUMENTS } from './constants';
-import { RiderData, BandMember, StageItem } from './types';
+import { RiderData, BandMember, StageItem, InstrumentType } from './types';
 import { StagePlotCanvas } from './components/StagePlotCanvas';
 import { InputList } from './components/InputList';
 import { Plus, Trash2, Mic, Info, ArrowRight, ArrowLeft, Download, Printer, Music2, X } from 'lucide-react';
@@ -81,89 +81,157 @@ const App: React.FC = () => {
   };
 
   // --- Step 2 Handlers (Stage Plot) ---
-  // Initialize stage items when entering step 2 based on members
+  
+  // Helper to determine member role for layout
+  const getMemberRole = (member: BandMember) => {
+    const instruments = member.instrumentIds.map(id => INSTRUMENTS.find(i => i.id === id));
+    if (instruments.some(i => i?.type === InstrumentType.DRUMS)) return 'drummer';
+    if (instruments.some(i => i?.type === InstrumentType.BASS)) return 'bass';
+    if (instruments.some(i => i?.type === InstrumentType.KEYS)) return 'keys';
+    if (instruments.some(i => i?.type === InstrumentType.BRASS)) return 'horn';
+    if (instruments.some(i => i?.type === InstrumentType.VOCAL)) return 'vocal'; // Lead vocal priority if no other heavy instrument
+    return 'front'; // Guitars and others default to front
+  };
+
   useEffect(() => {
     if (step === 2) {
-      // 1. Identify valid stage item IDs based on current members and their instruments
-      const validItemIds = new Set<string>();
-      const validMonitorIds = new Set<string>();
+      // Logic to distribute members intelligently on the stage
+      // Only regenerate if we don't have 'person' items yet (legacy or first load) or if member count changed significantly
+      const hasPeople = data.stagePlot.some(i => i.type === 'person');
+      const currentMemberIds = new Set(data.members.map(m => m.id));
+      const plottedMemberIds = new Set(data.stagePlot.filter(i => i.memberId).map(i => i.memberId));
+      
+      // If we already have a good plot for these members, try to preserve it, but we need to ensure all members are present
+      // For this implementation, to satisfy the prompt "Distribute members...", we will regenerate the member layout if the counts mismatch or no people exist.
+      // We will keep manual items (power, extra monitors).
 
-      data.members.forEach(m => {
-          m.instrumentIds.forEach((_, idx) => {
-              validItemIds.add(`stage-${m.id}-${idx}`);
+      const manualItems = data.stagePlot.filter(item => !item.memberId && item.type !== 'person');
+      
+      const newItems: StageItem[] = [...manualItems];
+      
+      // 1. Sort Members by Role
+      const members = [...data.members];
+      let drummer = members.find(m => getMemberRole(m) === 'drummer');
+      let otherMembers = members.filter(m => m !== drummer);
+      
+      // Separate into Back Row (Bass, Keys, Horns) and Front Row (Vocals, Guitars, Others)
+      const backRow: BandMember[] = [];
+      const frontRow: BandMember[] = [];
+      
+      otherMembers.forEach(m => {
+        const role = getMemberRole(m);
+        if (['bass', 'keys', 'horn'].includes(role)) {
+            backRow.push(m);
+        } else {
+            frontRow.push(m);
+        }
+      });
+
+      // 2. Assign Positions
+      // Coordinates: x (0-100 L-R), y (0-100 Back-Front)
+      // Standard depth: Back Row Y=30, Front Row Y=75
+      
+      const assignments = new Map<string, {x: number, y: number}>();
+      
+      // Place Drummer (Center Back)
+      if (drummer) {
+          assignments.set(drummer.id, { x: 50, y: 25 });
+      }
+
+      // Distribute Back Row (Left/Right of drums)
+      // Alternating sides: Left (30), Right (70), Far Left (15), Far Right (85)
+      const backSlots = [30, 70, 15, 85]; 
+      backRow.forEach((m, i) => {
+          assignments.set(m.id, { x: backSlots[i % backSlots.length] || 10 + (i*10), y: 30 });
+      });
+
+      // Distribute Front Row
+      // Center (50) is for Lead Singer if possible.
+      // Slots: 50, 30, 70, 15, 85
+      const frontSlots = [50, 30, 70, 15, 85, 40, 60];
+      
+      // Find lead singer to put in center
+      const leadSingerIndex = frontRow.findIndex(m => getMemberRole(m) === 'vocal');
+      if (leadSingerIndex !== -1) {
+          // Move lead singer to start of array so they get slot 50
+          const singer = frontRow.splice(leadSingerIndex, 1)[0];
+          frontRow.unshift(singer);
+      } else if (!drummer && frontRow.length > 0) {
+          // If no drummer and no lead singer detected, just center the first person
+          // (Already sorted to front)
+      }
+
+      frontRow.forEach((m, i) => {
+           assignments.set(m.id, { x: frontSlots[i % frontSlots.length] || 10 + (i*10), y: 75 });
+      });
+
+      // 3. Generate Items based on assignments
+      data.members.forEach(member => {
+          const pos = assignments.get(member.id) || { x: 50, y: 50 };
+          
+          // A. Place Person
+          newItems.push({
+              id: `person-${member.id}`,
+              memberId: member.id,
+              type: 'person',
+              label: member.name,
+              x: pos.x,
+              y: pos.y
           });
-          // Check if any instrument needs a monitor
-          const needsMonitor = m.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor);
-          if (needsMonitor) validMonitorIds.add(`mon-${m.id}`);
-      });
 
-      // 2. Filter existing items: Keep custom items OR valid member items
-      const keptItems = data.stagePlot.filter(item => {
-          // If it's a member item, it MUST be in our valid list
-          if (item.type === 'member' && item.memberId) {
-             return validItemIds.has(item.id);
-          }
-          // If it's an auto-generated monitor (mon-{memberId}), check if it's still needed
-          if (item.type === 'monitor' && item.id.startsWith('mon-')) { 
-             const parts = item.id.split('-');
-             if (parts.length === 2) {
-                 const memId = parts[1];
-                 const memberExists = data.members.find(m => m.id === memId);
-                 // If it looks like a member monitor, validate it
-                 if (memberExists) {
-                     return validMonitorIds.has(item.id);
-                 }
-             }
-          }
-          // Keep other items (manual additions)
-          return true; 
-      });
+          // B. Place Instruments
+          member.instrumentIds.forEach((instId, idx) => {
+              const instDef = INSTRUMENTS.find(i => i.id === instId);
+              if (!instDef) return;
 
-      // 3. Add missing items
-      const newItems: StageItem[] = [];
-      data.members.forEach((member, mIndex) => {
-          // Instruments
-          member.instrumentIds.forEach((instId, iIndex) => {
-              const itemId = `stage-${member.id}-${iIndex}`;
-              
-              // Only add if not already in keptItems (update label if exists?)
-              const existingItem = keptItems.find(i => i.id === itemId);
-              const instrument = INSTRUMENTS.find(i => i.id === instId);
-              
-              if (!existingItem) {
-                  const spreadX = 20 + ((mIndex % 4) * 20) + (iIndex * 3); // Slight offset for multiple instruments
-                  const spreadY = 30 + (Math.floor(mIndex / 4) * 25) + (iIndex * 2);
-                  
-                  newItems.push({
-                      id: itemId,
-                      memberId: member.id,
-                      type: 'member',
-                      label: instrument?.name || 'Instrument',
-                      x: spreadX,
-                      y: spreadY
-                  });
-              } else {
-                  // Update label of existing item to match current instrument selection
-                  existingItem.label = instrument?.name || 'Instrument';
+              let instX = pos.x;
+              let instY = pos.y;
+              let label = instDef.name;
+
+              // Offset logic based on instrument type
+              if (instDef.type === InstrumentType.DRUMS) {
+                  // Drums are usually the kit itself, can be at person position or slightly front
+                  instY = pos.y - 5; 
+                  label = "Kit";
+              } else if (instDef.type === InstrumentType.GUITAR || instDef.type === InstrumentType.BASS) {
+                  // Amps usually behind
+                  instY = pos.y - 15;
+                  instX = pos.x + (idx % 2 === 0 ? -5 : 5); // Slight stagger if multiple
+                  label = "Amp";
+              } else if (instDef.type === InstrumentType.VOCAL) {
+                  // Mic stand in front
+                  instY = pos.y + 5;
+                  label = "Mic";
+              } else if (instDef.type === InstrumentType.KEYS) {
+                  // Keys at position
+                  instX = pos.x + 5;
               }
+
+              newItems.push({
+                  id: `inst-${member.id}-${idx}`,
+                  memberId: member.id,
+                  type: 'member', // Treated as equipment
+                  label: label,
+                  x: instX,
+                  y: instY
+              });
           });
 
-          // Monitor
-          const monId = `mon-${member.id}`;
-          if (validMonitorIds.has(monId) && !keptItems.find(i => i.id === monId)) {
-               const spreadX = 20 + ((mIndex % 4) * 20);
-               const spreadY = 30 + (Math.floor(mIndex / 4) * 25);
-               newItems.push({
-                   id: monId,
-                   type: 'monitor',
-                   label: 'Mon',
-                   x: spreadX,
-                   y: spreadY + 15
-               });
+          // C. Place Monitor (if needed)
+          const needsMonitor = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor);
+          if (needsMonitor) {
+              newItems.push({
+                  id: `mon-${member.id}`,
+                  memberId: member.id,
+                  type: 'monitor',
+                  label: 'Mon',
+                  x: pos.x,
+                  y: pos.y + 15 // In front of person
+              });
           }
       });
 
-      setData(prev => ({ ...prev, stagePlot: [...keptItems, ...newItems] }));
+      setData(prev => ({ ...prev, stagePlot: newItems }));
     }
   }, [step, data.members]);
 
