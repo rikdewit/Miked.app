@@ -184,7 +184,7 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Layers size={24} className="text-black" />
                 </div>
-                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} />
+                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} isPreview={true} />
               </div>
 
               {/* 3D View */}
@@ -192,7 +192,7 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Box size={24} className="text-black" />
                 </div>
-                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} />
+                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} isPreview={true} />
               </div>
           </div>
         </div>

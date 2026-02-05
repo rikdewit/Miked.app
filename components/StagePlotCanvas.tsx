@@ -10,6 +10,7 @@ interface StagePlotCanvasProps {
   editable: boolean;
   viewMode?: 'isometric' | 'top';
   showAudienceLabel?: boolean;
+  isPreview?: boolean;
 }
 
 // --- Constants ---
@@ -142,7 +143,14 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   );
 };
 
-export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItems, editable, viewMode = 'isometric', showAudienceLabel = true }) => {
+export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ 
+  items, 
+  setItems, 
+  editable, 
+  viewMode = 'isometric', 
+  showAudienceLabel = true,
+  isPreview = false
+}) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
 
@@ -216,7 +224,11 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItem
   
   // Camera Logic
   const camPosition: [number, number, number] = isTopView ? [0, 50, 0] : [-20, 30, 20];
-  const camZoom = isTopView ? 50 : 50; 
+  
+  // Use zoomed in view for editor (90/80), but keep old zoom (50/50) for preview/PDF
+  const camZoom = isPreview 
+    ? 50 
+    : (isTopView ? 90 : 80); 
   
   return (
     <div className="w-full aspect-video bg-white rounded-lg overflow-hidden border-2 border-slate-300 print:border-black shadow-inner">
