@@ -1,6 +1,8 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { StageItem } from '../types';
-import { Monitor, Plug, Move, Mic, Guitar, Speaker, Music, Drum, Disc, Laptop, User } from 'lucide-react';
+import { Canvas, ThreeEvent } from '@react-three/fiber';
+import { OrthographicCamera, Grid, Html, ContactShadows } from '@react-three/drei';
+import * as THREE from 'three';
 
 interface StagePlotCanvasProps {
   items: StageItem[];
@@ -8,133 +10,201 @@ interface StagePlotCanvasProps {
   editable: boolean;
 }
 
-const IconMap: Record<string, any> = {
-  Mic, Guitar, Speaker, Music, Drum, Disc, Laptop, User, Monitor, Plug
-};
+// --- Constants ---
+const STAGE_SIZE = 8; // 8 meters (Increased from 5)
+const GRID_DIVISIONS = 16; // 0.5 meter grid for 8m
 
-// Helper to get icon component
-const getIcon = (label: string, type: string) => {
-    if (type === 'person') return User;
-    if (type === 'monitor') return Monitor;
-    if (type === 'power') return Plug;
-    
-    const lowerLabel = label.toLowerCase();
-    
-    if (lowerLabel.includes('amp')) return Speaker;
-    if (lowerLabel.includes('drum') || lowerLabel.includes('kit')) return Drum;
-    if (lowerLabel.includes('vocal') || lowerLabel.includes('mic')) return Mic;
-    if (lowerLabel.includes('guitar') || lowerLabel.includes('gtr')) return Guitar;
-    if (lowerLabel.includes('bass')) return Guitar; // Bass guitar gets guitar icon
-    if (lowerLabel.includes('keys')) return Music;
-    if (lowerLabel.includes('sax') || lowerLabel.includes('trumpet') || lowerLabel.includes('horn')) return Music;
-    if (lowerLabel.includes('dj') || lowerLabel.includes('disc')) return Disc;
-    if (lowerLabel.includes('laptop')) return Laptop;
-    
-    return Music; // Default instrument icon
+// --- Helpers to map Data (0-100%) to World (-4 to 4) ---
+const percentToWorld = (p: number) => ((p / 100) * STAGE_SIZE) - (STAGE_SIZE / 2);
+const worldToPercent = (w: number) => ((w + (STAGE_SIZE / 2)) / STAGE_SIZE) * 100;
+
+// --- 3D Components ---
+
+interface DraggableItemProps {
+  item: StageItem;
+  activeId: string | null;
+  onDown: (e: ThreeEvent<PointerEvent>, id: string) => void;
+}
+
+const DraggableItem: React.FC<DraggableItemProps> = ({ 
+  item, 
+  activeId, 
+  onDown 
+}) => {
+  const isPerson = item.type === 'person';
+  const isMonitor = item.type === 'monitor';
+  const isAmp = item.label.toLowerCase().includes('amp');
+  const isDrum = item.label.toLowerCase().includes('kit') || item.label.toLowerCase().includes('drum');
+  
+  // Dimensions based on type
+  let width = 0.4, height = 0.4, depth = 0.4;
+  let color = '#ffffff';
+  let yPos = height / 2;
+
+  if (isPerson) {
+    width = 0.4; depth = 0.4; height = 1.6;
+    color = '#4f46e5'; // Indigo
+    yPos = height / 2;
+  } else if (isAmp) {
+    width = 0.6; depth = 0.4; height = 0.6;
+    color = '#1e293b'; // Slate 800
+    yPos = height / 2;
+  } else if (isDrum) {
+    width = 1.5; depth = 1.2; height = 0.8;
+    color = '#7f1d1d'; // Red 900
+    yPos = height / 2;
+  } else if (isMonitor) {
+    width = 0.5; depth = 0.4; height = 0.3;
+    color = '#334155'; // Slate 700
+    yPos = height / 2;
+  } else {
+    // Generic Instrument
+    width = 0.2; depth = 0.2; height = 0.8; // Stand-like
+    color = '#94a3b8'; // Slate 400
+    yPos = height / 2;
+  }
+
+  const x = percentToWorld(item.x);
+  const z = percentToWorld(item.y);
+  
+  const isDragging = activeId === item.id;
+
+  return (
+    <group position={[x, 0, z]}>
+      {/* Label */}
+      <Html position={[0, height + 0.2, 0]} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
+        <div className="text-[8px] font-bold text-slate-900 whitespace-nowrap select-none tracking-tight" style={{ textShadow: '0 1px 2px rgba(255,255,255,0.8)' }}>
+          {item.label}
+        </div>
+      </Html>
+
+      {/* The 3D Object */}
+      <mesh 
+        position={[0, yPos, 0]} 
+        onPointerDown={(e) => onDown(e, item.id)}
+        castShadow 
+        receiveShadow
+      >
+        <boxGeometry args={[width, height, depth]} />
+        <meshStandardMaterial 
+          color={isDragging ? '#ef4444' : color} 
+          roughness={0.6}
+        />
+      </mesh>
+      
+      {/* Monitor Wedge Shape tweak if monitor */}
+      {isMonitor && (
+         <mesh position={[0, yPos, 0.2]} rotation={[Math.PI / 4, 0, 0]}>
+             <boxGeometry args={[width, 0.05, 0.1]} />
+             <meshStandardMaterial color="#000" />
+         </mesh>
+      )}
+    </group>
+  );
 };
 
 export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ items, setItems, editable }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  const handleMouseDown = (e: React.MouseEvent, id: string) => {
+  const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
     if (!editable) return;
-    e.preventDefault();
     e.stopPropagation();
-    setDraggingId(id);
+    setActiveId(id);
+    // @ts-ignore - target setPointerCapture is available on the canvas event source
+    e.target.setPointerCapture(e.pointerId);
   };
 
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!draggingId || !containerRef.current || !editable) return;
+  const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
+    if (!editable) return;
+    setActiveId(null);
+    // @ts-ignore
+    e.target.releasePointerCapture(e.pointerId);
+  };
 
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
+  const handlePlaneMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!activeId || !editable) return;
+    e.stopPropagation();
+    
+    // Convert intersection point to percentages
+    const newX = worldToPercent(e.point.x);
+    const newY = worldToPercent(e.point.z);
 
-    // Constrain to 0-100
-    const constrainedX = Math.max(0, Math.min(100, x));
-    const constrainedY = Math.max(0, Math.min(100, y));
+    // Clamp values
+    const clampedX = Math.max(0, Math.min(100, newX));
+    const clampedY = Math.max(0, Math.min(100, newY));
 
     setItems(items.map(item => 
-      item.id === draggingId ? { ...item, x: constrainedX, y: constrainedY } : item
+      item.id === activeId 
+        ? { ...item, x: clampedX, y: clampedY } 
+        : item
     ));
   };
 
-  const handleMouseUp = () => {
-    setDraggingId(null);
-  };
-
-  // Global mouse up handler to catch releases outside the div
-  useEffect(() => {
-    if (draggingId) {
-      window.addEventListener('mouseup', handleMouseUp);
-    }
-    return () => {
-      window.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [draggingId]);
-
   return (
-    <div 
-      className="relative w-full aspect-[4/3] bg-white border-2 border-slate-300 rounded-lg overflow-hidden shadow-inner print:border-black print:shadow-none"
-      ref={containerRef}
-      onMouseMove={handleMouseMove}
-    >
-      {/* Stage Floor Background */}
-      <div className="absolute inset-4 border-2 border-dashed border-slate-200 pointer-events-none print:border-slate-400">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 bg-slate-100 px-2 text-xs text-slate-400 font-mono print:text-black">BACK OF STAGE</div>
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-slate-100 px-2 text-xs text-slate-400 font-mono print:text-black">FRONT OF STAGE (AUDIENCE)</div>
-      </div>
+    <div className="w-full aspect-video bg-slate-100 rounded-lg overflow-hidden border-2 border-slate-300 print:border-black shadow-inner">
+      <Canvas 
+        shadows 
+        gl={{ preserveDrawingBuffer: true, antialias: true }}
+        className="w-full h-full"
+      >
+        {/* Camera: Isometric view - Zoom adjusted for larger stage */}
+        <OrthographicCamera 
+            makeDefault 
+            position={[20, 20, 20]} 
+            zoom={60} 
+            near={-50} 
+            far={200}
+            onUpdate={c => c.lookAt(0, 0, 0)}
+        />
 
-      {items.map((item) => {
-        const IconComponent = getIcon(item.label, item.type);
-        const isPerson = item.type === 'person';
-        
-        return (
-          <div
-            key={item.id}
-            style={{ 
-              left: `${item.x}%`, 
-              top: `${item.y}%`,
-              transform: 'translate(-50%, -50%)',
-              cursor: editable ? (draggingId === item.id ? 'grabbing' : 'grab') : 'default',
-              // Person at 20, Instruments/Others at 30, Dragging at 100
-              zIndex: draggingId === item.id ? 100 : (isPerson ? 20 : 30)
-            }}
-            className={`absolute flex flex-col items-center group`}
-            onMouseDown={(e) => handleMouseDown(e, item.id)}
+        <ambientLight intensity={0.7} />
+        <directionalLight 
+          position={[5, 10, 5]} 
+          intensity={1} 
+          castShadow 
+          shadow-mapSize={[1024, 1024]} 
+        />
+
+        <group position={[0, -0.01, 0]}>
+          {/* Floor Grid */}
+          <Grid 
+            args={[STAGE_SIZE, STAGE_SIZE]} 
+            cellSize={0.5} 
+            cellThickness={0.6} 
+            cellColor="#cbd5e1" 
+            sectionSize={1} 
+            sectionThickness={1} 
+            sectionColor="#94a3b8" 
+            infiniteGrid={false}
+            fadeDistance={25}
+          />
+          
+          {/* Invisible Plane for Dragging */}
+          <mesh 
+            rotation={[-Math.PI / 2, 0, 0]} 
+            position={[0, 0, 0]} 
+            onPointerMove={handlePlaneMove}
+            onPointerUp={handlePointerUp}
           >
-            <div className={`
-              flex items-center justify-center
-              ${isPerson 
-                ? 'w-10 h-10 bg-indigo-100 border-2 border-indigo-600 rounded-full text-indigo-800' 
-                : (item.type === 'monitor' 
-                    ? 'p-2 bg-slate-200 border-2 border-slate-500 rounded-none transform -skew-x-12' 
-                    : 'p-2 bg-white border-2 border-black rounded-lg')
-              }
-              ${editable ? 'hover:border-blue-500 hover:shadow-md' : ''}
-              print:bg-white print:border-black print:text-black
-            `}>
-              <IconComponent size={isPerson ? 20 : 24} className={isPerson ? "" : "text-slate-900"} />
-            </div>
-            
-            <span className={`
-              mt-1 text-[10px] font-bold px-1 rounded whitespace-nowrap border border-transparent 
-              ${isPerson ? 'bg-indigo-50 text-indigo-900' : 'bg-white/80'}
-              group-hover:border-slate-200 
-              print:text-black print:bg-white print:border-0
-            `}>
-              {item.label}
-            </span>
-            
-            {editable && (
-               <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity bg-white rounded-full p-0.5 shadow border border-slate-200">
-                 <Move size={10} className="text-blue-500" />
-               </div>
-            )}
-          </div>
-        );
-      })}
+            <planeGeometry args={[STAGE_SIZE * 2, STAGE_SIZE * 2]} />
+            <meshBasicMaterial visible={false} />
+          </mesh>
+        </group>
+
+        {/* Shadows on floor */}
+        <ContactShadows opacity={0.4} scale={15} blur={2} far={4} />
+
+        {/* Stage Objects */}
+        {items.map((item) => (
+          <DraggableItem 
+            key={item.id} 
+            item={item} 
+            activeId={activeId} 
+            onDown={handlePointerDown} 
+          />
+        ))}
+
+      </Canvas>
     </div>
   );
 };

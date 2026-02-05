@@ -458,37 +458,40 @@ const App: React.FC = () => {
   );
 
   const renderStep2 = () => (
-    <div className="max-w-4xl mx-auto w-full">
+    <div className="max-w-6xl mx-auto w-full">
       <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
         <span className="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg">2</span>
         Stage Plot
       </h2>
       <p className="text-slate-400 mb-4">Drag instruments and monitors to their position on stage.</p>
       
-      <div className="flex flex-col md:flex-row gap-6">
-        <div className="flex-1">
-           <StagePlotCanvas items={data.stagePlot} setItems={updateStageItems} editable={true} />
-        </div>
-        <div className="w-full md:w-48 space-y-4">
-           <div className="bg-slate-800 p-4 rounded-lg border border-slate-700">
-             <h3 className="font-bold text-white mb-2 text-sm uppercase tracking-wider">Extras</h3>
-             <div className="grid grid-cols-2 gap-2">
+      <div className="relative w-full rounded-xl overflow-hidden shadow-2xl border border-slate-700">
+        
+        {/* Overlay Menu */}
+        <div className="absolute top-4 right-4 z-10 bg-slate-900/90 backdrop-blur-md border border-slate-700 p-3 rounded-lg shadow-xl">
+           <h3 className="font-bold text-white mb-2 text-xs uppercase tracking-wider text-center">Extras</h3>
+           <div className="flex flex-col gap-2">
                <button 
                  onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
-                 className="flex flex-col items-center justify-center p-2 bg-slate-700 rounded hover:bg-slate-600 text-xs text-center"
+                 className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded hover:bg-slate-700 text-xs text-white transition-colors border border-slate-600 hover:border-slate-500"
                >
-                 <Info size={16} className="mb-1" /> Monitor
+                 <div className="w-4 h-4 bg-slate-600 rounded-sm"></div>
+                 <span>Add Monitor</span>
                </button>
                <button 
                  onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: '230V' }])}
-                 className="flex flex-col items-center justify-center p-2 bg-slate-700 rounded hover:bg-slate-600 text-xs text-center"
+                 className="flex items-center gap-2 px-3 py-2 bg-slate-800 rounded hover:bg-slate-700 text-xs text-white transition-colors border border-slate-600 hover:border-slate-500"
                >
-                 <Info size={16} className="mb-1" /> Power
+                 <div className="w-4 h-4 bg-yellow-600 rounded-full"></div>
+                 <span>Add Power</span>
                </button>
-             </div>
-             <p className="text-xs text-slate-500 mt-4">Tip: Click and drag to move.</p>
            </div>
+           <p className="text-[10px] text-slate-500 mt-2 text-center">Drag to move</p>
         </div>
+
+        {/* 3D Canvas */}
+        <StagePlotCanvas items={data.stagePlot} setItems={updateStageItems} editable={true} />
+        
       </div>
     </div>
   );
