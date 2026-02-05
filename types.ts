@@ -12,7 +12,9 @@ export enum InstrumentType {
 
 export interface InstrumentDefinition {
   id: string;
-  name: string;
+  name: string; // The specific name (e.g. "Guitar (Modeler)")
+  group: string; // The UI Label (e.g. "Electric Guitar")
+  variantLabel?: string; // Short label for the toggle (e.g. "Modeler")
   type: InstrumentType;
   defaultMic?: string;
   defaultDi?: boolean;
@@ -45,6 +47,8 @@ export interface RiderDetails {
   website?: string;
   logoUrl?: string; // Base64 string
   generalNotes?: string;
+  showDuration?: string;
+  soundcheckDuration?: string;
 }
 
 export interface RiderData {

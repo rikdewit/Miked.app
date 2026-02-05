@@ -10,7 +10,10 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
   // Helper to get instrument names string for a member
   const getMemberInstrumentString = (member: BandMember) => {
     return member.instrumentIds
-      .map(id => INSTRUMENTS.find(i => i.id === id)?.name || 'Unknown')
+      .map(id => {
+          const inst = INSTRUMENTS.find(i => i.id === id);
+          return inst ? (inst.group + (inst.variantLabel ? ` (${inst.variantLabel})` : '')) : 'Unknown';
+      })
       .join(', ');
   };
 
@@ -38,22 +41,61 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
             instrument: kitPiece.name,
             micDi: kitPiece.mic,
             stand: kitPiece.stand,
-            // Only show member notes on the Kick channel to avoid clutter
             notes: idx === 0 ? member.notes : '' 
           });
         });
-      } else {
-        // Handle Standard Instruments
-        const instrument = INSTRUMENTS.find(i => i.id === instId);
-        if (instrument) {
+        return;
+      } 
+      
+      // Handle Stereo Keys Splitting
+      if (instId === 'keys_stereo') {
           inputs.push({
             channel: channelCounter++,
-            instrument: instrument.name,
-            micDi: instrument.defaultDi ? 'DI' : (instrument.defaultMic || 'Venue Tech'),
-            stand: instrument.type === 'Vocal' ? 'Tall Boom' : (instrument.name.includes('Amp') ? 'Short Boom' : ''),
-            notes: member.notes || ''
+            instrument: 'Keys L',
+            micDi: 'DI',
+            stand: '',
+            notes: member.notes
           });
+          inputs.push({
+            channel: channelCounter++,
+            instrument: 'Keys R',
+            micDi: 'DI',
+            stand: '',
+            notes: ''
+          });
+          return;
+      }
+
+      // Handle Standard Instruments
+      const instrument = INSTRUMENTS.find(i => i.id === instId);
+      if (instrument) {
+        let micDi = instrument.defaultDi ? 'DI' : (instrument.defaultMic || 'Venue Tech');
+        let stand = '';
+
+        // Logic to determine mic/stand based on instrument type/variant
+        if (instrument.type === 'Vocal') {
+            stand = 'Tall Boom';
+        } else if (instrument.id.includes('amp')) {
+            stand = 'Short Boom';
+        } else if (instrument.id.includes('stand')) {
+            stand = 'Tall Boom'; // Horns on stand
+        } else if (instrument.id.includes('clip')) {
+            stand = 'Clip-on';
         }
+
+        // Bass Combined Special Case
+        if (instrument.id === 'bass_combined') {
+            micDi = 'DI + Mic (D112)';
+            stand = 'Short Boom';
+        }
+
+        inputs.push({
+          channel: channelCounter++,
+          instrument: instrument.group, // Use Group Name for cleaner list (e.g. "Electric Guitar" instead of "Electric Guitar (Amp)")
+          micDi: micDi,
+          stand: stand,
+          notes: member.notes || ''
+        });
       }
     });
   });

@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Download, Mic, Music2, Layers, Box, Loader2 } from 'lucide-react';
+import { Download, Mic, Music2, Layers, Box, Loader2, Clock } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { RiderData } from '../types';
@@ -143,10 +143,17 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
         <div className="flex justify-between items-start border-b-2 border-black pb-6">
           <div>
             <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">{data.details.bandName || 'BAND NAME'}</h1>
-            <div className="text-sm space-y-1">
-              <p><span className="font-bold">Contact:</span> {data.details.contactName}</p>
-              <p><span className="font-bold">Email:</span> {data.details.email}</p>
-              <p className="text-slate-500 text-xs mt-2">Technical Rider & Stageplot</p>
+            <div className="flex gap-8 text-sm">
+                <div className="space-y-1">
+                    <p><span className="font-bold">Contact:</span> {data.details.contactName}</p>
+                    <p><span className="font-bold">Email:</span> {data.details.email}</p>
+                </div>
+                {(data.details.showDuration || data.details.soundcheckDuration) && (
+                    <div className="space-y-1 border-l border-slate-300 pl-8">
+                         {data.details.showDuration && <p className="flex items-center gap-2"><Clock size={14} /> <span className="font-bold">Show:</span> {data.details.showDuration}</p>}
+                         {data.details.soundcheckDuration && <p className="flex items-center gap-2"><Clock size={14} /> <span className="font-bold">Soundcheck:</span> {data.details.soundcheckDuration}</p>}
+                    </div>
+                )}
             </div>
           </div>
           {data.details.logoUrl ? (

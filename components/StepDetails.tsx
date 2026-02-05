@@ -59,6 +59,29 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
           </div>
         </div>
 
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Show Duration</label>
+            <input 
+              type="text" 
+              value={data.details.showDuration || ''}
+              onChange={(e) => setData(prev => ({...prev, details: {...prev.details, showDuration: e.target.value}}))}
+              placeholder="e.g. 60 min"
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Soundcheck Time</label>
+            <input 
+              type="text" 
+              value={data.details.soundcheckDuration || ''}
+              onChange={(e) => setData(prev => ({...prev, details: {...prev.details, soundcheckDuration: e.target.value}}))}
+              placeholder="e.g. 45 min"
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+        </div>
+
         <div>
            <label className="block text-sm font-medium text-slate-300 mb-2">General Notes</label>
            <textarea 

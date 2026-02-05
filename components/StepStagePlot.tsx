@@ -103,27 +103,40 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                   if (!instDef) return;
                   const isHeld = (idx === heldIndex);
 
-                  if (instDef.id === 'gtr_elec' || instDef.type === InstrumentType.BASS) {
-                      newItems.push({ id: `amp-${member.id}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: pos.x + (idx % 2 === 0 ? -10 : 10), y: pos.y - 15 });
-                      newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label: instDef.type === InstrumentType.BASS ? 'Bass' : 'Gtr', x: isHeld ? pos.x + 2 : pos.x + 12, y: isHeld ? pos.y + 2 : pos.y - 5 });
+                  // Logic for Electric Guitars & Bass (Amps)
+                  if (instDef.type === InstrumentType.GUITAR || instDef.type === InstrumentType.BASS) {
+                      // Only show AMP if it's an Amp or Combined type. Exclude Modeler/DI.
+                      const showAmp = instId.includes('amp') || instId.includes('combined');
+                      
+                      if (showAmp) {
+                        newItems.push({ id: `amp-${member.id}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: pos.x + (idx % 2 === 0 ? -10 : 10), y: pos.y - 15 });
+                      }
+                      
+                      // Label: "Bass" or "Gtr"
+                      const label = instDef.type === InstrumentType.BASS ? 'Bass' : 'Gtr';
+                      newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label: label, x: isHeld ? pos.x + 2 : pos.x + 12, y: isHeld ? pos.y + 2 : pos.y - 5 });
                   } else {
-                      let instX = pos.x, instY = pos.y, label = instDef.name;
+                      let instX = pos.x, instY = pos.y, label = instDef.group;
+                      
                       if (isHeld) {
                           instX = pos.x + 2; instY = pos.y + 2;
-                          if (instDef.type === InstrumentType.BRASS) label = instDef.name;
+                          // Shorten brass names
+                          if (instDef.type === InstrumentType.BRASS) label = instDef.group.substring(0, 3);
                       } else {
                           if (instDef.type === InstrumentType.DRUMS) { instY = pos.y; label = "Kit"; }
                           else if (instDef.type === InstrumentType.VOCAL) { instY = pos.y + 10; label = "Mic"; }
                           else if (instDef.type === InstrumentType.KEYS) { instX = pos.x + 6; instY = pos.y + 4; label = "Keys"; }
                           else if (instDef.id === 'dj') { instY = pos.y + 5; label = "DJ"; }
                           else if (instDef.id === 'laptop') { instX = pos.x + 10; label = "Laptop"; }
-                          else if (holdableTypes.includes(instDef.type)) { instX = pos.x + 12; instY = pos.y - 5; label = instDef.name.split(' ')[0]; }
+                          else if (holdableTypes.includes(instDef.type)) { instX = pos.x + 12; instY = pos.y - 5; label = instDef.group.split(' ')[0]; }
                       }
                       newItems.push({ id: `inst-${member.id}-${idx}`, memberId: member.id, type: 'member', label, x: instX, y: instY });
                   }
               });
 
               // Monitor
+              // Check if any of the instruments require a monitor. 
+              // Note: Modelers often need monitors even if they are DI, so default requirement in constants handles this.
               if (member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.requiresMonitor)) {
                   newItems.push({ id: `mon-${member.id}`, memberId: member.id, type: 'monitor', label: 'Mon', x: pos.x, y: pos.y + 15 });
               }

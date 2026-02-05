@@ -26,6 +26,14 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
   addMemberInstrument,
   removeMember
 }) => {
+  // Get unique groups for the dropdown
+  const uniqueGroups = Array.from(new Set(INSTRUMENTS.map(i => i.group)));
+
+  // Helper to find valid default ID when switching groups
+  const getDefaultIdForGroup = (groupName: string) => {
+    return INSTRUMENTS.find(i => i.group === groupName)?.id || INSTRUMENTS[0].id;
+  };
+
   return (
     <div className="max-w-4xl mx-auto w-full">
       <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
@@ -85,27 +93,52 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
 
                 <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-600/50">
                      <label className="text-xs text-slate-400 block mb-2 font-bold uppercase">Instruments</label>
-                     <div className="space-y-2">
-                        {member.instrumentIds.map((instId, iIndex) => (
-                            <div key={iIndex} className="flex gap-2 items-center">
-                                <select 
-                                    value={instId}
-                                    onChange={(e) => updateMemberInstrument(member.id, iIndex, e.target.value)}
-                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500"
-                                >
-                                {INSTRUMENTS.map(inst => (
-                                    <option key={inst.id} value={inst.id}>{inst.name}</option>
-                                ))}
-                                </select>
-                                <button 
-                                    onClick={() => removeMemberInstrument(member.id, iIndex)}
-                                    disabled={member.instrumentIds.length === 1}
-                                    className={`p-2 rounded transition-colors ${member.instrumentIds.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-800'}`}
-                                >
-                                    <X size={16} />
-                                </button>
+                     <div className="space-y-4">
+                        {member.instrumentIds.map((instId, iIndex) => {
+                            const currentInstrument = INSTRUMENTS.find(i => i.id === instId);
+                            const variants = INSTRUMENTS.filter(i => i.group === currentInstrument?.group);
+
+                            return (
+                            <div key={iIndex} className="flex flex-col gap-2">
+                                <div className="flex gap-2 items-center">
+                                    <select 
+                                        value={currentInstrument?.group || uniqueGroups[0]}
+                                        onChange={(e) => updateMemberInstrument(member.id, iIndex, getDefaultIdForGroup(e.target.value))}
+                                        className="flex-1 bg-slate-800 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500"
+                                    >
+                                    {uniqueGroups.map(group => (
+                                        <option key={group} value={group}>{group}</option>
+                                    ))}
+                                    </select>
+                                    <button 
+                                        onClick={() => removeMemberInstrument(member.id, iIndex)}
+                                        disabled={member.instrumentIds.length === 1}
+                                        className={`p-2 rounded transition-colors ${member.instrumentIds.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-800'}`}
+                                    >
+                                        <X size={16} />
+                                    </button>
+                                </div>
+                                
+                                {/* Variants Selection (if multiple options exist) */}
+                                {variants.length > 1 && (
+                                    <div className="flex flex-wrap gap-2 pl-1">
+                                        {variants.map(variant => (
+                                            <button
+                                                key={variant.id}
+                                                onClick={() => updateMemberInstrument(member.id, iIndex, variant.id)}
+                                                className={`text-xs px-2 py-1 rounded border ${
+                                                    instId === variant.id 
+                                                    ? 'bg-indigo-600 border-indigo-500 text-white' 
+                                                    : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400'
+                                                }`}
+                                            >
+                                                {variant.variantLabel || variant.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
-                        ))}
+                        )})}
                         <button 
                             onClick={() => addMemberInstrument(member.id)}
                             className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 mt-2 font-medium"
