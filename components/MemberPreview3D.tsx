@@ -4,22 +4,6 @@ import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
 
-// Fix for missing R3F types in environment
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      boxGeometry: any;
-      meshStandardMaterial: any;
-      ambientLight: any;
-      directionalLight: any;
-      pointLight: any;
-      gridHelper: any;
-    }
-  }
-}
-
 interface MemberPreview3DProps {
   member: BandMember;
 }
