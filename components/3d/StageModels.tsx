@@ -65,7 +65,7 @@ export const PersonModel = ({ color }: { color?: string }) => {
       object={model}
       scale={0.9} 
       position={[0, 0, 0]} 
-      rotation={[0, Math.PI, 0]}
+      rotation={[0, 0, 0]}
     />
   );
 };
