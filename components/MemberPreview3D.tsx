@@ -1,26 +1,14 @@
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Html, useGLTF, Clone } from '@react-three/drei';
-import * as THREE from 'three';
+import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
+import { COLORS } from '../utils/stageConfig';
+import { GuitarModel, PersonModel } from './3d/StageModels';
 
 interface MemberPreview3DProps {
   member: BandMember;
 }
-
-// Updated Color Palette
-const COLORS = {
-  person: '#3b82f6',     // Blue 500
-  amp: '#1e293b',        // Slate 800
-  drum: '#ef4444',       // Red 500
-  keys: '#8b5cf6',       // Violet 500
-  mic: '#94a3b8',        // Slate 400
-  instrument: '#fbbf24', // Amber 400
-  pedalboard: '#111827', // Gray 900
-  di: '#f97316',         // Orange 500
-  stand: '#64748b'       // Slate 500 (Hardware)
-};
 
 type ShapeType = 'box' | 'cylinder' | 'pole' | 'instrument' | 'person' | 'wedge';
 
@@ -40,79 +28,6 @@ interface PreviewItemProps {
   label?: string;
   shape?: ShapeType;
 }
-
-// Consistent URL with StagePlotCanvas
-const GUITAR_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb';
-const PERSON_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Male_Strong.glb';
-
-// Reusing the GuitarModel here for consistency in preview
-const GuitarModel = ({ color }: { color: string }) => {
-  const { scene } = useGLTF(GUITAR_URL);
-  
-  return (
-    <Clone 
-        object={scene} 
-        scale={1.5} 
-        rotation={[0, Math.PI / 2, 0]} 
-        position={[0, -0.5, 0]}
-        inject={(object) => {
-            if ((object as THREE.Mesh).isMesh) {
-                const mesh = object as THREE.Mesh;
-                if (Array.isArray(mesh.material)) {
-                    mesh.material = mesh.material.map(m => {
-                        const newM = m.clone();
-                        // @ts-ignore
-                        newM.color.set(color);
-                        return newM;
-                    });
-                } else {
-                    const newM = mesh.material.clone();
-                    // @ts-ignore
-                    newM.color.set(color);
-                    mesh.material = newM;
-                }
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-            }
-            return null;
-        }}
-    />
-  );
-};
-
-const PersonModel = ({ color }: { color: string }) => {
-  const { scene } = useGLTF(PERSON_URL);
-  
-  return (
-    <Clone 
-        object={scene} 
-        scale={0.9} 
-        position={[0, 0, 0]} 
-        rotation={[0, Math.PI, 0]}
-        inject={(object) => {
-            if ((object as THREE.Mesh).isMesh) {
-                const mesh = object as THREE.Mesh;
-                if (Array.isArray(mesh.material)) {
-                    mesh.material = mesh.material.map(m => {
-                        const newM = m.clone();
-                        // @ts-ignore
-                        newM.color.set(color);
-                        return newM;
-                    });
-                } else {
-                    const newM = mesh.material.clone();
-                    // @ts-ignore
-                    newM.color.set(color);
-                    mesh.material = newM;
-                }
-                mesh.castShadow = true;
-                mesh.receiveShadow = true;
-            }
-            return null;
-        }}
-    />
-  );
-};
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, shape = 'box' }) => {
     const [width, height, depth] = args;

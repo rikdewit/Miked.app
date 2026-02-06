@@ -1,19 +1,11 @@
-import React, { useState, useRef, useEffect, Suspense, useMemo } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { StageItem } from '../types';
 import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
-import { OrthographicCamera, Grid, Html, ContactShadows, Text, useGLTF } from '@react-three/drei';
+import { OrthographicCamera, Grid, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
-// @ts-ignore
-import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
-
-// Extend JSX.IntrinsicElements to allow any tag (fixes React Three Fiber + HTML tag issues)
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      [elemName: string]: any;
-    }
-  }
-}
+import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
+import { percentToX, percentToZ, xToPercent, zToPercent } from '../utils/stageHelpers';
+import { StageDraggableItem } from './3d/StageDraggableItem';
 
 interface StagePlotCanvasProps {
   items: StageItem[];
@@ -23,137 +15,9 @@ interface StagePlotCanvasProps {
   showAudienceLabel?: boolean;
   isPreview?: boolean;
   ghostItems?: StageItem[];
-  // New props for external drag handling
   dragCoords?: { x: number; y: number; width: number; height: number } | null;
   onDragPosChange?: (x: number, y: number) => void;
 }
-
-// --- Constants ---
-export const STAGE_WIDTH = 8; // Wider stage for better spacing
-export const STAGE_DEPTH = 5; 
-
-// --- Helpers to map Data (0-100%) to World ---
-const percentToX = (p: number) => ((p / 100) * STAGE_WIDTH) - (STAGE_WIDTH / 2);
-const percentToZ = (p: number) => ((p / 100) * STAGE_DEPTH) - (STAGE_DEPTH / 2);
-const xToPercent = (w: number) => ((w + (STAGE_WIDTH / 2)) / STAGE_WIDTH) * 100;
-const zToPercent = (w: number) => ((w + (STAGE_DEPTH / 2)) / STAGE_DEPTH) * 100;
-
-// Reusing updated palette from MemberPreview3D
-export const COLORS = {
-  person: '#3b82f6',     // Blue 500
-  amp: '#1e293b',        // Slate 800
-  drum: '#ef4444',       // Red 500
-  keys: '#8b5cf6',       // Violet 500
-  mic: '#94a3b8',        // Slate 400
-  instrument: '#fbbf24', // Amber 400
-  pedalboard: '#111827', // Gray 900
-  di: '#f97316',         // Orange 500
-  monitor: '#374151',    // Gray 700
-  power: '#eab308'       // Yellow 500
-};
-
-// --- Config Helper ---
-export const getItemConfig = (item: StageItem) => {
-  const isPerson = item.type === 'person';
-  const isMonitor = item.type === 'monitor';
-  const isPower = item.type === 'power';
-  const label = (item.label || '').toLowerCase();
-
-  // Specific Item Detection based on labels generated in StepStagePlot
-  if (isPerson) {
-    return { width: 0.5, depth: 0.5, height: 1.7, color: COLORS.person, shape: 'person' };
-  } 
-  
-  if (isMonitor) {
-    return { width: 0.6, depth: 0.4, height: 0.3, color: COLORS.monitor, shape: 'wedge' };
-  }
-
-  if (isPower) {
-    return { width: 0.3, depth: 0.3, height: 0.3, color: COLORS.power, shape: 'box' };
-  }
-
-  // Instrument / Gear detection
-  if (label.includes('amp')) {
-    return { width: 0.7, depth: 0.4, height: 0.7, color: COLORS.amp, shape: 'box' };
-  }
-  if (label.includes('kit') || label.includes('drum')) {
-    return { width: 1.8, depth: 1.5, height: 0.9, color: COLORS.drum, shape: 'box' };
-  }
-  if (label.includes('keys')) {
-    return { width: 1.2, depth: 0.4, height: 0.9, color: COLORS.keys, shape: 'box' }; // Simplified key stand
-  }
-  if (label.includes('di')) {
-    return { width: 0.2, depth: 0.2, height: 0.1, color: COLORS.di, shape: 'box' };
-  }
-  if (label.includes('pedal') || label.includes('modeler')) {
-    return { width: 0.6, depth: 0.3, height: 0.1, color: COLORS.pedalboard, shape: 'box' };
-  }
-  if (label.includes('mic')) {
-    return { width: 0.2, depth: 0.2, height: 1.5, color: COLORS.mic, shape: 'pole' };
-  }
-  // Added 'guitar' and 'brass' to this check to ensure they render as instruments instead of default boxes
-  if (label.includes('gtr') || label.includes('guitar') || label.includes('bass') || label.includes('sax') || label.includes('tpt') || label.includes('brass')) {
-     // Instrument on stand
-     return { width: 0.4, depth: 0.3, height: 1.0, color: COLORS.instrument, shape: 'instrument' };
-  }
-
-  // Fallback
-  return { width: 0.3, depth: 0.3, height: 0.3, color: '#cbd5e1', shape: 'box' };
-};
-
-// --- 3D Components ---
-
-// Use the direct raw.githubusercontent.com link to avoid redirects and CORS issues
-const GUITAR_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb';
-const PERSON_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Male_Strong.glb';
-
-// Standard handler hook for cloning 3D models with material overrides
-const useStageModel = (url: string, color: string) => {
-  const { scene } = useGLTF(url);
-  
-  const model = useMemo(() => {
-      // Use SkeletonUtils.clone to ensure SkinnedMeshes (bones) are cloned correctly
-      // This is crucial for characters (PersonModel) to move correctly with their parent group
-      const cloned = cloneGLTF(scene);
-      
-      cloned.traverse((node: any) => {
-          if (node.isMesh) {
-             const mesh = node as THREE.Mesh;
-             mesh.castShadow = true;
-             mesh.receiveShadow = true;
-             if (mesh.material) {
-                 const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                 const newMaterials = materials.map(m => {
-                     const nm = m.clone() as THREE.MeshStandardMaterial;
-                     nm.color.set(color);
-                     return nm;
-                 });
-                 mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
-             }
-          }
-      });
-      return cloned;
-  }, [scene, color]);
-
-  return model;
-};
-
-const GuitarModel = ({ color }: { color: string }) => {
-  const model = useStageModel(GUITAR_URL, color);
-  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, -0.5, 0]} />;
-};
-
-const PersonModel = ({ color }: { color: string }) => {
-  const model = useStageModel(PERSON_URL, color);
-  return (
-    <primitive 
-      object={model}
-      scale={0.9} 
-      position={[0, 0, 0]} 
-      rotation={[0, Math.PI, 0]}
-    />
-  );
-};
 
 const StagePlatform = () => {
   const thickness = 0.2;
@@ -193,7 +57,6 @@ const ExternalDragHandler = ({
         const pctY = zToPercent(intersectPoint.z);
         
         // Return raw 0-100 coords. 
-        // Strict group boundary logic is now handled in StepStagePlot::handleGhostUpdate
         const clampedX = Math.max(0, Math.min(100, pctX));
         const clampedY = Math.max(0, Math.min(100, pctY));
         
@@ -202,139 +65,6 @@ const ExternalDragHandler = ({
   }, [dragCoords, camera, raycaster, onUpdate]);
 
   return null;
-};
-
-interface DraggableItemProps {
-  item: StageItem;
-  activeId: string | null;
-  onDown: (e: ThreeEvent<PointerEvent>, id: string) => void;
-  onMove: (e: ThreeEvent<PointerEvent>) => void;
-  onUp: (e: ThreeEvent<PointerEvent>) => void;
-  isGhost?: boolean;
-}
-
-const DraggableItem: React.FC<DraggableItemProps> = ({ 
-  item, 
-  activeId, 
-  onDown,
-  onMove,
-  onUp,
-  isGhost = false
-}) => {
-  const { width, height, depth, color, shape } = getItemConfig(item);
-  const yPos = height / 2;
-  const x = percentToX(item.x);
-  const z = percentToZ(item.y);
-  const isDragging = activeId === item.id;
-  
-  const opacity = isGhost ? 0.6 : 1;
-  const transparent = isGhost;
-  const materialProps = { opacity, transparent, roughness: 0.4 };
-
-  // Always show label for better visibility in exports and top views
-  const showLabel = true;
-
-  // Check if it's a guitar or bass for the 3D model
-  const isGuitarOrBass = (item.label || '').toLowerCase().match(/guitar|bass/);
-
-  return (
-    <group position={[x, 0, z]}>
-      {showLabel && (
-        <Html 
-            position={[0, height + 0.3, 0]} 
-            center 
-            zIndexRange={isDragging ? [500, 400] : [100, 0]} 
-            style={{ pointerEvents: 'none' }}
-        >
-          <div className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded backdrop-blur-sm border ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}>
-            {item.label}
-          </div>
-        </Html>
-      )}
-
-      <group
-        onPointerDown={!isGhost ? (e) => onDown(e, item.id) : undefined}
-        onPointerMove={!isGhost ? onMove : undefined}
-        onPointerUp={!isGhost ? onUp : undefined}
-      >
-        {/* HIT BOX - Invisible mesh to ensure robust drag-and-drop interaction */}
-        <mesh position={[0, height / 2, 0]}>
-             <boxGeometry args={[Math.max(width, 0.6), height, Math.max(depth, 0.6)]} />
-             <meshBasicMaterial transparent opacity={0} />
-        </mesh>
-
-        {shape === 'wedge' ? (
-             // Monitor Wedge shape
-             <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow={!isGhost} receiveShadow>
-                 <boxGeometry args={[width, height, depth]} />
-                 <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-             </mesh>
-        ) : shape === 'pole' ? (
-             // Mic Stand
-             <group>
-                 <mesh position={[0, height/2, 0]} castShadow={!isGhost}>
-                     <cylinderGeometry args={[0.02, 0.02, height]} />
-                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                 </mesh>
-                 <mesh position={[0, 0.02, 0]}>
-                     <cylinderGeometry args={[0.15, 0.15, 0.05]} />
-                     <meshStandardMaterial color="#475569" {...materialProps} />
-                 </mesh>
-             </group>
-        ) : shape === 'instrument' ? (
-             isGuitarOrBass ? (
-                 <group position={[0, height/2, 0]}>
-                    <Suspense fallback={
-                         <mesh position={[0, 0, 0]} castShadow={!isGhost}>
-                             <boxGeometry args={[width, height*0.6, 0.1]} />
-                             <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                         </mesh>
-                    }>
-                        <GuitarModel color={isDragging ? '#fbbf24' : color} />
-                    </Suspense>
-                 </group>
-             ) : (
-                // Abstract Instrument Shape (Sax/Trumpet etc)
-                <group>
-                    {/* Body */}
-                    <mesh position={[0, height*0.4, 0]} castShadow={!isGhost}>
-                        <boxGeometry args={[width, height*0.6, 0.1]} />
-                        <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                    </mesh>
-                    {/* Neck */}
-                    <mesh position={[0, height*0.8, 0]}>
-                        <boxGeometry args={[width*0.2, height*0.4, 0.05]} />
-                        <meshStandardMaterial color="#475569" {...materialProps} />
-                    </mesh>
-                    {/* Stand Base */}
-                    <mesh position={[0, 0.05, 0]}>
-                        <cylinderGeometry args={[0.2, 0.2, 0.1]} />
-                        <meshStandardMaterial color="#475569" {...materialProps} />
-                    </mesh>
-                </group>
-             )
-        ) : shape === 'person' ? (
-             // Band Member 3D Model
-             <group position={[0, 0, 0]}>
-                 <Suspense fallback={
-                     <mesh position={[0, height/2, 0]} castShadow={!isGhost} receiveShadow>
-                        <boxGeometry args={[width, height, depth]} />
-                        <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                     </mesh>
-                 }>
-                     <PersonModel color={isDragging ? '#fbbf24' : color} />
-                 </Suspense>
-             </group>
-        ) : (
-             // Default Box / Amp
-             <mesh position={[0, yPos, 0]} castShadow={!isGhost} receiveShadow>
-                <boxGeometry args={[width, height, depth]} />
-                <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-             </mesh>
-        )}
-      </group>
-    </group>
-  );
 };
 
 export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ 
@@ -492,7 +222,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
         <Suspense fallback={null}>
             {items.map((item) => (
-              <DraggableItem 
+              <StageDraggableItem 
                 key={item.id} 
                 item={item} 
                 activeId={activeId} 
@@ -503,7 +233,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             ))}
 
             {ghostItems.map((item) => (
-              <DraggableItem 
+              <StageDraggableItem 
                 key={item.id} 
                 item={item} 
                 activeId={null} 
