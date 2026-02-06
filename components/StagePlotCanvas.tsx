@@ -1,7 +1,6 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { StageItem } from '../types';
-import { Canvas, ThreeEvent } from '@react-three/fiber';
+import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
@@ -12,6 +11,10 @@ interface StagePlotCanvasProps {
   viewMode?: 'isometric' | 'top';
   showAudienceLabel?: boolean;
   isPreview?: boolean;
+  ghostItems?: StageItem[];
+  // New props for external drag handling
+  dragCoords?: { x: number; y: number; width: number; height: number } | null;
+  onDragPosChange?: (x: number, y: number) => void;
 }
 
 // --- Constants ---
@@ -100,12 +103,49 @@ const StagePlatform = () => {
   );
 };
 
+// Component to handle External Drag Logic inside Canvas context
+const ExternalDragHandler = ({ 
+  dragCoords, 
+  onUpdate 
+}: { 
+  dragCoords: { x: number; y: number; width: number; height: number };
+  onUpdate: (x: number, y: number) => void;
+}) => {
+  const { camera, raycaster } = useThree();
+  const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+  const mouse = new THREE.Vector2();
+  const intersectPoint = new THREE.Vector3();
+
+  useEffect(() => {
+    // Convert Pixel Coords to NDC (-1 to +1)
+    mouse.x = (dragCoords.x / dragCoords.width) * 2 - 1;
+    mouse.y = -(dragCoords.y / dragCoords.height) * 2 + 1;
+
+    raycaster.setFromCamera(mouse, camera);
+    
+    // Raycast to the floor plane
+    if (raycaster.ray.intersectPlane(plane, intersectPoint)) {
+        const pctX = xToPercent(intersectPoint.x);
+        const pctY = zToPercent(intersectPoint.z);
+        
+        // Clamp
+        const clampedX = Math.max(2, Math.min(98, pctX));
+        const clampedY = Math.max(2, Math.min(98, pctY));
+        
+        onUpdate(clampedX, clampedY);
+    }
+  }, [dragCoords, camera, raycaster, onUpdate]);
+
+  return null;
+};
+
 interface DraggableItemProps {
   item: StageItem;
   activeId: string | null;
   onDown: (e: ThreeEvent<PointerEvent>, id: string) => void;
   onMove: (e: ThreeEvent<PointerEvent>) => void;
   onUp: (e: ThreeEvent<PointerEvent>) => void;
+  isGhost?: boolean;
 }
 
 const DraggableItem: React.FC<DraggableItemProps> = ({ 
@@ -113,69 +153,74 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   activeId, 
   onDown,
   onMove,
-  onUp
+  onUp,
+  isGhost = false
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const yPos = height / 2;
   const x = percentToX(item.x);
   const z = percentToZ(item.y);
   const isDragging = activeId === item.id;
+  
+  const opacity = isGhost ? 0.6 : 1;
+  const transparent = isGhost;
+  const materialProps = { opacity, transparent, roughness: 0.4 };
 
   return (
     <group position={[x, 0, z]}>
       <Html position={[0, height + 0.3, 0]} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
-        <div className="text-[10px] font-black text-slate-900 whitespace-nowrap select-none tracking-tight bg-white/50 px-1 rounded backdrop-blur-sm border border-white/20">
+        <div className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded backdrop-blur-sm border ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}>
           {item.label}
         </div>
       </Html>
 
       <group
-        onPointerDown={(e) => onDown(e, item.id)}
-        onPointerMove={onMove}
-        onPointerUp={onUp}
+        onPointerDown={!isGhost ? (e) => onDown(e, item.id) : undefined}
+        onPointerMove={!isGhost ? onMove : undefined}
+        onPointerUp={!isGhost ? onUp : undefined}
       >
         {shape === 'wedge' ? (
              // Monitor Wedge shape
-             <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow receiveShadow>
+             <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow={!isGhost} receiveShadow>
                  <boxGeometry args={[width, height, depth]} />
-                 <meshStandardMaterial color={isDragging ? '#fbbf24' : color} />
+                 <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
              </mesh>
         ) : shape === 'pole' ? (
              // Mic Stand
              <group>
-                 <mesh position={[0, height/2, 0]} castShadow>
+                 <mesh position={[0, height/2, 0]} castShadow={!isGhost}>
                      <cylinderGeometry args={[0.02, 0.02, height]} />
-                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} />
+                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
                  </mesh>
                  <mesh position={[0, 0.02, 0]}>
                      <cylinderGeometry args={[0.15, 0.15, 0.05]} />
-                     <meshStandardMaterial color="#475569" />
+                     <meshStandardMaterial color="#475569" {...materialProps} />
                  </mesh>
              </group>
         ) : shape === 'instrument' ? (
              // Abstract Instrument Shape
              <group>
                  {/* Body */}
-                 <mesh position={[0, height*0.4, 0]} castShadow>
+                 <mesh position={[0, height*0.4, 0]} castShadow={!isGhost}>
                      <boxGeometry args={[width, height*0.6, 0.1]} />
-                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} />
+                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
                  </mesh>
                  {/* Neck */}
                  <mesh position={[0, height*0.8, 0]}>
                      <boxGeometry args={[width*0.2, height*0.4, 0.05]} />
-                     <meshStandardMaterial color="#475569" />
+                     <meshStandardMaterial color="#475569" {...materialProps} />
                  </mesh>
                  {/* Stand Base */}
                  <mesh position={[0, 0.05, 0]}>
                      <cylinderGeometry args={[0.2, 0.2, 0.1]} />
-                     <meshStandardMaterial color="#475569" />
+                     <meshStandardMaterial color="#475569" {...materialProps} />
                  </mesh>
              </group>
         ) : (
              // Default Box / Person / Amp
-             <mesh position={[0, yPos, 0]} castShadow receiveShadow>
+             <mesh position={[0, yPos, 0]} castShadow={!isGhost} receiveShadow>
                 <boxGeometry args={[width, height, depth]} />
-                <meshStandardMaterial color={isDragging ? '#fbbf24' : color} roughness={0.4} />
+                <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
              </mesh>
         )}
       </group>
@@ -189,7 +234,10 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   editable, 
   viewMode = 'isometric', 
   showAudienceLabel = true,
-  isPreview = false
+  isPreview = false,
+  ghostItems = [],
+  dragCoords,
+  onDragPosChange
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
@@ -328,6 +376,23 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             onUp={handlePointerUp}
           />
         ))}
+
+        {ghostItems.map((item) => (
+          <DraggableItem 
+            key={item.id} 
+            item={item} 
+            activeId={null} 
+            onDown={() => {}} 
+            onMove={() => {}} 
+            onUp={() => {}}
+            isGhost={true}
+          />
+        ))}
+
+        {/* Logic to sync external drag (sidebar) with 3D world */}
+        {dragCoords && onDragPosChange && (
+            <ExternalDragHandler dragCoords={dragCoords} onUpdate={onDragPosChange} />
+        )}
 
       </Canvas>
     </div>
