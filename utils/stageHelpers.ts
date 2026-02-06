@@ -44,6 +44,19 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
         // KEYS
         else if (inst.type === InstrumentType.KEYS) {
             items.push({ id: `keys-${baseId}-${idx}`, memberId: member.id, type: 'member', label: inst.group, x: startX + spreadX, y: startY, fromInstrumentIndex: idx, isPeripheral: false });
+            
+            // Add DI Box
+            const diLabel = instId.includes('stereo') ? 'Stereo DI' : 'DI';
+            items.push({ 
+                id: `di-${baseId}-${idx}`, 
+                memberId: member.id, 
+                type: 'member', 
+                label: diLabel, 
+                x: startX + spreadX + (isRight ? 3 : -3), 
+                y: startY + 5, 
+                fromInstrumentIndex: idx, 
+                isPeripheral: true 
+            });
         }
 
         // AMPS
