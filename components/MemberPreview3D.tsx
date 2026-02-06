@@ -1,6 +1,6 @@
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Html, useGLTF } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Html, useGLTF, Clone } from '@react-three/drei';
 import * as THREE from 'three';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
@@ -43,28 +43,75 @@ interface PreviewItemProps {
 
 // Consistent URL with StagePlotCanvas
 const GUITAR_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb';
+const PERSON_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Male_Strong.glb';
 
 // Reusing the GuitarModel here for consistency in preview
 const GuitarModel = ({ color }: { color: string }) => {
   const { scene } = useGLTF(GUITAR_URL);
   
-  const clone = React.useMemo(() => {
-    const c = scene.clone();
-    c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-         (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ 
-             color: color, 
-             roughness: 0.3,
-             metalness: 0.2
-         });
-         child.castShadow = true;
-         child.receiveShadow = true;
-      }
-    });
-    return c;
-  }, [scene, color]);
+  return (
+    <Clone 
+        object={scene} 
+        scale={1.5} 
+        rotation={[0, Math.PI / 2, 0]} 
+        position={[0, -0.5, 0]}
+        inject={(object) => {
+            if ((object as THREE.Mesh).isMesh) {
+                const mesh = object as THREE.Mesh;
+                if (Array.isArray(mesh.material)) {
+                    mesh.material = mesh.material.map(m => {
+                        const newM = m.clone();
+                        // @ts-ignore
+                        newM.color.set(color);
+                        return newM;
+                    });
+                } else {
+                    const newM = mesh.material.clone();
+                    // @ts-ignore
+                    newM.color.set(color);
+                    mesh.material = newM;
+                }
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+            }
+            return null;
+        }}
+    />
+  );
+};
 
-  return <primitive object={clone} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, -0.5, 0]} />;
+const PersonModel = ({ color }: { color: string }) => {
+  const { scene } = useGLTF(PERSON_URL);
+  
+  return (
+    <Clone 
+        object={scene} 
+        scale={0.9} 
+        position={[0, 0, 0]} 
+        rotation={[0, Math.PI, 0]}
+        inject={(object) => {
+            if ((object as THREE.Mesh).isMesh) {
+                const mesh = object as THREE.Mesh;
+                if (Array.isArray(mesh.material)) {
+                    mesh.material = mesh.material.map(m => {
+                        const newM = m.clone();
+                        // @ts-ignore
+                        newM.color.set(color);
+                        return newM;
+                    });
+                } else {
+                    const newM = mesh.material.clone();
+                    // @ts-ignore
+                    newM.color.set(color);
+                    mesh.material = newM;
+                }
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+            }
+            return null;
+        }}
+    />
+  );
 };
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, shape = 'box' }) => {
@@ -134,6 +181,20 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
                 </mesh>
             );
         }
+        if (shape === 'person') {
+            return (
+                <group position={[0, 0, 0]}>
+                     <Suspense fallback={
+                         <mesh position={[0, height/2, 0]} castShadow receiveShadow>
+                            <boxGeometry args={[width, height, depth]} />
+                            <meshStandardMaterial color={color} roughness={0.4} />
+                         </mesh>
+                     }>
+                         <PersonModel color={color} />
+                     </Suspense>
+                </group>
+            );
+        }
 
         // Default Box
         return (
@@ -170,7 +231,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       size: [0.5, 1.7, 0.5], // Matched StagePlotCanvas
       color: COLORS.person, 
       label: member.name || 'Musician',
-      shape: 'box' 
+      shape: 'person' 
     });
 
     // Track positioning to prevent overlapping

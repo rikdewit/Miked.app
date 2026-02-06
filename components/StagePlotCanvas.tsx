@@ -1,8 +1,10 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, Suspense, useMemo } from 'react';
 import { StageItem } from '../types';
 import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+// @ts-ignore
+import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
 
 // Extend JSX.IntrinsicElements to allow any tag (fixes React Three Fiber + HTML tag issues)
 declare global {
@@ -103,32 +105,54 @@ export const getItemConfig = (item: StageItem) => {
 
 // Use the direct raw.githubusercontent.com link to avoid redirects and CORS issues
 const GUITAR_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb';
+const PERSON_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Male_Strong.glb';
 
-const GuitarModel = ({ color, dragging }: { color: string, dragging?: boolean }) => {
-  const { scene } = useGLTF(GUITAR_URL);
+// Standard handler hook for cloning 3D models with material overrides
+const useStageModel = (url: string, color: string) => {
+  const { scene } = useGLTF(url);
   
-  const clone = React.useMemo(() => {
-    const c = scene.clone();
-    c.traverse((child) => {
-      if ((child as THREE.Mesh).isMesh) {
-         // Apply styling while preserving some model geometry details if possible
-         // But for consistent style with the app, we override material
-         (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ 
-             color: color, 
-             roughness: 0.3,
-             metalness: 0.2
-         });
-         child.castShadow = true;
-         child.receiveShadow = true;
-      }
-    });
-    return c;
+  const model = useMemo(() => {
+      // Use SkeletonUtils.clone to ensure SkinnedMeshes (bones) are cloned correctly
+      // This is crucial for characters (PersonModel) to move correctly with their parent group
+      const cloned = cloneGLTF(scene);
+      
+      cloned.traverse((node: any) => {
+          if (node.isMesh) {
+             const mesh = node as THREE.Mesh;
+             mesh.castShadow = true;
+             mesh.receiveShadow = true;
+             if (mesh.material) {
+                 const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                 const newMaterials = materials.map(m => {
+                     const nm = m.clone() as THREE.MeshStandardMaterial;
+                     nm.color.set(color);
+                     return nm;
+                 });
+                 mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
+             }
+          }
+      });
+      return cloned;
   }, [scene, color]);
 
-  // Adjust scale and rotation to fit the scene
-  // Assuming a standard upright guitar model, we might need to scale it down/up
-  // and ensure it stands on the floor.
-  return <primitive object={clone} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, -0.5, 0]} />;
+  return model;
+};
+
+const GuitarModel = ({ color }: { color: string }) => {
+  const model = useStageModel(GUITAR_URL, color);
+  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, -0.5, 0]} />;
+};
+
+const PersonModel = ({ color }: { color: string }) => {
+  const model = useStageModel(PERSON_URL, color);
+  return (
+    <primitive 
+      object={model}
+      scale={0.9} 
+      position={[0, 0, 0]} 
+      rotation={[0, Math.PI, 0]}
+    />
+  );
 };
 
 const StagePlatform = () => {
@@ -233,6 +257,12 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         onPointerMove={!isGhost ? onMove : undefined}
         onPointerUp={!isGhost ? onUp : undefined}
       >
+        {/* HIT BOX - Invisible mesh to ensure robust drag-and-drop interaction */}
+        <mesh position={[0, height / 2, 0]}>
+             <boxGeometry args={[Math.max(width, 0.6), height, Math.max(depth, 0.6)]} />
+             <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+
         {shape === 'wedge' ? (
              // Monitor Wedge shape
              <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow={!isGhost} receiveShadow>
@@ -260,7 +290,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                              <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
                          </mesh>
                     }>
-                        <GuitarModel color={isDragging ? '#fbbf24' : color} dragging={isDragging} />
+                        <GuitarModel color={isDragging ? '#fbbf24' : color} />
                     </Suspense>
                  </group>
              ) : (
@@ -283,8 +313,20 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                     </mesh>
                 </group>
              )
+        ) : shape === 'person' ? (
+             // Band Member 3D Model
+             <group position={[0, 0, 0]}>
+                 <Suspense fallback={
+                     <mesh position={[0, height/2, 0]} castShadow={!isGhost} receiveShadow>
+                        <boxGeometry args={[width, height, depth]} />
+                        <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
+                     </mesh>
+                 }>
+                     <PersonModel color={isDragging ? '#fbbf24' : color} />
+                 </Suspense>
+             </group>
         ) : (
-             // Default Box / Person / Amp
+             // Default Box / Amp
              <mesh position={[0, yPos, 0]} castShadow={!isGhost} receiveShadow>
                 <boxGeometry args={[width, height, depth]} />
                 <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
