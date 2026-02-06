@@ -89,7 +89,8 @@ export const getItemConfig = (item: StageItem) => {
   if (label.includes('mic')) {
     return { width: 0.2, depth: 0.2, height: 1.5, color: COLORS.mic, shape: 'pole' };
   }
-  if (label.includes('gtr') || label.includes('bass') || label.includes('sax') || label.includes('tpt')) {
+  // Added 'guitar' and 'brass' to this check to ensure they render as instruments instead of default boxes
+  if (label.includes('gtr') || label.includes('guitar') || label.includes('bass') || label.includes('sax') || label.includes('tpt') || label.includes('brass')) {
      // Instrument on stand
      return { width: 0.4, depth: 0.3, height: 1.0, color: COLORS.instrument, shape: 'instrument' };
   }

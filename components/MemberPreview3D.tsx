@@ -41,10 +41,12 @@ interface PreviewItemProps {
   shape?: ShapeType;
 }
 
+// Consistent URL with StagePlotCanvas
+const GUITAR_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb';
+
 // Reusing the GuitarModel here for consistency in preview
 const GuitarModel = ({ color }: { color: string }) => {
-  // Use the direct raw.githubusercontent.com link to avoid redirects and CORS issues
-  const { scene } = useGLTF('https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb');
+  const { scene } = useGLTF(GUITAR_URL);
   
   const clone = React.useMemo(() => {
     const c = scene.clone();
