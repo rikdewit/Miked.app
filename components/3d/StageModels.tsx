@@ -118,5 +118,34 @@ export const StandModel = ({ color }: { color?: string }) => {
 
 export const PersonModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.PERSON, color);
+
+  useMemo(() => {
+    // Manually adjust the skeleton to bring arms down (neutral stance)
+    // Targeting specific bones based on hierarchy: Shoulder_L, Shoulder_R, Elbow_L, Elbow_R
+    model.traverse((node: any) => {
+      if (node.isBone) {
+        
+        if (node.name === 'Shoulder_L') {
+            node.rotation.set(0, 0, 0); // Reset existing pose
+            // Rotate down (inverted direction based on feedback)
+            node.rotation.z = -1.35; 
+            node.rotation.x = 0.2; 
+        }
+        
+        if (node.name === 'Shoulder_R') {
+            node.rotation.set(0, 0, 0); // Reset existing pose
+            // Rotate down (inverted direction based on feedback)
+            node.rotation.z = 1.35;
+            node.rotation.x = 0.2;
+        }
+
+        // Straighten Elbows (neutral)
+        if (node.name === 'Elbow_L' || node.name === 'Elbow_R') {
+            node.rotation.set(0, 0, 0);
+        }
+      }
+    });
+  }, [model]);
+
   return <primitive object={model} scale={1.1} position={MODEL_OFFSETS.DEFAULT} />;
 };
