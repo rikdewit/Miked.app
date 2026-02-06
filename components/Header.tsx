@@ -8,7 +8,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ step, setStep }) => {
   return (
-    <nav className="no-print bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-50">
+    <nav className="no-print bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-[1000]">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
          <div className="font-bold text-xl flex items-center gap-2 cursor-pointer" onClick={() => setStep(0)}>
            <Mic className="text-indigo-500" />

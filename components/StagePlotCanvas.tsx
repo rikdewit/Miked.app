@@ -4,6 +4,40 @@ import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
+// Augment React's JSX namespace (for React 18+ / TS 5+)
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      boxGeometry: any;
+      meshStandardMaterial: any;
+      cylinderGeometry: any;
+      ambientLight: any;
+      directionalLight: any;
+      planeGeometry: any;
+      meshBasicMaterial: any;
+    }
+  }
+}
+
+// Augment Global JSX namespace (fallback)
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      boxGeometry: any;
+      meshStandardMaterial: any;
+      cylinderGeometry: any;
+      ambientLight: any;
+      directionalLight: any;
+      planeGeometry: any;
+      meshBasicMaterial: any;
+    }
+  }
+}
+
 interface StagePlotCanvasProps {
   items: StageItem[];
   setItems: (items: StageItem[]) => void;
@@ -166,13 +200,23 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   const transparent = isGhost;
   const materialProps = { opacity, transparent, roughness: 0.4 };
 
+  // Always show label for better visibility in exports and top views
+  const showLabel = true;
+
   return (
     <group position={[x, 0, z]}>
-      <Html position={[0, height + 0.3, 0]} center zIndexRange={[100, 0]} style={{ pointerEvents: 'none' }}>
-        <div className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded backdrop-blur-sm border ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}>
-          {item.label}
-        </div>
-      </Html>
+      {showLabel && (
+        <Html 
+            position={[0, height + 0.3, 0]} 
+            center 
+            zIndexRange={isDragging ? [500, 400] : [100, 0]} 
+            style={{ pointerEvents: 'none' }}
+        >
+          <div className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded backdrop-blur-sm border ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}>
+            {item.label}
+          </div>
+        </Html>
+      )}
 
       <group
         onPointerDown={!isGhost ? (e) => onDown(e, item.id) : undefined}

@@ -11,7 +11,7 @@ export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed 
   if (step === 0) return null;
 
   return (
-    <div className="no-print bg-slate-950 p-4 border-t border-slate-800 sticky bottom-0 w-full z-40">
+    <div className="no-print bg-slate-950 p-4 border-t border-slate-800 sticky bottom-0 w-full z-[1000]">
       <div className="max-w-4xl mx-auto flex justify-between">
         <button 
           onClick={() => setStep(s => s - 1)}

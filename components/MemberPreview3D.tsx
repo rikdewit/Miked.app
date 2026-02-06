@@ -4,6 +4,40 @@ import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
 
+// Augment React's JSX namespace (for React 18+ / TS 5+)
+declare module 'react' {
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      boxGeometry: any;
+      meshStandardMaterial: any;
+      ambientLight: any;
+      directionalLight: any;
+      pointLight: any;
+      gridHelper: any;
+      cylinderGeometry: any;
+    }
+  }
+}
+
+// Augment Global JSX namespace (fallback)
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      boxGeometry: any;
+      meshStandardMaterial: any;
+      ambientLight: any;
+      directionalLight: any;
+      pointLight: any;
+      gridHelper: any;
+      cylinderGeometry: any;
+    }
+  }
+}
+
 interface MemberPreview3DProps {
   member: BandMember;
 }
@@ -14,35 +48,14 @@ const COLORS = {
   amp: '#1e293b',        // Slate 800
   drum: '#ef4444',       // Red 500
   keys: '#8b5cf6',       // Violet 500
-  mic: '#cbd5e1',        // Slate 300 (Silver)
-  instrument: '#fbbf24', // Amber 400 (Guitar/Bass body)
-  pedalboard: '#111827', // Gray 900 (Black)
+  mic: '#94a3b8',        // Slate 400
+  instrument: '#fbbf24', // Amber 400
+  pedalboard: '#111827', // Gray 900
   di: '#f97316',         // Orange 500
   stand: '#64748b'       // Slate 500 (Hardware)
 };
 
-interface PreviewItemProps {
-  position: [number, number, number];
-  args: [number, number, number];
-  color: string;
-  label?: string;
-}
-
-const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label }) => (
-  <group position={position}>
-    <mesh castShadow receiveShadow position={[0, args[1]/2, 0]}>
-      <boxGeometry args={args} />
-      <meshStandardMaterial color={color} roughness={0.4} />
-    </mesh>
-    {label && (
-        <Html position={[0, args[1] + 0.1, 0]} center zIndexRange={[100, 0]}>
-            <div className="text-[7px] font-bold bg-black/60 text-white px-1 py-0.5 rounded backdrop-blur-sm whitespace-nowrap border border-white/10">
-                {label}
-            </div>
-        </Html>
-    )}
-  </group>
-);
+type ShapeType = 'box' | 'cylinder' | 'pole' | 'instrument' | 'person' | 'wedge';
 
 interface SceneItem {
   id: string;
@@ -50,7 +63,88 @@ interface SceneItem {
   size: [number, number, number];
   color: string;
   label: string;
+  shape?: ShapeType;
 }
+
+interface PreviewItemProps {
+  position: [number, number, number];
+  args: [number, number, number];
+  color: string;
+  label?: string;
+  shape?: ShapeType;
+}
+
+const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, shape = 'box' }) => {
+    const [width, height, depth] = args;
+
+    const renderMesh = () => {
+        if (shape === 'pole') {
+            // Mic Stand
+            return (
+                <group>
+                    <mesh position={[0, height/2, 0]} castShadow>
+                        <cylinderGeometry args={[0.02, 0.02, height]} />
+                        <meshStandardMaterial color={color} roughness={0.4} />
+                    </mesh>
+                    <mesh position={[0, 0.02, 0]}>
+                        <cylinderGeometry args={[0.15, 0.15, 0.05]} />
+                        <meshStandardMaterial color="#475569" roughness={0.4} />
+                    </mesh>
+                </group>
+            );
+        }
+        if (shape === 'instrument') {
+            return (
+                <group>
+                    {/* Body */}
+                    <mesh position={[0, height*0.4, 0]} castShadow>
+                        <boxGeometry args={[width, height*0.6, 0.1]} />
+                        <meshStandardMaterial color={color} roughness={0.4} />
+                    </mesh>
+                    {/* Neck */}
+                    <mesh position={[0, height*0.8, 0]}>
+                        <boxGeometry args={[width*0.2, height*0.4, 0.05]} />
+                        <meshStandardMaterial color="#475569" roughness={0.4} />
+                    </mesh>
+                    {/* Stand Base */}
+                    <mesh position={[0, 0.05, 0]}>
+                        <cylinderGeometry args={[0.2, 0.2, 0.1]} />
+                        <meshStandardMaterial color="#475569" roughness={0.4} />
+                    </mesh>
+                </group>
+            );
+        }
+        if (shape === 'wedge') {
+            return (
+                <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow receiveShadow>
+                    <boxGeometry args={[width, height, depth]} />
+                    <meshStandardMaterial color={color} roughness={0.4} />
+                </mesh>
+            );
+        }
+
+        // Default Box
+        return (
+            <mesh castShadow receiveShadow position={[0, height/2, 0]}>
+                <boxGeometry args={[width, height, depth]} />
+                <meshStandardMaterial color={color} roughness={0.4} />
+            </mesh>
+        );
+    };
+
+    return (
+        <group position={position}>
+            {renderMesh()}
+            {label && (
+                <Html position={[0, height + 0.3, 0]} center zIndexRange={[100, 0]}>
+                    <div className="text-[7px] font-bold bg-black/60 text-white px-1 py-0.5 rounded backdrop-blur-sm whitespace-nowrap border border-white/10">
+                        {label}
+                    </div>
+                </Html>
+            )}
+        </group>
+    );
+};
 
 export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
   
@@ -61,9 +155,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
     items.push({ 
       id: 'person', 
       pos: [0, 0, 0], 
-      size: [0.4, 1.6, 0.4], 
+      size: [0.5, 1.7, 0.5], // Matched StagePlotCanvas
       color: COLORS.person, 
-      label: member.name || 'Musician' 
+      label: member.name || 'Musician',
+      shape: 'box' 
     });
 
     // Track positioning to prevent overlapping
@@ -79,9 +174,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         items.push({ 
             id: `drum-${instId}`, 
             pos: [0, 0, -1.0], // Behind person
-            size: [1.6, 0.8, 1.0], 
+            size: [1.8, 0.9, 1.5], // Matched StagePlotCanvas
             color: COLORS.drum, 
-            label: 'Kit' 
+            label: 'Kit',
+            shape: 'box'
         });
       }
       
@@ -91,9 +187,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         items.push({ 
             id: `amp-${instId}-${ampCount}`, 
             pos: [offset, 0, -0.6], // Behind and to side
-            size: [0.7, 0.7, 0.4], 
+            size: [0.7, 0.7, 0.4], // Matched StagePlotCanvas
             color: COLORS.amp, 
-            label: 'Amp' 
+            label: 'Amp',
+            shape: 'box'
         });
         ampCount++;
       }
@@ -103,9 +200,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         items.push({ 
             id: `keys-${instId}`, 
             pos: [0.7, 0, 0.4], // Front-Right
-            size: [0.9, 0.9, 0.35], 
+            size: [1.2, 0.9, 0.4], // Matched StagePlotCanvas
             color: COLORS.keys, 
-            label: inst.group 
+            label: inst.group,
+            shape: 'box'
         });
       }
 
@@ -115,17 +213,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         items.push({ 
             id: `mic-${instId}`, 
             pos: [0, 0, 0.6], // Directly in front
-            size: [0.05, 1.5, 0.05], 
+            size: [0.2, 1.5, 0.2], // Matched StagePlotCanvas logic (Pole args)
             color: COLORS.mic, 
-            label: 'Mic' 
-        });
-        // Mic Base
-        items.push({ 
-            id: `mic-base-${instId}`, 
-            pos: [0, 0, 0.6], 
-            size: [0.3, 0.02, 0.3], 
-            color: COLORS.stand, 
-            label: '' 
+            label: 'Mic',
+            shape: 'pole'
         });
       }
       
@@ -134,32 +225,25 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
           const isRight = instrumentCount % 2 === 0;
           const sideOffset = isRight ? 0.6 : -0.6;
           
-          // The Instrument Body (placed next to musician)
+          // The Instrument
           items.push({
               id: `inst-body-${instId}`,
-              pos: [sideOffset, 0.5, 0.1],
-              size: [0.3, 0.8, 0.15],
+              pos: [sideOffset, 0, 0.1], // Y=0 because shape handles elevation
+              size: [0.4, 1.0, 0.3], // Matched StagePlotCanvas
               color: COLORS.instrument,
-              label: inst.type
+              label: inst.type,
+              shape: 'instrument'
           });
           
-          // Neck of instrument (simulated)
-          items.push({
-              id: `inst-neck-${instId}`,
-              pos: [sideOffset, 1.0, 0.1],
-              size: [0.05, 0.5, 0.05],
-              color: COLORS.stand,
-              label: ''
-          });
-
           // Pedalboard / Modeler
           if (instId.includes('modeler')) {
               items.push({
                   id: `modeler-${instId}`,
                   pos: [sideOffset, 0, 0.7],
-                  size: [0.5, 0.1, 0.3],
+                  size: [0.6, 0.1, 0.3],
                   color: COLORS.pedalboard,
-                  label: 'Modeler'
+                  label: 'Modeler',
+                  shape: 'box'
               });
           } else if (inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS) {
                // Standard pedalboard for electric instruments
@@ -167,9 +251,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                    items.push({
                        id: `pedal-${instId}`,
                        pos: [sideOffset, 0, 0.7],
-                       size: [0.5, 0.05, 0.3],
+                       size: [0.6, 0.1, 0.3],
                        color: COLORS.pedalboard,
-                       label: 'Pedals'
+                       label: 'Pedals',
+                       shape: 'box'
                    });
                }
           }
@@ -179,9 +264,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
               items.push({
                   id: `di-${instId}`,
                   pos: [sideOffset + (isRight ? 0.3 : -0.3), 0, 0.5],
-                  size: [0.15, 0.1, 0.2],
+                  size: [0.2, 0.1, 0.2],
                   color: COLORS.di,
-                  label: 'DI'
+                  label: 'DI',
+                  shape: 'box'
               });
           }
           
@@ -209,6 +295,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                         args={item.size}
                         color={item.color}
                         label={item.label}
+                        shape={item.shape}
                     />
                 ))}
                 
