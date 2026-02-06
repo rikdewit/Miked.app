@@ -1,16 +1,20 @@
-import React, { useRef, useState } from 'react';
-import { Download, Mic, Music2, Layers, Box, Loader2, Clock } from 'lucide-react';
+import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { Mic, Music2, Layers, Box, Clock } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { RiderData } from '../types';
 import { InputList } from './InputList';
 import { StagePlotCanvas } from './StagePlotCanvas';
 
+export interface PreviewHandle {
+  downloadPdf: () => Promise<void>;
+}
+
 interface PreviewProps {
   data: RiderData;
 }
 
-export const Preview: React.FC<PreviewProps> = ({ data }) => {
+export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -117,22 +121,16 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
     }
   };
 
+  useImperativeHandle(ref, () => ({
+    downloadPdf: handleDownloadPDF
+  }));
+
   return (
     <div className="w-full flex flex-col items-center">
       <div className="no-print w-full max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
          <div>
            <h2 className="text-xl font-bold text-white">Your Rider is ready!</h2>
-           <p className="text-slate-400 text-sm">Review it below or download it now.</p>
-         </div>
-         <div className="flex gap-3">
-            <button 
-                onClick={handleDownloadPDF}
-                disabled={isGeneratingPdf}
-                className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-wait text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg transition-all min-w-[180px] justify-center"
-            >
-                {isGeneratingPdf ? <Loader2 className="animate-spin" size={20} /> : <Download size={20} />} 
-                {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
-            </button>
+           <p className="text-slate-400 text-sm">Review it below. Click "Download PDF" below to save.</p>
          </div>
       </div>
 
@@ -217,4 +215,4 @@ export const Preview: React.FC<PreviewProps> = ({ data }) => {
       </div>
     </div>
   );
-};
+});

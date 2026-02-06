@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRiderState } from './hooks/useRiderState';
 import { Header } from './components/Header';
 import { FooterNav } from './components/FooterNav';
@@ -6,10 +6,13 @@ import { Landing } from './components/Landing';
 import { StepInstruments } from './components/StepInstruments';
 import { StepStagePlot } from './components/StepStagePlot';
 import { StepDetails } from './components/StepDetails';
-import { Preview } from './components/Preview';
+import { Preview, PreviewHandle } from './components/Preview';
 
 const App: React.FC = () => {
   const [step, setStep] = useState(0); // 0: Landing, 1: Instruments, 2: Stage, 3: Details, 4: Preview
+  const previewRef = useRef<PreviewHandle>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
   const { 
     data, 
     setData, 
@@ -32,6 +35,14 @@ const App: React.FC = () => {
     }
     if (step === 3) return data.details.bandName.trim() !== '' && data.details.contactName.trim() !== '';
     return true;
+  };
+
+  const handleDownload = async () => {
+    if (previewRef.current) {
+      setIsDownloading(true);
+      await previewRef.current.downloadPdf();
+      setIsDownloading(false);
+    }
   };
 
   return (
@@ -71,11 +82,17 @@ const App: React.FC = () => {
         )}
 
         {step === 4 && (
-          <Preview data={data} />
+          <Preview data={data} ref={previewRef} />
         )}
       </main>
 
-      <FooterNav step={step} setStep={setStep} canProceed={canProceed()} />
+      <FooterNav 
+        step={step} 
+        setStep={setStep} 
+        canProceed={canProceed()} 
+        onDownload={handleDownload}
+        isDownloading={isDownloading}
+      />
     </div>
   );
 };

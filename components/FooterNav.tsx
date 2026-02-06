@@ -1,13 +1,15 @@
 import React from 'react';
-import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Download, Loader2 } from 'lucide-react';
 
 interface FooterNavProps {
   step: number;
   setStep: React.Dispatch<React.SetStateAction<number>>;
   canProceed: boolean;
+  onDownload?: () => void;
+  isDownloading?: boolean;
 }
 
-export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed }) => {
+export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed, onDownload, isDownloading }) => {
   if (step === 0) return null;
 
   return (
@@ -34,10 +36,12 @@ export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed 
           </button>
         ) : (
            <button 
-              onClick={() => setStep(0)} 
-              className="text-slate-500 text-sm hover:text-white"
+              onClick={onDownload}
+              disabled={isDownloading} 
+              className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-wait text-white px-6 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg hover:shadow-indigo-500/25 transition-all"
            >
-             Create New Rider
+             {isDownloading ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+             {isDownloading ? 'Generating...' : 'Download PDF'}
            </button>
         )}
       </div>
