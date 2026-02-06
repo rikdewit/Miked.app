@@ -101,7 +101,12 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         return <Models.MicStandModel color={isDragging ? '#fbbf24' : color} />;
     }
 
-    // --- 6. INSTRUMENTS (Guitars - No Stand) ---
+    // --- 6. INSTRUMENTS ---
+
+    // Check Bass BEFORE Guitar to prevent "Bass Guitar" from being caught by the "guitar" check
+    if (labelLower.includes('bass')) {
+         return <Models.BassModel color={isDragging ? '#fbbf24' : color} />;
+    }
     
     if (labelLower.includes('acoustic')) {
          return <Models.AcousticGuitarModel color={isDragging ? '#fbbf24' : color} />;
@@ -111,11 +116,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
          return <Models.ElectricGuitarModel color={isDragging ? '#fbbf24' : color} />;
     }
 
-    // --- 7. INSTRUMENTS WITHOUT STAND (Bass, Horns) ---
-
-    if (labelLower.includes('bass')) {
-         return <Models.BassModel color={isDragging ? '#fbbf24' : color} />;
-    }
+    // --- 7. HORNS ---
 
     if (labelLower.includes('sax')) {
          return <Models.SaxModel color={isDragging ? '#fbbf24' : color} />;
