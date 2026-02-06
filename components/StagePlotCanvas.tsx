@@ -4,6 +4,23 @@ import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
+// Fix for missing R3F types in environment
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      group: any;
+      mesh: any;
+      boxGeometry: any;
+      meshStandardMaterial: any;
+      cylinderGeometry: any;
+      ambientLight: any;
+      directionalLight: any;
+      planeGeometry: any;
+      meshBasicMaterial: any;
+    }
+  }
+}
+
 interface StagePlotCanvasProps {
   items: StageItem[];
   setItems: (items: StageItem[]) => void;

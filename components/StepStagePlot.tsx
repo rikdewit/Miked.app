@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Box, Layers, Trash2, GripVertical, Check, RefreshCw } from 'lucide-react';
+import { Box, Layers, Trash2, GripVertical, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { RiderData, StageItem, BandMember, InstrumentType } from '../types';
 import { StagePlotCanvas } from './StagePlotCanvas';
 import { INSTRUMENTS } from '../constants';
@@ -14,6 +14,7 @@ interface StepStagePlotProps {
 export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, updateStageItems }) => {
   const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('isometric');
   const [draggingMemberId, setDraggingMemberId] = useState<string | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
   
   // Stores the Percentage Position (0-100) on the stage
   const [dragPos, setDragPos] = useState<{ x: number, y: number } | null>(null);
@@ -140,12 +141,15 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
       return 'none';
   };
 
-  const clearStage = () => {
-      if (data.stagePlot.length === 0) return;
-      
-      if (window.confirm("Are you sure you want to clear the stage? All items will be removed.")) {
-          updateStageItems([]);
+  const requestClearStage = () => {
+      if (data.stagePlot.length > 0) {
+          setShowClearConfirm(true);
       }
+  };
+
+  const confirmClearStage = () => {
+      updateStageItems([]);
+      setShowClearConfirm(false);
   };
 
   // --- Drag & Drop Handlers ---
@@ -382,7 +386,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                      </button>
                      <button 
                         type="button"
-                        onClick={() => clearStage()}
+                        onClick={requestClearStage}
                         disabled={data.stagePlot.length === 0}
                         className={`px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors ${
                             data.stagePlot.length === 0 
@@ -424,6 +428,34 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
              </div>
         </div>
 
+        {/* CLEAR CONFIRMATION MODAL */}
+        {showClearConfirm && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="bg-slate-800 border border-slate-600 rounded-xl p-6 max-w-sm w-full shadow-2xl animate-in fade-in zoom-in duration-200">
+                    <div className="flex items-center gap-3 mb-4 text-red-400">
+                        <AlertTriangle size={24} />
+                        <h3 className="text-lg font-bold text-white">Clear Stage?</h3>
+                    </div>
+                    <p className="text-slate-300 text-sm mb-6">
+                        Are you sure you want to remove all items from the stage? This action cannot be undone.
+                    </p>
+                    <div className="flex justify-end gap-3">
+                        <button 
+                            onClick={() => setShowClearConfirm(false)}
+                            className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 transition-colors text-sm font-medium"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={confirmClearStage}
+                            className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-900/20 text-sm font-bold transition-all"
+                        >
+                            Yes, Clear All
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };
