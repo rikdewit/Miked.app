@@ -10,7 +10,7 @@ const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/productio
 const URLS = {
   GUITAR_ELEC: BASE_URL + 'Electric_Guitar_Telecaster_Red.glb',
   GUITAR_ACOUSTIC: BASE_URL + 'Acoustic_Guitar_Beige.glb',
-  BASS: BASE_URL + 'Bass_Guitar_White.glb',
+  BASS: BASE_URL + 'Bass_Guitar_Firebird_Red.glb',
   AMPLIFIER: BASE_URL + 'Amplifier.glb',
   DRUMS: BASE_URL + 'Drums_A.glb',
   PERSON: BASE_URL + 'Male_Strong.glb',
@@ -47,16 +47,6 @@ const convertQuaternion = (rot: number[]) => {
   return new THREE.Quaternion(rot[0], -rot[1], -rot[2], rot[3]);
 };
 
-// --- SWAP HELPER ---
-// Swaps L/R in bone names to fix inverted data mapping from export
-const getSwappedBoneName = (name: string) => {
-  if (name.endsWith('_L')) return name.replace('_L', '_R');
-  if (name.endsWith('_R')) return name.replace('_R', '_L');
-  if (name.endsWith('.L')) return name.replace('.L', '.R');
-  if (name.endsWith('.R')) return name.replace('.R', '.L');
-  return name;
-};
-
 // Recursive function to apply pose data to the skeleton
 const applyPose = (boneData: any, bone: THREE.Object3D) => {
   if (!bone) return;
@@ -69,8 +59,7 @@ const applyPose = (boneData: any, bone: THREE.Object3D) => {
   // Recursively apply to children
   if (boneData.children && boneData.children.length > 0) {
     boneData.children.forEach((childData: any) => {
-      // Find the child bone in the GLTF hierarchy using the SWAPPED name
-      // This routes Left Data -> Right Bone and vice versa, fixing the mirrored limbs
+
       const targetName = childData.name;
       const childBone = bone.children.find(b => b.name === targetName);
       
@@ -130,13 +119,13 @@ export const BassModel = ({ color, held }: { color?: string, held?: boolean }) =
       return (
         <primitive 
             object={model} 
-            scale={1.4} 
+            scale={1} 
             // Positioned chest height, slightly left to center body mass, forward
-            position={[.32, 1.3, 0.06]} 
+            position={[0.215851, 1.262, 0.086747]} 
             rotation={[
-                THREE.MathUtils.degToRad(90), // X: 0 (No forward/back tilt)
-                THREE.MathUtils.degToRad(-60), // Y: Face Audience 96.191
-                THREE.MathUtils.degToRad(3) // Z: Diagonal Neck Angle
+                THREE.MathUtils.degToRad(0), // X: Face Direction
+                THREE.MathUtils.degToRad(0), // Y: Rotate around
+                THREE.MathUtils.degToRad(0) // Z: Flip over
             ]} 
         />
       );
