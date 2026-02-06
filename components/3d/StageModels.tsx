@@ -25,14 +25,60 @@ const URLS = {
 Object.values(URLS).forEach(url => useGLTF.preload(url));
 
 // --- CENTRALIZED OFFSETS ---
-// These define the shift relative to the center point (x, z) or floor (y)
-// Used by StageDraggableItem to align Hitboxes and Labels
 export const MODEL_OFFSETS = {
   DRUMS: [0, 0, 1.75] as [number, number, number],
   SAX: [0, 0.4, 0] as [number, number, number],
   TRUMPET: [0, 0.5, 0] as [number, number, number],
   SYNTH: [-.1, 0.15, 0] as [number, number, number],
   DEFAULT: [0, 0, 0] as [number, number, number],
+};
+
+// --- COORDINATE CONVERSION HELPERS ---
+// Unity (Left-Handed, Y-Up, Z-Forward) -> Three.js (Right-Handed, Y-Up, Z-Backward)
+
+const convertPosition = (pos: number[]) => {
+  // Flip X axis to fix 180-degree rotation and handedness
+  // Preserving Z keeps facial features (eyes/brows) on the front of the face
+  return new THREE.Vector3(-pos[0], pos[1], pos[2]);
+};
+
+const convertQuaternion = (rot: number[]) => {
+  // Flip Y and Z components to match X-axis position flip
+  return new THREE.Quaternion(rot[0], -rot[1], -rot[2], rot[3]);
+};
+
+// --- SWAP HELPER ---
+// Swaps L/R in bone names to fix inverted data mapping from export
+const getSwappedBoneName = (name: string) => {
+  if (name.endsWith('_L')) return name.replace('_L', '_R');
+  if (name.endsWith('_R')) return name.replace('_R', '_L');
+  if (name.endsWith('.L')) return name.replace('.L', '.R');
+  if (name.endsWith('.R')) return name.replace('.R', '.L');
+  return name;
+};
+
+// Recursive function to apply pose data to the skeleton
+const applyPose = (boneData: any, bone: THREE.Object3D) => {
+  if (!bone) return;
+
+  // Apply transforms
+  bone.position.copy(convertPosition(boneData.position));
+  bone.quaternion.copy(convertQuaternion(boneData.rotation));
+  bone.scale.set(boneData.scale[0], boneData.scale[1], boneData.scale[2]);
+
+  // Recursively apply to children
+  if (boneData.children && boneData.children.length > 0) {
+    boneData.children.forEach((childData: any) => {
+      // Find the child bone in the GLTF hierarchy using the SWAPPED name
+      // This routes Left Data -> Right Bone and vice versa, fixing the mirrored limbs
+      const targetName = getSwappedBoneName(childData.name);
+      const childBone = bone.children.find(b => b.name === targetName);
+      
+      if (childBone) {
+        applyPose(childData, childBone);
+      }
+    });
+  }
 };
 
 export const useStageModel = (url: string, color?: string) => {
@@ -139,43 +185,15 @@ export const PersonModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.PERSON, color);
 
   useMemo(() => {
-    // Flatten the pose data for easier lookup
-    const poseMap = new Map<string, any>();
-    const traversePose = (data: any) => {
-        poseMap.set(data.name, data);
-        if (data.children) data.children.forEach(traversePose);
-    };
-    traversePose(malePose);
-
-    // Apply pose to the skeleton
-    model.traverse((node: any) => {
-      if (node.isBone) {
-        const pose = poseMap.get(node.name);
-        if (pose) {
-            // Apply quaternion rotation from JSON [x, y, z, w]
-            node.quaternion.set(
-                pose.rotation[0],
-                pose.rotation[1],
-                pose.rotation[2],
-                pose.rotation[3]
-            );
-            
-            // Apply position from JSON [x, y, z]
-            node.position.set(
-                pose.position[0],
-                pose.position[1],
-                pose.position[2]
-            );
-
-            // Apply scale from JSON [x, y, z]
-            node.scale.set(
-                pose.scale[0],
-                pose.scale[1],
-                pose.scale[2]
-            );
-        }
-      }
+    // Start recursion from the Hips bone
+    let hips: THREE.Object3D | undefined;
+    model.traverse((node) => {
+        if (node.name === 'Hips') hips = node;
     });
+    
+    if (hips) {
+        applyPose(malePose, hips);
+    }
   }, [model]);
 
   return <primitive object={model} scale={1.1} position={MODEL_OFFSETS.DEFAULT} />;
