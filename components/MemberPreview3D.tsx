@@ -105,7 +105,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
                             <meshStandardMaterial color={color} roughness={0.4} />
                          </mesh>
                      }>
-                         <PersonModel color={color} />
+                         <PersonModel />
                      </Suspense>
                 </group>
             );

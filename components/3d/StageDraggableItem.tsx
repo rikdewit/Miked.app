@@ -124,7 +124,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                         <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
                      </mesh>
                  }>
-                     <PersonModel color={isDragging ? '#fbbf24' : color} />
+                     <PersonModel color={isDragging ? '#fbbf24' : undefined} />
                  </Suspense>
              </group>
         ) : (
