@@ -1,3 +1,4 @@
+
 import React, { Suspense } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
@@ -55,6 +56,14 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   }
 
   const [offX, offY, offZ] = offset;
+
+  // Custom vertical label adjustment
+  let labelYPadding = 0.3; // Default padding
+  if (shape === 'person') {
+      labelYPadding = 0.65; // Higher for person
+  } else if (labelLower.includes('sax')) {
+      labelYPadding = 0.05; // Lower for sax
+  }
 
   const renderModel = () => {
     
@@ -141,7 +150,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       {showLabel && (
         <Html 
             // Apply offset to Label
-            position={[0 + offX, height + 0.3 + offY, 0 + offZ]} 
+            position={[0 + offX, height + labelYPadding + offY, 0 + offZ]} 
             center 
             zIndexRange={isDragging ? [500, 400] : [100, 0]} 
             style={{ pointerEvents: 'none' }}

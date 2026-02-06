@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { RiderData, BandMember, StageItem, InstrumentType } from '../types';
 import { INITIAL_RIDER_DATA, INSTRUMENTS } from '../constants';
@@ -85,7 +86,7 @@ export const useRiderState = () => {
       });
 
       // Update Stage Plot
-      const updatedStagePlot = prev.stagePlot.filter(item => {
+      let updatedStagePlot = prev.stagePlot.filter(item => {
         // If it's not this member, keep it
         if (item.memberId !== memberId) return true;
         
@@ -103,6 +104,14 @@ export const useRiderState = () => {
             // Different type: Remove everything for this instrument
             return false;
         }
+      });
+
+      // Update labels for core items if instrument changed
+      updatedStagePlot = updatedStagePlot.map(item => {
+        if (item.memberId === memberId && item.fromInstrumentIndex === index && !item.isPeripheral) {
+            return { ...item, label: newInstDef?.group || item.label };
+        }
+        return item;
       });
 
       return {

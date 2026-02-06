@@ -1,3 +1,4 @@
+
 import { BandMember, StageItem, InstrumentType } from '../types';
 import { STAGE_WIDTH, STAGE_DEPTH } from './stageConfig';
 import { INSTRUMENTS } from '../constants';
@@ -59,7 +60,7 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
                 id: `inst-${baseId}-${idx}`, 
                 memberId: member.id, 
                 type: 'member', 
-                label: inst.type, 
+                label: inst.group, // Use Group Name (e.g. "Acoustic Guitar") instead of Type ("Guitar")
                 x: startX + spreadX, 
                 y: startY - 5,
                 fromInstrumentIndex: idx,

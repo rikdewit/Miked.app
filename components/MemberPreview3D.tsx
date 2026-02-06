@@ -1,3 +1,4 @@
+
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
@@ -37,7 +38,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
     else if (type === 'sax') offset = MODEL_OFFSETS.SAX;
     else if (type === 'trumpet') offset = MODEL_OFFSETS.TRUMPET;
 
-    const [offX, offY, offZ] = offset;
+    // const [offX, offY, offZ] = offset; // Unused if labels are removed
 
     const renderMesh = () => {
         if (type === 'person') return <Models.PersonModel />;
@@ -92,13 +93,6 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
     return (
         <group position={position}>
             {renderMesh()}
-            {label && (
-                <Html position={[0 + offX, height + 0.3 + offY, 0 + offZ]} center zIndexRange={[100, 0]}>
-                    <div className="text-[7px] font-bold bg-black/60 text-white px-1 py-0.5 rounded backdrop-blur-sm whitespace-nowrap border border-white/10">
-                        {label}
-                    </div>
-                </Html>
-            )}
         </group>
     );
 };
@@ -181,7 +175,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
           const sideOffset = isRight ? 0.6 : -0.6;
           
           let type = 'box';
-          if (inst.id.includes('acoustic')) type = 'guitar_ac';
+          if (inst.id === 'gtr_ac') type = 'guitar_ac';
           else if (inst.type === InstrumentType.BASS) type = 'bass';
           else if (inst.type === InstrumentType.GUITAR) type = 'guitar_elec';
           else if (inst.id.includes('sax')) type = 'sax';
