@@ -5,6 +5,7 @@ import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { COLORS } from '../utils/stageConfig';
 import * as Models from './3d/StageModels';
+import { MODEL_OFFSETS } from './3d/StageModels';
 
 interface MemberPreview3DProps {
   member: BandMember;
@@ -29,10 +30,18 @@ interface PreviewItemProps {
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type }) => {
     const [width, height, depth] = args;
+    
+    // Determine offset
+    let offset = MODEL_OFFSETS.DEFAULT;
+    if (type === 'drums') offset = MODEL_OFFSETS.DRUMS;
+    else if (type === 'sax') offset = MODEL_OFFSETS.SAX;
+    else if (type === 'trumpet') offset = MODEL_OFFSETS.TRUMPET;
+
+    const [offX, offY, offZ] = offset;
 
     const renderMesh = () => {
         if (type === 'person') return <Models.PersonModel />;
-        if (type === 'drums') return <Models.DrumsModel />; // Remove color
+        if (type === 'drums') return <Models.DrumsModel />; 
         if (type === 'amp') return <Models.AmpModel color={color} />;
         
         // Keys with Stand, No Color
@@ -84,7 +93,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
         <group position={position}>
             {renderMesh()}
             {label && (
-                <Html position={[0, height + 0.3, 0]} center zIndexRange={[100, 0]}>
+                <Html position={[0 + offX, height + 0.3 + offY, 0 + offZ]} center zIndexRange={[100, 0]}>
                     <div className="text-[7px] font-bold bg-black/60 text-white px-1 py-0.5 rounded backdrop-blur-sm whitespace-nowrap border border-white/10">
                         {label}
                     </div>

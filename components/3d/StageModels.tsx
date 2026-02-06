@@ -23,6 +23,16 @@ const URLS = {
 // Preload models to prevent pop-in
 Object.values(URLS).forEach(url => useGLTF.preload(url));
 
+// --- CENTRALIZED OFFSETS ---
+// These define the shift relative to the center point (x, z) or floor (y)
+// Used by StageDraggableItem to align Hitboxes and Labels
+export const MODEL_OFFSETS = {
+  DRUMS: [0, 0, 1.75] as [number, number, number],
+  SAX: [0, 0.4, 0] as [number, number, number],
+  TRUMPET: [0, 0.5, 0] as [number, number, number],
+  DEFAULT: [0, 0, 0] as [number, number, number],
+};
+
 export const useStageModel = (url: string, color?: string) => {
   const { scene } = useGLTF(url);
   
@@ -57,56 +67,56 @@ export const useStageModel = (url: string, color?: string) => {
 
 export const ElectricGuitarModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.GUITAR_ELEC, color);
-  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const AcousticGuitarModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.GUITAR_ACOUSTIC, color);
-  return <primitive object={model} scale={1.4} rotation={[0, Math.PI / 2, 0]} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const BassModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.BASS, color);
-  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const AmpModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.AMPLIFIER, color);
-  return <primitive object={model} scale={1.2} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const DrumsModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.DRUMS, color);
-  // Rotate drums to face audience (assuming default model faces wrong way or needs adjustment)
-  return <primitive object={model} scale={1.1} position={[0, 0, 0]} rotation={[0, Math.PI, 0]} />;
+  // Rotate drums to face audience and apply centralized offset
+  return <primitive object={model} scale={1} position={MODEL_OFFSETS.DRUMS} rotation={[0, 0, 0]} />;
 };
 
 export const SynthModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.SYNTH, color);
-  return <primitive object={model} scale={1.2} position={[0, 0, 0]} rotation={[0, Math.PI, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.DEFAULT} rotation={[0, Math.PI, 0]} />;
 };
 
 export const MicStandModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.MIC_STAND, color);
-  return <primitive object={model} scale={1.3} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.DEFAULT} rotation={[0, Math.PI, 0]} />;
 };
 
 export const SaxModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.SAX, color);
-  return <primitive object={model} scale={1.5} position={[0, 0.4, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.SAX} />;
 };
 
 export const TrumpetModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.TRUMPET, color);
-  return <primitive object={model} scale={1.5} position={[0, 0.5, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.TRUMPET} />;
 };
 
 export const StandModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.STAND, color);
-  return <primitive object={model} scale={1.2} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const PersonModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.PERSON, color);
-  return <primitive object={model} scale={0.9} position={[0, 0, 0]} />;
+  return <primitive object={model} scale={1.1} position={MODEL_OFFSETS.DEFAULT} />;
 };

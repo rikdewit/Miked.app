@@ -5,6 +5,7 @@ import { StageItem } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ } from '../../utils/stageHelpers';
 import * as Models from './StageModels';
+import { MODEL_OFFSETS } from './StageModels';
 
 interface DraggableItemProps {
   item: StageItem;
@@ -35,8 +36,23 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   // Always show label for better visibility
   const showLabel = true;
 
+  const labelLower = (item.label || '').toLowerCase();
+  
+  // Logic to determine which offset to apply to the Label and Hitbox
+  // This must match the model used in renderModel
+  let offset = MODEL_OFFSETS.DEFAULT;
+  
+  if (labelLower.includes('drum') || labelLower.includes('kit')) {
+      offset = MODEL_OFFSETS.DRUMS;
+  } else if (labelLower.includes('sax')) {
+      offset = MODEL_OFFSETS.SAX;
+  } else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) {
+      offset = MODEL_OFFSETS.TRUMPET;
+  }
+
+  const [offX, offY, offZ] = offset;
+
   const renderModel = () => {
-    const labelLower = (item.label || '').toLowerCase();
     
     // --- 1. PERSON ---
     if (shape === 'person') {
@@ -120,7 +136,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     <group position={[x, 0, z]}>
       {showLabel && (
         <Html 
-            position={[0, height + 0.3, 0]} 
+            // Apply offset to Label
+            position={[0 + offX, height + 0.3 + offY, 0 + offZ]} 
             center 
             zIndexRange={isDragging ? [500, 400] : [100, 0]} 
             style={{ pointerEvents: 'none' }}
@@ -136,8 +153,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         onPointerMove={!isGhost ? onMove : undefined}
         onPointerUp={!isGhost ? onUp : undefined}
       >
-        {/* HIT BOX - Invisible mesh to ensure robust drag-and-drop interaction */}
-        <mesh position={[0, height / 2, 0]}>
+        {/* HIT BOX - Invisible mesh with OFFSET applied to match the model's visual location */}
+        <mesh position={[0 + offX, height / 2 + offY, 0 + offZ]}>
              <boxGeometry args={[Math.max(width, 0.6), height, Math.max(depth, 0.6)]} />
              <meshBasicMaterial transparent opacity={0} />
         </mesh>
