@@ -112,17 +112,13 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
       if (!hasPerson) return false;
 
       // 2. Strict check: Do we have all the specific gear items we expect?
-      // We generate the theoretical items this member *should* have.
-      // Coordinates (50,50) don't matter, we just check existence.
       const expectedItems = generateMemberItems(member, 50, 50);
 
       for (const expected of expectedItems) {
-          // We skip the person check as we did it above
           if (expected.type === 'person') continue;
 
           // Find a matching item on stage
           // Match by: MemberID, InstrumentIndex, and Label
-          // Label is crucial because it distinguishes Amp vs Modeler vs DI for the same instrument slot
           const match = data.stagePlot.find(existing => 
               existing.memberId === member.id &&
               existing.fromInstrumentIndex === expected.fromInstrumentIndex &&
@@ -145,10 +141,12 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   };
 
   const clearStage = () => {
-      if(window.confirm("Are you sure you want to clear the stage?")) {
+      if (data.stagePlot.length === 0) return;
+      
+      if (window.confirm("Are you sure you want to clear the stage? All items will be removed.")) {
           updateStageItems([]);
       }
-  }
+  };
 
   // --- Drag & Drop Handlers ---
 
@@ -221,9 +219,6 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
         if (newItem.type === 'person' && hasPerson) return false;
 
         // Smart Filtering for Instrument Gear:
-        // If we already have "Core" items for this instrument index on stage, we assume the core is placed.
-        // However, if we are here, it's likely because we are missing Peripherals.
-        // If we generate a Core item (like Guitar Body) but one already exists for this index, don't add the new one.
         if (newItem.fromInstrumentIndex !== undefined) {
             const index = newItem.fromInstrumentIndex;
             const existingCore = data.stagePlot.find(
@@ -234,7 +229,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
             if (!newItem.isPeripheral && existingCore) return false;
             
             // Peripherals (like Amps/DI) are always added if dragged, assuming the hook cleared old ones.
-            // Duplicate check: prevent adding exact same peripheral type for same index if it somehow exists?
+            // Duplicate check: prevent adding exact same peripheral type for same index if it somehow exists
             const existingSameItem = data.stagePlot.find(
                 i => i.memberId === memberId && i.fromInstrumentIndex === index && i.label === newItem.label
             );
@@ -386,10 +381,17 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                         + Power
                      </button>
                      <button 
-                        onClick={clearStage}
-                        className="px-3 py-2 bg-red-900/30 hover:bg-red-900/50 text-red-200 border border-red-900/50 rounded text-xs flex items-center gap-1"
+                        type="button"
+                        onClick={() => clearStage()}
+                        disabled={data.stagePlot.length === 0}
+                        className={`px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors ${
+                            data.stagePlot.length === 0 
+                            ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed' 
+                            : 'bg-red-900/30 hover:bg-red-900/50 text-red-200 border-red-900/50 cursor-pointer'
+                        }`}
+                        title="Remove all items from the stage"
                      >
-                        <Trash2 size={14} /> Clear
+                        <Trash2 size={14} className="pointer-events-none" /> Clear
                      </button>
                 </div>
              </div>
