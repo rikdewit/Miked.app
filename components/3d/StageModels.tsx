@@ -3,6 +3,7 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 // @ts-ignore
 import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
+import { malePose } from './male_pose';
 
 const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
 
@@ -138,28 +139,40 @@ export const PersonModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.PERSON, color);
 
   useMemo(() => {
-    // Manually adjust the skeleton to bring arms down (neutral stance)
-    // Targeting specific bones based on hierarchy: Shoulder_L, Shoulder_R, Elbow_L, Elbow_R
+    // Flatten the pose data for easier lookup
+    const poseMap = new Map<string, any>();
+    const traversePose = (data: any) => {
+        poseMap.set(data.name, data);
+        if (data.children) data.children.forEach(traversePose);
+    };
+    traversePose(malePose);
+
+    // Apply pose to the skeleton
     model.traverse((node: any) => {
       if (node.isBone) {
-        
-        if (node.name === 'Shoulder_L') {
-            node.rotation.set(0, 0, 0); // Reset existing pose
-            // Rotate down (inverted direction based on feedback)
-            node.rotation.z = -1.35; 
-            node.rotation.x = 0.2; 
-        }
-        
-        if (node.name === 'Shoulder_R') {
-            node.rotation.set(0, 0, 0); // Reset existing pose
-            // Rotate down (inverted direction based on feedback)
-            node.rotation.z = 1.35;
-            node.rotation.x = 0.2;
-        }
+        const pose = poseMap.get(node.name);
+        if (pose) {
+            // Apply quaternion rotation from JSON [x, y, z, w]
+            node.quaternion.set(
+                pose.rotation[0],
+                pose.rotation[1],
+                pose.rotation[2],
+                pose.rotation[3]
+            );
+            
+            // Apply position from JSON [x, y, z]
+            node.position.set(
+                pose.position[0],
+                pose.position[1],
+                pose.position[2]
+            );
 
-        // Straighten Elbows (neutral)
-        if (node.name === 'Elbow_L' || node.name === 'Elbow_R') {
-            node.rotation.set(0, 0, 0);
+            // Apply scale from JSON [x, y, z]
+            node.scale.set(
+                pose.scale[0],
+                pose.scale[1],
+                pose.scale[2]
+            );
         }
       }
     });
