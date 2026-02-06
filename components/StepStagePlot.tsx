@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Box, Layers, Trash2, GripVertical } from 'lucide-react';
+import { Box, Layers, Trash2, GripVertical, Check } from 'lucide-react';
 import { RiderData, StageItem, BandMember, InstrumentType } from '../types';
 import { StagePlotCanvas } from './StagePlotCanvas';
 import { INSTRUMENTS } from '../constants';
@@ -213,7 +213,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                 <p className="text-xs text-slate-400">Drag members onto the stage</p>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {data.members.map((member) => {
                     const placed = isMemberPlaced(member.id);
                     return (
@@ -222,27 +222,36 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                             draggable={!placed}
                             onDragStart={(e) => handleDragStart(e, member.id, member.name)}
                             onDragEnd={handleDragEnd}
-                            className={`bg-slate-700/50 rounded-lg p-2 transition-all group relative border border-transparent ${
+                            className={`rounded-lg transition-all group relative border ${
                                 placed 
-                                ? 'opacity-50 grayscale cursor-not-allowed' 
-                                : 'hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
+                                ? 'bg-slate-900/40 border-slate-700 p-3 cursor-default' 
+                                : 'bg-slate-700/50 border-transparent p-2 hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
                             }`}
                         >
+                            {/* Drag Handle - Only shown if not placed */}
                             {!placed && (
-                                <div className="absolute right-2 top-2 text-slate-500 group-hover:text-indigo-400">
+                                <div className="absolute right-2 top-2 text-slate-500 group-hover:text-indigo-400 z-10">
                                     <GripVertical size={16} />
                                 </div>
                             )}
 
-                            <div className="flex justify-between items-center mb-2 px-1">
-                                <span className="font-bold text-sm text-white truncate pr-6">{member.name}</span>
-                                {placed && <span className="text-[10px] bg-green-900 text-green-200 px-1.5 py-0.5 rounded">Placed</span>}
+                            <div className="flex justify-between items-center px-1">
+                                <span className={`font-bold text-sm truncate pr-6 ${placed ? 'text-slate-500' : 'text-white'}`}>
+                                    {member.name}
+                                </span>
+                                {placed && (
+                                    <span className="flex items-center gap-1 text-[10px] bg-green-900/30 text-green-500 border border-green-900/50 px-2 py-0.5 rounded-full font-medium">
+                                        <Check size={10} /> Placed
+                                    </span>
+                                )}
                             </div>
                             
-                            {/* Mini Preview */}
-                            <div className="h-[120px] w-full rounded bg-slate-900/50 mb-1 pointer-events-none">
-                                <MemberPreview3D member={member} />
-                            </div>
+                            {/* 3D Preview - HIDE when placed */}
+                            {!placed && (
+                                <div className="h-[120px] w-full rounded bg-slate-900/50 mb-1 pointer-events-none mt-2">
+                                    <MemberPreview3D member={member} />
+                                </div>
+                            )}
                             
                             {!placed && (
                                 <div className="text-[10px] text-center text-indigo-300 font-medium py-1 opacity-0 group-hover:opacity-100 transition-opacity">
