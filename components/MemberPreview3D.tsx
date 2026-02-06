@@ -1,4 +1,3 @@
-
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
@@ -19,6 +18,7 @@ interface SceneItem {
   color: string;
   label: string;
   type: string; // Used for model selection
+  held?: boolean;
 }
 
 interface PreviewItemProps {
@@ -27,9 +27,10 @@ interface PreviewItemProps {
   color: string;
   label?: string;
   type: string;
+  held?: boolean;
 }
 
-const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type }) => {
+const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held }) => {
     const [width, height, depth] = args;
     
     // Determine offset
@@ -63,8 +64,8 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
         if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} />;
         if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} />;
         
-        // Bass No Stand
-        if (type === 'bass') return <Models.BassModel color={color} />;
+        // Bass
+        if (type === 'bass') return <Models.BassModel color={color} held={held} />;
         
         // Sax No Stand
         if (type === 'sax') return <Models.SaxModel color={color} />;
@@ -182,14 +183,27 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
           else if (inst.id.includes('tpt') || inst.id.includes('trumpet')) type = 'trumpet';
 
           // The Instrument
-          items.push({
-              id: `inst-body-${instId}`,
-              pos: [sideOffset, 0, 0.1], 
-              size: [0.4, 1.0, 0.3], 
-              color: COLORS.instrument,
-              label: inst.type,
-              type: type
-          });
+          if (type === 'bass') {
+              // Bass is held by the person (centered)
+              items.push({
+                  id: `inst-body-${instId}`,
+                  pos: [0, 0, 0], // Positioned at origin, model handles 'held' offsets
+                  size: [0.4, 1.0, 0.3], 
+                  color: COLORS.instrument,
+                  label: inst.type,
+                  type: type,
+                  held: true
+              });
+          } else {
+              items.push({
+                  id: `inst-body-${instId}`,
+                  pos: [sideOffset, 0, 0.1], 
+                  size: [0.4, 1.0, 0.3], 
+                  color: COLORS.instrument,
+                  label: inst.type,
+                  type: type
+              });
+          }
           
           // Pedalboard / Modeler
           if (instId.includes('modeler')) {
@@ -238,6 +252,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                             color={item.color}
                             label={item.label}
                             type={item.type}
+                            held={item.held}
                         />
                     ))}
                     <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
