@@ -30,6 +30,7 @@ export const MODEL_OFFSETS = {
   DRUMS: [0, 0, 1.75] as [number, number, number],
   SAX: [0, 0.4, 0] as [number, number, number],
   TRUMPET: [0, 0.5, 0] as [number, number, number],
+  SYNTH: [-.1, 0.15, 0] as [number, number, number],
   DEFAULT: [0, 0, 0] as [number, number, number],
 };
 
@@ -93,7 +94,7 @@ export const DrumsModel = ({ color }: { color?: string }) => {
 
 export const SynthModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.SYNTH, color);
-  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.DEFAULT} rotation={[0, Math.PI, 0]} />;
+  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.SYNTH} rotation={[0, Math.PI, 0]} />;
 };
 
 export const MicStandModel = ({ color }: { color?: string }) => {
@@ -113,7 +114,7 @@ export const TrumpetModel = ({ color }: { color?: string }) => {
 
 export const StandModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.STAND, color);
-  return <primitive object={model} scale={1.5} position={MODEL_OFFSETS.DEFAULT} />;
+  return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const PersonModel = ({ color }: { color?: string }) => {
