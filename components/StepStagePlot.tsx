@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { Box, Layers, Trash2, GripVertical, Check } from 'lucide-react';
+import { Box, Layers, Trash2, GripVertical, Check, RefreshCw } from 'lucide-react';
 import { RiderData, StageItem, BandMember, InstrumentType } from '../types';
 import { StagePlotCanvas } from './StagePlotCanvas';
 import { INSTRUMENTS } from '../constants';
@@ -30,14 +30,15 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
       const items: StageItem[] = [];
       const baseId = idBaseOverride || `${member.id}-${Date.now()}`;
 
-      // 1. The Person
+      // 1. The Person (No instrument Index)
       items.push({ 
           id: `person-${baseId}`, 
           memberId: member.id, 
           type: 'person', 
           label: member.name || 'Musician', 
           x: startX, 
-          y: startY 
+          y: startY,
+          isPeripheral: false 
       });
 
       // 2. Instruments & Gear
@@ -54,57 +55,93 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
           
           // DRUMS
           if (inst.type === InstrumentType.DRUMS) {
-              items.push({ id: `drum-${baseId}`, memberId: member.id, type: 'member', label: 'Drum Kit', x: startX, y: startY - 15 });
+              items.push({ id: `drum-${baseId}`, memberId: member.id, type: 'member', label: 'Drum Kit', x: startX, y: startY - 15, fromInstrumentIndex: idx, isPeripheral: false });
           }
           
           // KEYS
           else if (inst.type === InstrumentType.KEYS) {
-              items.push({ id: `keys-${baseId}-${idx}`, memberId: member.id, type: 'member', label: inst.group, x: startX + spreadX, y: startY });
+              items.push({ id: `keys-${baseId}-${idx}`, memberId: member.id, type: 'member', label: inst.group, x: startX + spreadX, y: startY, fromInstrumentIndex: idx, isPeripheral: false });
           }
 
           // AMPS
           else if (instId.includes('amp') || instId.includes('combined')) {
              const ampX = startX + (ampCount % 2 === 0 ? -12 : 12);
-             items.push({ id: `amp-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: ampX, y: startY - 10 });
+             items.push({ id: `amp-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: ampX, y: startY - 10, fromInstrumentIndex: idx, isPeripheral: true });
              ampCount++;
           }
 
           // INSTRUMENTS ON STANDS (Guitar/Bass/Brass)
           if ([InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type)) {
-              // Instrument Body
+              // Instrument Body (Core - e.g. "Guitar")
               items.push({ 
                   id: `inst-${baseId}-${idx}`, 
                   memberId: member.id, 
                   type: 'member', 
-                  label: inst.type, // e.g. "Guitar"
+                  label: inst.type, 
                   x: startX + spreadX, 
-                  y: startY - 5 
+                  y: startY - 5,
+                  fromInstrumentIndex: idx,
+                  isPeripheral: false 
               });
 
-              // Pedalboard / Modeler
+              // Pedalboard / Modeler (Peripheral)
               if (instId.includes('modeler')) {
-                   items.push({ id: `mod-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Modeler', x: startX + spreadX, y: startY + 8 });
+                   items.push({ id: `mod-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Modeler', x: startX + spreadX, y: startY + 8, fromInstrumentIndex: idx, isPeripheral: true });
               } else if (inst.type !== InstrumentType.BRASS && inst.id !== 'gtr_ac') {
-                   items.push({ id: `pedal-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Pedals', x: startX + spreadX, y: startY + 8 });
+                   items.push({ id: `pedal-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Pedals', x: startX + spreadX, y: startY + 8, fromInstrumentIndex: idx, isPeripheral: true });
               }
               
-              // DI Box
+              // DI Box (Peripheral)
               if (inst.defaultDi || instId.includes('di')) {
-                   items.push({ id: `di-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'DI', x: startX + spreadX + (isRight?2:-2), y: startY + 5 });
+                   items.push({ id: `di-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'DI', x: startX + spreadX + (isRight?2:-2), y: startY + 5, fromInstrumentIndex: idx, isPeripheral: true });
               }
           }
           
           // MIC STAND (Vocals)
           if (inst.type === InstrumentType.VOCAL) {
-               items.push({ id: `mic-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Mic', x: startX, y: startY + 5 });
+               items.push({ id: `mic-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Mic', x: startX, y: startY + 5, fromInstrumentIndex: idx, isPeripheral: false });
           }
       });
 
       return items;
   };
 
-  const isMemberPlaced = (memberId: string) => {
-      return data.stagePlot.some(item => item.memberId === memberId);
+  const isMemberFullyPlaced = (member: BandMember) => {
+      // 1. Check if Person exists
+      const hasPerson = data.stagePlot.some(item => item.memberId === member.id && item.type === 'person');
+      if (!hasPerson) return false;
+
+      // 2. Strict check: Do we have all the specific gear items we expect?
+      // We generate the theoretical items this member *should* have.
+      // Coordinates (50,50) don't matter, we just check existence.
+      const expectedItems = generateMemberItems(member, 50, 50);
+
+      for (const expected of expectedItems) {
+          // We skip the person check as we did it above
+          if (expected.type === 'person') continue;
+
+          // Find a matching item on stage
+          // Match by: MemberID, InstrumentIndex, and Label
+          // Label is crucial because it distinguishes Amp vs Modeler vs DI for the same instrument slot
+          const match = data.stagePlot.find(existing => 
+              existing.memberId === member.id &&
+              existing.fromInstrumentIndex === expected.fromInstrumentIndex &&
+              existing.label === expected.label
+          );
+
+          if (!match) return false;
+      }
+
+      return true;
+  };
+
+  const getPlacementStatus = (member: BandMember) => {
+      const hasPerson = data.stagePlot.some(item => item.memberId === member.id && item.type === 'person');
+      const isFull = isMemberFullyPlaced(member);
+      
+      if (isFull) return 'full';
+      if (hasPerson) return 'partial';
+      return 'none';
   };
 
   const clearStage = () => {
@@ -123,22 +160,16 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
     // Set custom drag image (just the label)
     setDragLabelText(memberName);
     if (dragLabelRef.current) {
-        // Use a timeout to ensure state update renders before capturing, 
-        // though strictly synchronous setDragImage requires the element to be present.
-        // We rely on the element being always in DOM but hidden off-screen.
         e.dataTransfer.setDragImage(dragLabelRef.current, 0, 0);
     }
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault(); // Necessary to allow dropping
+    e.preventDefault(); 
     e.dataTransfer.dropEffect = "copy";
-
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-
-    // Pass raw pixel coordinates to Canvas for Raycasting
     setRawDragCoords({ x, y, width: rect.width, height: rect.height });
   };
 
@@ -147,7 +178,6 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
-      // Check if we actually left the container
       if (e.currentTarget.contains(e.relatedTarget as Node)) return;
       setDragPos(null);
       setRawDragCoords(null);
@@ -162,11 +192,8 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const memberId = e.dataTransfer.getData("memberId");
-    
-    // We use the last calculated dragPos (from the Raycaster)
     const finalPos = dragPos;
 
-    // Reset drag states
     setDraggingMemberId(null);
     setDragPos(null);
     setRawDragCoords(null);
@@ -176,13 +203,48 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
     const member = data.members.find(m => m.id === memberId);
     if (!member) return;
 
-    if (isMemberPlaced(memberId)) {
+    // Check if fully placed
+    if (isMemberFullyPlaced(member)) {
         alert(`${member.name} is already on the stage.`);
         return;
     }
 
-    const newItems = generateMemberItems(member, finalPos.x, finalPos.y);
-    updateStageItems([...data.stagePlot, ...newItems]);
+    // Generate potential items at drop location
+    const potentialItems = generateMemberItems(member, finalPos.x, finalPos.y);
+
+    // Filter Items to avoid duplication
+    // 1. If Person exists, remove new Person
+    const hasPerson = data.stagePlot.some(i => i.memberId === memberId && i.type === 'person');
+    
+    const itemsToAdd = potentialItems.filter(newItem => {
+        // Skip Person if already on stage
+        if (newItem.type === 'person' && hasPerson) return false;
+
+        // Smart Filtering for Instrument Gear:
+        // If we already have "Core" items for this instrument index on stage, we assume the core is placed.
+        // However, if we are here, it's likely because we are missing Peripherals.
+        // If we generate a Core item (like Guitar Body) but one already exists for this index, don't add the new one.
+        if (newItem.fromInstrumentIndex !== undefined) {
+            const index = newItem.fromInstrumentIndex;
+            const existingCore = data.stagePlot.find(
+                i => i.memberId === memberId && i.fromInstrumentIndex === index && !i.isPeripheral
+            );
+            
+            // If new item is Core, and we already have a Core item for this index -> Skip new core
+            if (!newItem.isPeripheral && existingCore) return false;
+            
+            // Peripherals (like Amps/DI) are always added if dragged, assuming the hook cleared old ones.
+            // Duplicate check: prevent adding exact same peripheral type for same index if it somehow exists?
+            const existingSameItem = data.stagePlot.find(
+                i => i.memberId === memberId && i.fromInstrumentIndex === index && i.label === newItem.label
+            );
+            if (existingSameItem) return false;
+        }
+
+        return true;
+    });
+
+    updateStageItems([...data.stagePlot, ...itemsToAdd]);
   };
 
   // Generate Ghost Items for Preview
@@ -191,9 +253,27 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
      const member = data.members.find(m => m.id === draggingMemberId);
      if (!member) return [];
      
-     // Use a stable seed for ID generation to prevent re-mounting meshes during drag
-     return generateMemberItems(member, dragPos.x, dragPos.y, `ghost-${member.id}`);
-  }, [draggingMemberId, dragPos, data.members]);
+     // Same filtering logic as Drop to show only what will be added
+     const potentialItems = generateMemberItems(member, dragPos.x, dragPos.y, `ghost-${member.id}`);
+     const hasPerson = data.stagePlot.some(i => i.memberId === draggingMemberId && i.type === 'person');
+
+     return potentialItems.filter(newItem => {
+         if (newItem.type === 'person' && hasPerson) return false;
+         if (newItem.fromInstrumentIndex !== undefined) {
+             const index = newItem.fromInstrumentIndex;
+             const existingCore = data.stagePlot.find(
+                 i => i.memberId === draggingMemberId && i.fromInstrumentIndex === index && !i.isPeripheral
+             );
+             if (!newItem.isPeripheral && existingCore) return false;
+             
+             const existingSameItem = data.stagePlot.find(
+                i => i.memberId === draggingMemberId && i.fromInstrumentIndex === index && i.label === newItem.label
+             );
+             if (existingSameItem) return false;
+         }
+         return true;
+     });
+  }, [draggingMemberId, dragPos, data.members, data.stagePlot]);
 
   return (
     <div className="w-full h-[calc(100vh-140px)] flex gap-6 relative">
@@ -215,47 +295,57 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
             
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {data.members.map((member) => {
-                    const placed = isMemberPlaced(member.id);
+                    const status = getPlacementStatus(member);
+                    const isFull = status === 'full';
+                    const isPartial = status === 'partial';
+
                     return (
                         <div 
                             key={member.id} 
-                            draggable={!placed}
+                            draggable={!isFull}
                             onDragStart={(e) => handleDragStart(e, member.id, member.name)}
                             onDragEnd={handleDragEnd}
                             className={`rounded-lg transition-all group relative border ${
-                                placed 
+                                isFull
                                 ? 'bg-slate-900/40 border-slate-700 p-3 cursor-default' 
-                                : 'bg-slate-700/50 border-transparent p-2 hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
+                                : isPartial
+                                    ? 'bg-slate-800/80 border-indigo-900/50 p-3 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing'
+                                    : 'bg-slate-700/50 border-transparent p-2 hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
                             }`}
                         >
-                            {/* Drag Handle - Only shown if not placed */}
-                            {!placed && (
+                            {/* Drag Handle - Show if draggable */}
+                            {!isFull && (
                                 <div className="absolute right-2 top-2 text-slate-500 group-hover:text-indigo-400 z-10">
                                     <GripVertical size={16} />
                                 </div>
                             )}
 
                             <div className="flex justify-between items-center px-1">
-                                <span className={`font-bold text-sm truncate pr-6 ${placed ? 'text-slate-500' : 'text-white'}`}>
+                                <span className={`font-bold text-sm truncate pr-6 ${isFull ? 'text-slate-500' : 'text-white'}`}>
                                     {member.name}
                                 </span>
-                                {placed && (
+                                {isFull && (
                                     <span className="flex items-center gap-1 text-[10px] bg-green-900/30 text-green-500 border border-green-900/50 px-2 py-0.5 rounded-full font-medium">
                                         <Check size={10} /> Placed
                                     </span>
                                 )}
+                                {isPartial && (
+                                    <span className="flex items-center gap-1 text-[10px] bg-indigo-900/30 text-indigo-300 border border-indigo-800/50 px-2 py-0.5 rounded-full font-medium">
+                                        <RefreshCw size={10} /> Update
+                                    </span>
+                                )}
                             </div>
                             
-                            {/* 3D Preview - HIDE when placed */}
-                            {!placed && (
+                            {/* 3D Preview - HIDE when fully placed, SHOW when partial or none */}
+                            {!isFull && (
                                 <div className="h-[120px] w-full rounded bg-slate-900/50 mb-1 pointer-events-none mt-2">
                                     <MemberPreview3D member={member} />
                                 </div>
                             )}
                             
-                            {!placed && (
+                            {!isFull && (
                                 <div className="text-[10px] text-center text-indigo-300 font-medium py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Drag to Stage
+                                    {isPartial ? 'Drag to Add New Gear' : 'Drag to Stage'}
                                 </div>
                             )}
                         </div>
