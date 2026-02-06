@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, Suspense } from 'react';
 import { StageItem } from '../types';
 import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
-import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
+import { OrthographicCamera, Grid, Html, ContactShadows, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 
 // Extend JSX.IntrinsicElements to allow any tag (fixes React Three Fiber + HTML tag issues)
@@ -100,6 +100,36 @@ export const getItemConfig = (item: StageItem) => {
 
 // --- 3D Components ---
 
+// Preload the guitar model with correct path (URL encoded spaces)
+useGLTF.preload('/assets/Electric%20Guitar%20Telecaster%20Red.glb');
+
+const GuitarModel = ({ color, dragging }: { color: string, dragging?: boolean }) => {
+  const { scene } = useGLTF('/assets/Electric%20Guitar%20Telecaster%20Red.glb');
+  
+  const clone = React.useMemo(() => {
+    const c = scene.clone();
+    c.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+         // Apply styling while preserving some model geometry details if possible
+         // But for consistent style with the app, we override material
+         (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ 
+             color: color, 
+             roughness: 0.3,
+             metalness: 0.2
+         });
+         child.castShadow = true;
+         child.receiveShadow = true;
+      }
+    });
+    return c;
+  }, [scene, color]);
+
+  // Adjust scale and rotation to fit the scene
+  // Assuming a standard upright guitar model, we might need to scale it down/up
+  // and ensure it stands on the floor.
+  return <primitive object={clone} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, -0.5, 0]} />;
+};
+
 const StagePlatform = () => {
   const thickness = 0.2;
   return (
@@ -179,6 +209,9 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
   // Always show label for better visibility in exports and top views
   const showLabel = true;
 
+  // Check if it's a guitar or bass for the 3D model
+  const isGuitarOrBass = (item.label || '').toLowerCase().match(/guitar|bass/);
+
   return (
     <group position={[x, 0, z]}>
       {showLabel && (
@@ -218,24 +251,37 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                  </mesh>
              </group>
         ) : shape === 'instrument' ? (
-             // Abstract Instrument Shape
-             <group>
-                 {/* Body */}
-                 <mesh position={[0, height*0.4, 0]} castShadow={!isGhost}>
-                     <boxGeometry args={[width, height*0.6, 0.1]} />
-                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                 </mesh>
-                 {/* Neck */}
-                 <mesh position={[0, height*0.8, 0]}>
-                     <boxGeometry args={[width*0.2, height*0.4, 0.05]} />
-                     <meshStandardMaterial color="#475569" {...materialProps} />
-                 </mesh>
-                 {/* Stand Base */}
-                 <mesh position={[0, 0.05, 0]}>
-                     <cylinderGeometry args={[0.2, 0.2, 0.1]} />
-                     <meshStandardMaterial color="#475569" {...materialProps} />
-                 </mesh>
-             </group>
+             isGuitarOrBass ? (
+                 <group position={[0, height/2, 0]}>
+                    <Suspense fallback={
+                         <mesh position={[0, 0, 0]} castShadow={!isGhost}>
+                             <boxGeometry args={[width, height*0.6, 0.1]} />
+                             <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
+                         </mesh>
+                    }>
+                        <GuitarModel color={isDragging ? '#fbbf24' : color} dragging={isDragging} />
+                    </Suspense>
+                 </group>
+             ) : (
+                // Abstract Instrument Shape (Sax/Trumpet etc)
+                <group>
+                    {/* Body */}
+                    <mesh position={[0, height*0.4, 0]} castShadow={!isGhost}>
+                        <boxGeometry args={[width, height*0.6, 0.1]} />
+                        <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
+                    </mesh>
+                    {/* Neck */}
+                    <mesh position={[0, height*0.8, 0]}>
+                        <boxGeometry args={[width*0.2, height*0.4, 0.05]} />
+                        <meshStandardMaterial color="#475569" {...materialProps} />
+                    </mesh>
+                    {/* Stand Base */}
+                    <mesh position={[0, 0.05, 0]}>
+                        <cylinderGeometry args={[0.2, 0.2, 0.1]} />
+                        <meshStandardMaterial color="#475569" {...materialProps} />
+                    </mesh>
+                </group>
+             )
         ) : (
              // Default Box / Person / Amp
              <mesh position={[0, yPos, 0]} castShadow={!isGhost} receiveShadow>
@@ -280,16 +326,15 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
         };
     }
     setActiveId(id);
-    // @ts-ignore 
-    e.target.setPointerCapture(e.pointerId);
+    // Removed setPointerCapture to prevent "Cannot read properties of null" error
+    // Dragging is handled by the global plane pointer move event which is robust enough
   };
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     if (!editable) return;
     setActiveId(null);
     dragOffset.current = { x: 0, z: 0 };
-    // @ts-ignore
-    e.target.releasePointerCapture(e.pointerId);
+    // Removed releasePointerCapture
   };
 
   const handlePlaneMove = (e: ThreeEvent<PointerEvent>) => {
@@ -405,28 +450,30 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
           <ContactShadows position={[0, 0.02, 0]} opacity={0.4} scale={20} blur={3} far={2} color="#000000" />
         </group>
 
-        {items.map((item) => (
-          <DraggableItem 
-            key={item.id} 
-            item={item} 
-            activeId={activeId} 
-            onDown={handlePointerDown}
-            onMove={handlePlaneMove} 
-            onUp={handlePointerUp}
-          />
-        ))}
+        <Suspense fallback={null}>
+            {items.map((item) => (
+              <DraggableItem 
+                key={item.id} 
+                item={item} 
+                activeId={activeId} 
+                onDown={handlePointerDown}
+                onMove={handlePlaneMove} 
+                onUp={handlePointerUp}
+              />
+            ))}
 
-        {ghostItems.map((item) => (
-          <DraggableItem 
-            key={item.id} 
-            item={item} 
-            activeId={null} 
-            onDown={() => {}} 
-            onMove={() => {}} 
-            onUp={() => {}}
-            isGhost={true}
-          />
-        ))}
+            {ghostItems.map((item) => (
+              <DraggableItem 
+                key={item.id} 
+                item={item} 
+                activeId={null} 
+                onDown={() => {}} 
+                onMove={() => {}} 
+                onUp={() => {}}
+                isGhost={true}
+              />
+            ))}
+        </Suspense>
 
         {/* Logic to sync external drag (sidebar) with 3D world */}
         {dragCoords && onDragPosChange && (

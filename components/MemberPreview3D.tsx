@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
+import { OrbitControls, ContactShadows, Html, useGLTF } from '@react-three/drei';
+import * as THREE from 'three';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
 
@@ -40,6 +41,29 @@ interface PreviewItemProps {
   shape?: ShapeType;
 }
 
+// Reusing the GuitarModel here for consistency in preview
+const GuitarModel = ({ color }: { color: string }) => {
+  const { scene } = useGLTF('/assets/Electric%20Guitar%20Telecaster%20Red.glb');
+  
+  const clone = React.useMemo(() => {
+    const c = scene.clone();
+    c.traverse((child) => {
+      if ((child as THREE.Mesh).isMesh) {
+         (child as THREE.Mesh).material = new THREE.MeshStandardMaterial({ 
+             color: color, 
+             roughness: 0.3,
+             metalness: 0.2
+         });
+         child.castShadow = true;
+         child.receiveShadow = true;
+      }
+    });
+    return c;
+  }, [scene, color]);
+
+  return <primitive object={clone} scale={1.5} rotation={[0, Math.PI / 2, 0]} position={[0, -0.5, 0]} />;
+};
+
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, shape = 'box' }) => {
     const [width, height, depth] = args;
 
@@ -60,6 +84,25 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
             );
         }
         if (shape === 'instrument') {
+            // Check label for Guitar/Bass
+            const isGuitarOrBass = (label || '').toLowerCase().match(/guitar|bass/);
+            
+            if (isGuitarOrBass) {
+                return (
+                    <group position={[0, height/2, 0]}>
+                         <Suspense fallback={
+                             <mesh position={[0, 0, 0]}>
+                                <boxGeometry args={[width, height*0.6, 0.1]} />
+                                <meshStandardMaterial color={color} roughness={0.4} />
+                             </mesh>
+                         }>
+                             <GuitarModel color={color} />
+                         </Suspense>
+                    </group>
+                );
+            }
+
+            // Fallback for Horns/Others
             return (
                 <group>
                     {/* Body */}
@@ -253,22 +296,24 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
             {/* Fill Light (Blueish for stage feel) */}
             <pointLight position={[-5, 2, -5]} intensity={0.5} color="#3b82f6" />
             
-            <group position={[0, -0.8, 0]}> {/* Center the scene vertically */}
-                {sceneItems.map((item, idx) => (
-                    <PreviewItem 
-                        key={idx}
-                        position={item.pos}
-                        args={item.size}
-                        color={item.color}
-                        label={item.label}
-                        shape={item.shape}
-                    />
-                ))}
-                
-                {/* Floor Grid for reference */}
-                <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
-                <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />
-            </group>
+            <Suspense fallback={null}>
+                <group position={[0, -0.8, 0]}> {/* Center the scene vertically */}
+                    {sceneItems.map((item, idx) => (
+                        <PreviewItem 
+                            key={idx}
+                            position={item.pos}
+                            args={item.size}
+                            color={item.color}
+                            label={item.label}
+                            shape={item.shape}
+                        />
+                    ))}
+                    
+                    {/* Floor Grid for reference */}
+                    <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
+                    <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />
+                </group>
+            </Suspense>
 
             <OrbitControls enableZoom={false} autoRotate autoRotateSpeed={1.5} minPolarAngle={0} maxPolarAngle={Math.PI / 2.2} />
         </Canvas>
