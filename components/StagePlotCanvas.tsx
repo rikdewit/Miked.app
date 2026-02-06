@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
 import { percentToX, percentToZ, xToPercent, zToPercent } from '../utils/stageHelpers';
 import { StageDraggableItem } from './3d/StageDraggableItem';
+import { MODEL_OFFSETS } from './3d/StageModels';
 
 interface StagePlotCanvasProps {
   items: StageItem[];
@@ -125,11 +126,30 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
         const halfWidth = config.width / 2;
         const halfDepth = config.depth / 2;
 
+        // Determine visual offset (must match StageDraggableItem logic)
+        let offset = [0, 0, 0];
+        const labelLower = (item.label || '').toLowerCase();
+        
+        if (config.shape !== 'person') {
+            if (labelLower.includes('drum') || labelLower.includes('kit')) {
+                offset = MODEL_OFFSETS.DRUMS;
+            } else if (labelLower.includes('sax')) {
+                offset = MODEL_OFFSETS.SAX;
+            } else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) {
+                offset = MODEL_OFFSETS.TRUMPET;
+            }
+        }
+        const [offX, _offY, offZ] = offset;
+
         // Boundaries (World Coordinates)
-        const minX = -(STAGE_WIDTH / 2) + halfWidth;
-        const maxX = (STAGE_WIDTH / 2) - halfWidth;
-        const minZ = -(STAGE_DEPTH / 2) + halfDepth;
-        const maxZ = (STAGE_DEPTH / 2) - halfDepth;
+        // We adjust bounds by the offset so the VISUAL mesh stays inside stage.
+        // minX = Left Edge + Half Width - X Offset
+        // maxX = Right Edge - Half Width - X Offset
+        
+        const minX = -(STAGE_WIDTH / 2) + halfWidth - offX;
+        const maxX = (STAGE_WIDTH / 2) - halfWidth - offX;
+        const minZ = -(STAGE_DEPTH / 2) + halfDepth - offZ;
+        const maxZ = (STAGE_DEPTH / 2) - halfDepth - offZ;
 
         // Clamp
         const clampedWorldX = Math.max(minX, Math.min(maxX, targetWorldX));

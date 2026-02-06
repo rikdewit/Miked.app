@@ -42,12 +42,16 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   // This must match the model used in renderModel
   let offset = MODEL_OFFSETS.DEFAULT;
   
-  if (labelLower.includes('drum') || labelLower.includes('kit')) {
-      offset = MODEL_OFFSETS.DRUMS;
-  } else if (labelLower.includes('sax')) {
-      offset = MODEL_OFFSETS.SAX;
-  } else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) {
-      offset = MODEL_OFFSETS.TRUMPET;
+  // Only apply instrument-specific offsets if the item is NOT a person.
+  // This prevents a person named "Drummer" from inheriting the Drum Kit offset.
+  if (shape !== 'person') {
+    if (labelLower.includes('drum') || labelLower.includes('kit')) {
+        offset = MODEL_OFFSETS.DRUMS;
+    } else if (labelLower.includes('sax')) {
+        offset = MODEL_OFFSETS.SAX;
+    } else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) {
+        offset = MODEL_OFFSETS.TRUMPET;
+    }
   }
 
   const [offX, offY, offZ] = offset;

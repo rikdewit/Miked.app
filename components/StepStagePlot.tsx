@@ -5,6 +5,7 @@ import { StagePlotCanvas } from './StagePlotCanvas';
 import { MemberPreview3D } from './MemberPreview3D';
 import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
 import { generateMemberItems } from '../utils/stageHelpers';
+import { MODEL_OFFSETS } from './3d/StageModels';
 
 interface StepStagePlotProps {
   data: RiderData;
@@ -113,11 +114,34 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
           
           const halfW = wPercent / 2;
           const halfD = dPercent / 2;
+
+          // Determine Visual Offset (Matches StageDraggableItem logic)
+          let offset = [0, 0, 0];
+          const labelLower = (item.label || '').toLowerCase();
           
-          const iMinX = item.x - halfW;
-          const iMaxX = item.x + halfW;
-          const iMinY = item.y - halfD;
-          const iMaxY = item.y + halfD;
+          if (config.shape !== 'person') {
+              if (labelLower.includes('drum') || labelLower.includes('kit')) {
+                  offset = MODEL_OFFSETS.DRUMS;
+              } else if (labelLower.includes('sax')) {
+                  offset = MODEL_OFFSETS.SAX;
+              } else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) {
+                  offset = MODEL_OFFSETS.TRUMPET;
+              }
+          }
+          const [offX, _, offZ] = offset;
+
+          // Convert Offset to Percent
+          const offXPercent = (offX / STAGE_WIDTH) * 100;
+          const offZPercent = (offZ / STAGE_DEPTH) * 100;
+
+          // Apply offset to center position for bounds check
+          const visualCenterX = item.x + offXPercent;
+          const visualCenterY = item.y + offZPercent;
+          
+          const iMinX = visualCenterX - halfW;
+          const iMaxX = visualCenterX + halfW;
+          const iMinY = visualCenterY - halfD;
+          const iMaxY = visualCenterY + halfD;
           
           if (iMinX < minX) minX = iMinX;
           if (iMaxX > maxX) maxX = iMaxX;
