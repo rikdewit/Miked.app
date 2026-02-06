@@ -4,36 +4,11 @@ import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, Html, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 
-// Augment React's JSX namespace (for React 18+ / TS 5+)
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      boxGeometry: any;
-      meshStandardMaterial: any;
-      cylinderGeometry: any;
-      ambientLight: any;
-      directionalLight: any;
-      planeGeometry: any;
-      meshBasicMaterial: any;
-    }
-  }
-}
-
-// Augment Global JSX namespace (fallback)
+// Extend JSX.IntrinsicElements to allow any tag (fixes React Three Fiber + HTML tag issues)
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      boxGeometry: any;
-      meshStandardMaterial: any;
-      cylinderGeometry: any;
-      ambientLight: any;
-      directionalLight: any;
-      planeGeometry: any;
-      meshBasicMaterial: any;
+      [elemName: string]: any;
     }
   }
 }
@@ -52,8 +27,8 @@ interface StagePlotCanvasProps {
 }
 
 // --- Constants ---
-const STAGE_WIDTH = 8; // Wider stage for better spacing
-const STAGE_DEPTH = 5; 
+export const STAGE_WIDTH = 8; // Wider stage for better spacing
+export const STAGE_DEPTH = 5; 
 
 // --- Helpers to map Data (0-100%) to World ---
 const percentToX = (p: number) => ((p / 100) * STAGE_WIDTH) - (STAGE_WIDTH / 2);
@@ -62,7 +37,7 @@ const xToPercent = (w: number) => ((w + (STAGE_WIDTH / 2)) / STAGE_WIDTH) * 100;
 const zToPercent = (w: number) => ((w + (STAGE_DEPTH / 2)) / STAGE_DEPTH) * 100;
 
 // Reusing updated palette from MemberPreview3D
-const COLORS = {
+export const COLORS = {
   person: '#3b82f6',     // Blue 500
   amp: '#1e293b',        // Slate 800
   drum: '#ef4444',       // Red 500
@@ -76,7 +51,7 @@ const COLORS = {
 };
 
 // --- Config Helper ---
-const getItemConfig = (item: StageItem) => {
+export const getItemConfig = (item: StageItem) => {
   const isPerson = item.type === 'person';
   const isMonitor = item.type === 'monitor';
   const isPower = item.type === 'power';
@@ -162,9 +137,10 @@ const ExternalDragHandler = ({
         const pctX = xToPercent(intersectPoint.x);
         const pctY = zToPercent(intersectPoint.z);
         
-        // Clamp
-        const clampedX = Math.max(2, Math.min(98, pctX));
-        const clampedY = Math.max(2, Math.min(98, pctY));
+        // Return raw 0-100 coords. 
+        // Strict group boundary logic is now handled in StepStagePlot::handleGhostUpdate
+        const clampedX = Math.max(0, Math.min(100, pctX));
+        const clampedY = Math.max(0, Math.min(100, pctY));
         
         onUpdate(clampedX, clampedY);
     }
@@ -327,22 +303,41 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     const targetWorldX = pointOnPlane.x + dragOffset.current.x;
     const targetWorldZ = pointOnPlane.z + dragOffset.current.z;
 
-    const newX = xToPercent(targetWorldX);
-    const newY = zToPercent(targetWorldZ);
+    // Get item dimensions to enforce boundaries
+    const item = items.find(i => i.id === activeId);
+    if (item) {
+        const config = getItemConfig(item);
+        const halfWidth = config.width / 2;
+        const halfDepth = config.depth / 2;
 
-    const clampedX = Math.max(2, Math.min(98, newX));
-    const clampedY = Math.max(2, Math.min(98, newY));
+        // Boundaries (World Coordinates)
+        const minX = -(STAGE_WIDTH / 2) + halfWidth;
+        const maxX = (STAGE_WIDTH / 2) - halfWidth;
+        const minZ = -(STAGE_DEPTH / 2) + halfDepth;
+        const maxZ = (STAGE_DEPTH / 2) - halfDepth;
 
-    setItems(items.map(item => 
-      item.id === activeId 
-        ? { ...item, x: clampedX, y: clampedY } 
-        : item
-    ));
+        // Clamp
+        const clampedWorldX = Math.max(minX, Math.min(maxX, targetWorldX));
+        const clampedWorldZ = Math.max(minZ, Math.min(maxZ, targetWorldZ));
+
+        const newX = xToPercent(clampedWorldX);
+        const newY = zToPercent(clampedWorldZ);
+
+        setItems(items.map(i => 
+            i.id === activeId 
+                ? { ...i, x: newX, y: newY } 
+                : i
+        ));
+    }
   };
 
   const isTopView = viewMode === 'top';
   const camPosition: [number, number, number] = isTopView ? [0, 50, 0] : [-20, 30, 20];
-  const camZoom = isPreview ? 40 : (isTopView ? 80 : 60); 
+  
+  // Use tighter zoom for preview to minimize whitespace and fit the stage
+  const camZoom = isPreview 
+    ? (isTopView ? 75 : 60) 
+    : (isTopView ? 80 : 60);
   
   return (
     <div className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative">

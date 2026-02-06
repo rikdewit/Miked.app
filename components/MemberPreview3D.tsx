@@ -4,40 +4,6 @@ import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
 
-// Augment React's JSX namespace (for React 18+ / TS 5+)
-declare module 'react' {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      boxGeometry: any;
-      meshStandardMaterial: any;
-      ambientLight: any;
-      directionalLight: any;
-      pointLight: any;
-      gridHelper: any;
-      cylinderGeometry: any;
-    }
-  }
-}
-
-// Augment Global JSX namespace (fallback)
-declare global {
-  namespace JSX {
-    interface IntrinsicElements {
-      group: any;
-      mesh: any;
-      boxGeometry: any;
-      meshStandardMaterial: any;
-      ambientLight: any;
-      directionalLight: any;
-      pointLight: any;
-      gridHelper: any;
-      cylinderGeometry: any;
-    }
-  }
-}
-
 interface MemberPreview3DProps {
   member: BandMember;
 }

@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { Box, Layers, Trash2, GripVertical, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { RiderData, StageItem, BandMember, InstrumentType } from '../types';
-import { StagePlotCanvas } from './StagePlotCanvas';
+import { StagePlotCanvas, getItemConfig, STAGE_WIDTH, STAGE_DEPTH } from './StagePlotCanvas';
 import { INSTRUMENTS } from '../constants';
 import { MemberPreview3D } from './MemberPreview3D';
 
@@ -176,7 +176,47 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   };
 
   const handleGhostUpdate = (x: number, y: number) => {
-      setDragPos({ x, y });
+      if (!draggingMemberId) return;
+      const member = data.members.find(m => m.id === draggingMemberId);
+      if (!member) return;
+
+      // 1. Generate items at the proposed center to check bounds
+      const tempItems = generateMemberItems(member, x, y, 'temp-bounds-check');
+      
+      let minX = 100, maxX = 0, minY = 100, maxY = 0;
+      
+      tempItems.forEach(item => {
+          const config = getItemConfig(item);
+          // Convert World Dimensions to Percentage
+          const wPercent = (config.width / STAGE_WIDTH) * 100;
+          const dPercent = (config.depth / STAGE_DEPTH) * 100;
+          
+          const halfW = wPercent / 2;
+          const halfD = dPercent / 2;
+          
+          const iMinX = item.x - halfW;
+          const iMaxX = item.x + halfW;
+          const iMinY = item.y - halfD;
+          const iMaxY = item.y + halfD;
+          
+          if (iMinX < minX) minX = iMinX;
+          if (iMaxX > maxX) maxX = iMaxX;
+          if (iMinY < minY) minY = iMinY;
+          if (iMaxY > maxY) maxY = iMaxY;
+      });
+
+      // 2. Calculate Shift needed to fit in 0-100 with margin
+      let shiftX = 0;
+      let shiftY = 0;
+      const MARGIN = 0.5; // Small margin to prevent clipping
+
+      if (minX < MARGIN) shiftX = MARGIN - minX;
+      else if (maxX > (100 - MARGIN)) shiftX = (100 - MARGIN) - maxX;
+
+      if (minY < MARGIN) shiftY = MARGIN - minY;
+      else if (maxY > (100 - MARGIN)) shiftY = (100 - MARGIN) - maxY;
+      
+      setDragPos({ x: x + shiftX, y: y + shiftY });
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -194,7 +234,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     const memberId = e.dataTransfer.getData("memberId");
-    const finalPos = dragPos;
+    const finalPos = dragPos; // Use the clamped position
 
     setDraggingMemberId(null);
     setDragPos(null);
