@@ -100,11 +100,11 @@ export const getItemConfig = (item: StageItem) => {
 
 // --- 3D Components ---
 
-// Preload the guitar model with correct path (URL encoded spaces)
-useGLTF.preload('/assets/Electric%20Guitar%20Telecaster%20Red.glb');
+// Use the direct raw.githubusercontent.com link to avoid redirects and CORS issues
+const GUITAR_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb';
 
 const GuitarModel = ({ color, dragging }: { color: string, dragging?: boolean }) => {
-  const { scene } = useGLTF('/assets/Electric%20Guitar%20Telecaster%20Red.glb');
+  const { scene } = useGLTF(GUITAR_URL);
   
   const clone = React.useMemo(() => {
     const c = scene.clone();
@@ -299,7 +299,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   setItems, 
   editable, 
   viewMode = 'isometric', 
-  showAudienceLabel = true,
+  showAudienceLabel = true, 
   isPreview = false,
   ghostItems = [],
   dragCoords,
@@ -326,15 +326,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
         };
     }
     setActiveId(id);
-    // Removed setPointerCapture to prevent "Cannot read properties of null" error
-    // Dragging is handled by the global plane pointer move event which is robust enough
   };
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     if (!editable) return;
     setActiveId(null);
     dragOffset.current = { x: 0, z: 0 };
-    // Removed releasePointerCapture
   };
 
   const handlePlaneMove = (e: ThreeEvent<PointerEvent>) => {

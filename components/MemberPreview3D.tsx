@@ -43,7 +43,8 @@ interface PreviewItemProps {
 
 // Reusing the GuitarModel here for consistency in preview
 const GuitarModel = ({ color }: { color: string }) => {
-  const { scene } = useGLTF('/assets/Electric%20Guitar%20Telecaster%20Red.glb');
+  // Use the direct raw.githubusercontent.com link to avoid redirects and CORS issues
+  const { scene } = useGLTF('https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/Electric_Guitar_Telecaster_Red.glb');
   
   const clone = React.useMemo(() => {
     const c = scene.clone();
