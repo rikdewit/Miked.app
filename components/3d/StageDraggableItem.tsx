@@ -4,7 +4,7 @@ import { Html } from '@react-three/drei';
 import { StageItem } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ } from '../../utils/stageHelpers';
-import { GuitarModel, PersonModel } from './StageModels';
+import * as Models from './StageModels';
 
 interface DraggableItemProps {
   item: StageItem;
@@ -24,7 +24,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   isGhost = false
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
-  const yPos = height / 2;
   const x = percentToX(item.x);
   const z = percentToZ(item.y);
   const isDragging = activeId === item.id;
@@ -36,8 +35,86 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   // Always show label for better visibility
   const showLabel = true;
 
-  // Check if it's a guitar or bass for the 3D model
-  const isGuitarOrBass = (item.label || '').toLowerCase().match(/guitar|bass/);
+  const renderModel = () => {
+    const labelLower = (item.label || '').toLowerCase();
+    
+    // --- 1. PERSON ---
+    if (shape === 'person') {
+        return <Models.PersonModel color={isDragging ? '#fbbf24' : undefined} />;
+    }
+
+    // --- 2. DRUMS ---
+    if (labelLower.includes('drum') || labelLower.includes('kit')) {
+        // Remove coloring, only highlight on drag
+        return <Models.DrumsModel color={isDragging ? '#fbbf24' : undefined} />;
+    }
+    
+    // --- 3. AMPS ---
+    if (labelLower.includes('amp')) {
+        return <Models.AmpModel color={isDragging ? '#fbbf24' : color} />;
+    }
+    
+    // --- 4. KEYS / SYNTH ---
+    if (labelLower.includes('keys') || labelLower.includes('synth')) {
+        // Add Stand, Remove coloring unless dragging
+        return (
+            <group>
+                <Models.StandModel color={isDragging ? '#fbbf24' : '#64748b'} />
+                <group position={[0, 0.8, 0]}>
+                    <Models.SynthModel color={isDragging ? '#fbbf24' : undefined} />
+                </group>
+            </group>
+        );
+    }
+    
+    // --- 5. MIC STANDS ---
+    if (labelLower.includes('mic')) {
+        return <Models.MicStandModel color={isDragging ? '#fbbf24' : color} />;
+    }
+
+    // --- 6. INSTRUMENTS (Guitars - No Stand) ---
+    
+    if (labelLower.includes('acoustic')) {
+         return <Models.AcousticGuitarModel color={isDragging ? '#fbbf24' : color} />;
+    }
+    
+    if (labelLower.includes('guitar')) { // Electric
+         return <Models.ElectricGuitarModel color={isDragging ? '#fbbf24' : color} />;
+    }
+
+    // --- 7. INSTRUMENTS WITHOUT STAND (Bass, Horns) ---
+
+    if (labelLower.includes('bass')) {
+         return <Models.BassModel color={isDragging ? '#fbbf24' : color} />;
+    }
+
+    if (labelLower.includes('sax')) {
+         return <Models.SaxModel color={isDragging ? '#fbbf24' : color} />;
+    }
+
+    if (labelLower.includes('trumpet') || labelLower.includes('tpt')) {
+         return <Models.TrumpetModel color={isDragging ? '#fbbf24' : color} />;
+    }
+    
+    // --- 8. FALLBACKS ---
+    
+    if (shape === 'wedge') {
+        return (
+             <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow={!isGhost} receiveShadow>
+                 <boxGeometry args={[width, height, depth]} />
+                 <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
+             </mesh>
+        );
+    }
+    
+    // Default Box
+    return (
+         <mesh position={[0, height/2, 0]} castShadow={!isGhost} receiveShadow>
+            <boxGeometry args={[width, height, depth]} />
+            <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
+         </mesh>
+    );
+  };
 
   return (
     <group position={[x, 0, z]}>
@@ -65,75 +142,14 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
              <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
-        {shape === 'wedge' ? (
-             // Monitor Wedge shape
-             <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow={!isGhost} receiveShadow>
-                 <boxGeometry args={[width, height, depth]} />
-                 <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-             </mesh>
-        ) : shape === 'pole' ? (
-             // Mic Stand
-             <group>
-                 <mesh position={[0, height/2, 0]} castShadow={!isGhost}>
-                     <cylinderGeometry args={[0.02, 0.02, height]} />
-                     <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                 </mesh>
-                 <mesh position={[0, 0.02, 0]}>
-                     <cylinderGeometry args={[0.15, 0.15, 0.05]} />
-                     <meshStandardMaterial color="#475569" {...materialProps} />
-                 </mesh>
-             </group>
-        ) : shape === 'instrument' ? (
-             isGuitarOrBass ? (
-                 <group position={[0, height/2, 0]}>
-                    <Suspense fallback={
-                         <mesh position={[0, 0, 0]} castShadow={!isGhost}>
-                             <boxGeometry args={[width, height*0.6, 0.1]} />
-                             <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                         </mesh>
-                    }>
-                        <GuitarModel color={isDragging ? '#fbbf24' : color} />
-                    </Suspense>
-                 </group>
-             ) : (
-                // Abstract Instrument Shape (Sax/Trumpet etc)
-                <group>
-                    {/* Body */}
-                    <mesh position={[0, height*0.4, 0]} castShadow={!isGhost}>
-                        <boxGeometry args={[width, height*0.6, 0.1]} />
-                        <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                    </mesh>
-                    {/* Neck */}
-                    <mesh position={[0, height*0.8, 0]}>
-                        <boxGeometry args={[width*0.2, height*0.4, 0.05]} />
-                        <meshStandardMaterial color="#475569" {...materialProps} />
-                    </mesh>
-                    {/* Stand Base */}
-                    <mesh position={[0, 0.05, 0]}>
-                        <cylinderGeometry args={[0.2, 0.2, 0.1]} />
-                        <meshStandardMaterial color="#475569" {...materialProps} />
-                    </mesh>
-                </group>
-             )
-        ) : shape === 'person' ? (
-             // Band Member 3D Model
-             <group position={[0, 0, 0]}>
-                 <Suspense fallback={
-                     <mesh position={[0, height/2, 0]} castShadow={!isGhost} receiveShadow>
-                        <boxGeometry args={[width, height, depth]} />
-                        <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-                     </mesh>
-                 }>
-                     <PersonModel color={isDragging ? '#fbbf24' : undefined} />
-                 </Suspense>
-             </group>
-        ) : (
-             // Default Box / Amp
-             <mesh position={[0, yPos, 0]} castShadow={!isGhost} receiveShadow>
+        <Suspense fallback={
+            <mesh position={[0, height/2, 0]}>
                 <boxGeometry args={[width, height, depth]} />
-                <meshStandardMaterial color={isDragging ? '#fbbf24' : color} {...materialProps} />
-             </mesh>
-        )}
+                <meshStandardMaterial color={color} opacity={0.5} transparent />
+            </mesh>
+        }>
+            {renderModel()}
+        </Suspense>
       </group>
     </group>
   );
