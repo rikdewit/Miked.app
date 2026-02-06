@@ -71,7 +71,7 @@ const applyPose = (boneData: any, bone: THREE.Object3D) => {
     boneData.children.forEach((childData: any) => {
       // Find the child bone in the GLTF hierarchy using the SWAPPED name
       // This routes Left Data -> Right Bone and vice versa, fixing the mirrored limbs
-      const targetName = getSwappedBoneName(childData.name);
+      const targetName = childData.name;
       const childBone = bone.children.find(b => b.name === targetName);
       
       if (childBone) {
