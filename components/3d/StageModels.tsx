@@ -33,6 +33,12 @@ export const useStageModel = (url: string, color?: string) => {
                  const newMaterials = materials.map(m => {
                      const nm = m.clone() as THREE.MeshStandardMaterial;
                      nm.color.set(color);
+                     
+                     // Reset material properties to ensure visibility in simple lighting.
+                     // High metalness without an environment map results in very dark/black renders.
+                     nm.metalness = 0.0;
+                     nm.roughness = 0.5;
+                     
                      return nm;
                  });
                  mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];

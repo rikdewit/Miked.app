@@ -11,7 +11,7 @@ export const COLORS = {
   drum: '#ef4444',       // Red 500
   keys: '#8b5cf6',       // Violet 500
   mic: '#94a3b8',        // Slate 400
-  instrument: '#fbbf24', // Amber 400
+  instrument: '#cbd5e1', // Slate 300 (Lighter Neutral)
   pedalboard: '#111827', // Gray 900
   di: '#f97316',         // Orange 500
   monitor: '#374151',    // Gray 700
