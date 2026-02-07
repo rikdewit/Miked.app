@@ -210,20 +210,47 @@ export const StandModel = ({ color }: { color?: string }) => {
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export const PersonModel = ({ color }: { color?: string }) => {
-  const model = useStageModel(URLS.PERSON, color);
+export const PersonModel = ({ color, isBass = false }: { color?: string, isBass?: boolean }) => {
+  const { scene } = useGLTF(URLS.PERSON);
 
-  useMemo(() => {
-    // Start recursion from the Hips bone
-    let hips: THREE.Object3D | undefined;
-    model.traverse((node) => {
-        if (node.name === 'Hips') hips = node;
-    });
+  const model = useMemo(() => {
+    const cloned = cloneGLTF(scene);
     
-    if (hips) {
-        applyPose(malePose, hips);
+    // Apply Color
+    cloned.traverse((node: any) => {
+        if (node.isMesh) {
+           const mesh = node as THREE.Mesh;
+           mesh.castShadow = true;
+           mesh.receiveShadow = true;
+           
+           if (color && mesh.material) {
+               const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+               const newMaterials = materials.map(m => {
+                   const nm = m.clone() as THREE.MeshStandardMaterial;
+                   nm.color.set(color);
+                   nm.metalness = 0.1;
+                   nm.roughness = 0.6;
+                   return nm;
+               });
+               mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
+           }
+        }
+    });
+
+    // Apply Pose only if Bass
+    if (isBass) {
+        let hips: THREE.Object3D | undefined;
+        cloned.traverse((node: any) => {
+            if (node.name === 'Hips') hips = node;
+        });
+        
+        if (hips) {
+            applyPose(malePose, hips);
+        }
     }
-  }, [model]);
+
+    return cloned;
+  }, [scene, color, isBass]);
 
   return <primitive object={model} scale={1.1} position={MODEL_OFFSETS.DEFAULT} />;
 };

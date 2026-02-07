@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
@@ -72,6 +71,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     // --- 1. PERSON ---
     if (shape === 'person') {
         let heldElement = null;
+        let isBass = false;
 
         // Check if the member has an instrument that should be held
         if (member) {
@@ -87,6 +87,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
                   if (labelLowerInst.includes('bass')) {
                       heldElement = <Models.BassModel held />;
+                      isBass = true;
                   } else if (labelLowerInst.includes('acoustic')) {
                       heldElement = <Models.AcousticGuitarModel held />;
                   } else if (instType === InstrumentType.GUITAR) { // Electric
@@ -101,7 +102,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
         return (
             <group>
-                <Models.PersonModel color={isDragging ? '#fbbf24' : undefined} />
+                <Models.PersonModel color={isDragging ? '#fbbf24' : undefined} isBass={isBass} />
                 {heldElement}
             </group>
         );

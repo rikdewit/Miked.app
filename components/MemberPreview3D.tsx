@@ -19,6 +19,7 @@ interface SceneItem {
   label: string;
   type: string; // Used for model selection
   held?: boolean;
+  isBass?: boolean;
 }
 
 interface PreviewItemProps {
@@ -28,9 +29,10 @@ interface PreviewItemProps {
   label?: string;
   type: string;
   held?: boolean;
+  isBass?: boolean;
 }
 
-const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held }) => {
+const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held, isBass }) => {
     const [width, height, depth] = args;
     
     // Determine offset
@@ -42,7 +44,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
     // const [offX, offY, offZ] = offset; // Unused if labels are removed
 
     const renderMesh = () => {
-        if (type === 'person') return <Models.PersonModel />;
+        if (type === 'person') return <Models.PersonModel isBass={isBass} />;
         if (type === 'drums') return <Models.DrumsModel />; 
         if (type === 'amp') return <Models.AmpModel color={color} />;
         
@@ -102,6 +104,12 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
   
   const sceneItems = useMemo(() => {
     const items: SceneItem[] = [];
+
+    // Check if member is a bass player for the pose
+    const isBass = member.instrumentIds.some(id => {
+        const inst = INSTRUMENTS.find(i => i.id === id);
+        return inst?.type === InstrumentType.BASS;
+    });
     
     // 1. The Person (Center)
     items.push({ 
@@ -110,7 +118,8 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       size: [0.5, 1.7, 0.5], 
       color: COLORS.person, 
       label: member.name || 'Musician',
-      type: 'person' 
+      type: 'person',
+      isBass
     });
 
     let ampCount = 0;
@@ -253,6 +262,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                             label={item.label}
                             type={item.type}
                             held={item.held}
+                            isBass={item.isBass}
                         />
                     ))}
                     <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
