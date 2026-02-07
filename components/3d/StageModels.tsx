@@ -1,3 +1,4 @@
+
 import React, { useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,7 +9,7 @@ import { malePose } from './male_pose';
 const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
 
 const URLS = {
-  GUITAR_ELEC: BASE_URL + 'Electric_Guitar_Telecaster_Red.glb',
+  GUITAR_ELEC: BASE_URL + 'Electric_Guitar_Telecaster_Blue.glb',
   GUITAR_ACOUSTIC: BASE_URL + 'Acoustic_Guitar_Beige.glb',
   BASS: BASE_URL + 'Bass_Guitar_Firebird_Red.glb',
   AMPLIFIER: BASE_URL + 'Amplifier.glb',
@@ -113,7 +114,7 @@ export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: bo
         <primitive 
             object={model} 
             scale={1} 
-            position={HELD_GUITAR_POS} 
+            position={HELD_GUITAR_POS}
             rotation={HELD_GUITAR_ROT} 
         />
       );
@@ -210,7 +211,7 @@ export const StandModel = ({ color }: { color?: string }) => {
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export const PersonModel = ({ color, isBass = false }: { color?: string, isBass?: boolean }) => {
+export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 'stand' | 'guitar' | 'bass' }) => {
   const { scene } = useGLTF(URLS.PERSON);
 
   const model = useMemo(() => {
@@ -237,8 +238,8 @@ export const PersonModel = ({ color, isBass = false }: { color?: string, isBass?
         }
     });
 
-    // Apply Pose only if Bass
-    if (isBass) {
+    // Apply Pose
+    if (pose === 'guitar' || pose === 'bass') {
         let hips: THREE.Object3D | undefined;
         cloned.traverse((node: any) => {
             if (node.name === 'Hips') hips = node;
@@ -250,7 +251,7 @@ export const PersonModel = ({ color, isBass = false }: { color?: string, isBass?
     }
 
     return cloned;
-  }, [scene, color, isBass]);
+  }, [scene, color, pose]);
 
   return <primitive object={model} scale={1.1} position={MODEL_OFFSETS.DEFAULT} />;
 };

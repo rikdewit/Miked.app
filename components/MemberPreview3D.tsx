@@ -1,3 +1,4 @@
+
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
@@ -19,7 +20,7 @@ interface SceneItem {
   label: string;
   type: string; // Used for model selection
   held?: boolean;
-  isBass?: boolean;
+  pose?: 'stand' | 'guitar' | 'bass';
 }
 
 interface PreviewItemProps {
@@ -29,10 +30,10 @@ interface PreviewItemProps {
   label?: string;
   type: string;
   held?: boolean;
-  isBass?: boolean;
+  pose?: 'stand' | 'guitar' | 'bass';
 }
 
-const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held, isBass }) => {
+const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held, pose }) => {
     const [width, height, depth] = args;
     
     // Determine offset
@@ -44,7 +45,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
     // const [offX, offY, offZ] = offset; // Unused if labels are removed
 
     const renderMesh = () => {
-        if (type === 'person') return <Models.PersonModel isBass={isBass} />;
+        if (type === 'person') return <Models.PersonModel pose={pose} />;
         if (type === 'drums') return <Models.DrumsModel />; 
         if (type === 'amp') return <Models.AmpModel color={color} />;
         
@@ -63,17 +64,17 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
         if (type === 'mic') return <Models.MicStandModel color={color} />;
         
         // Guitars No Stand
-        if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} />;
-        if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} />;
+        if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} held={held} />;
+        if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} held={held} />;
         
         // Bass
         if (type === 'bass') return <Models.BassModel color={color} held={held} />;
         
         // Sax No Stand
-        if (type === 'sax') return <Models.SaxModel color={color} />;
+        if (type === 'sax') return <Models.SaxModel color={color} held={held} />;
         
         // Trumpet No Stand
-        if (type === 'trumpet') return <Models.TrumpetModel color={color} />;
+        if (type === 'trumpet') return <Models.TrumpetModel color={color} held={held} />;
 
         if (type === 'wedge') {
             return (
@@ -105,11 +106,22 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
   const sceneItems = useMemo(() => {
     const items: SceneItem[] = [];
 
-    // Check if member is a bass player for the pose
-    const isBass = member.instrumentIds.some(id => {
+    // --- DETERMINE HELD INSTRUMENT & POSE ---
+    // Match logic in StageDraggableItem: First valid held instrument gets the spot.
+    let pose: 'stand' | 'guitar' | 'bass' = 'stand';
+    let heldInstId: string | undefined;
+
+    heldInstId = member.instrumentIds.find(id => {
         const inst = INSTRUMENTS.find(i => i.id === id);
-        return inst?.type === InstrumentType.BASS;
+        return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
     });
+
+    if (heldInstId) {
+        const inst = INSTRUMENTS.find(i => i.id === heldInstId);
+        if (inst?.type === InstrumentType.BASS) pose = 'bass';
+        else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
+        // Brass keeps 'stand'
+    }
     
     // 1. The Person (Center)
     items.push({ 
@@ -119,7 +131,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       color: COLORS.person, 
       label: member.name || 'Musician',
       type: 'person',
-      isBass
+      pose: pose
     });
 
     let ampCount = 0;
@@ -191,9 +203,11 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
           else if (inst.id.includes('sax')) type = 'sax';
           else if (inst.id.includes('tpt') || inst.id.includes('trumpet')) type = 'trumpet';
 
+          // Determine if this specific instrument instance is the one being held
+          const isHeld = (instId === heldInstId);
+
           // The Instrument
-          if (type === 'bass') {
-              // Bass is held by the person (centered)
+          if (isHeld) {
               items.push({
                   id: `inst-body-${instId}`,
                   pos: [0, 0, 0], // Positioned at origin, model handles 'held' offsets
@@ -262,7 +276,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                             label={item.label}
                             type={item.type}
                             held={item.held}
-                            isBass={item.isBass}
+                            pose={item.pose}
                         />
                     ))}
                     <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
