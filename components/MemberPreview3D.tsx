@@ -20,7 +20,7 @@ interface SceneItem {
   label: string;
   type: string; // Used for model selection
   held?: boolean;
-  pose?: 'stand' | 'guitar' | 'bass';
+  pose?: 'stand' | 'guitar' | 'bass' | 'acoustic';
 }
 
 interface PreviewItemProps {
@@ -30,7 +30,7 @@ interface PreviewItemProps {
   label?: string;
   type: string;
   held?: boolean;
-  pose?: 'stand' | 'guitar' | 'bass';
+  pose?: 'stand' | 'guitar' | 'bass' | 'acoustic';
 }
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held, pose }) => {
@@ -108,7 +108,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
 
     // --- DETERMINE HELD INSTRUMENT & POSE ---
     // Match logic in StageDraggableItem: First valid held instrument gets the spot.
-    let pose: 'stand' | 'guitar' | 'bass' = 'stand';
+    let pose: 'stand' | 'guitar' | 'bass' | 'acoustic' = 'stand';
     let heldInstId: string | undefined;
 
     heldInstId = member.instrumentIds.find(id => {
@@ -119,6 +119,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
     if (heldInstId) {
         const inst = INSTRUMENTS.find(i => i.id === heldInstId);
         if (inst?.type === InstrumentType.BASS) pose = 'bass';
+        else if (inst?.id === 'gtr_ac') pose = 'acoustic';
         else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
         // Brass keeps 'stand'
     }

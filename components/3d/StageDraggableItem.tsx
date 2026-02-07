@@ -72,7 +72,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     // --- 1. PERSON ---
     if (shape === 'person') {
         let heldElement = null;
-        let pose: 'stand' | 'guitar' | 'bass' = 'stand';
+        let pose: 'stand' | 'guitar' | 'bass' | 'acoustic' = 'stand';
 
         // Check if the member has an instrument that should be held
         if (member) {
@@ -91,7 +91,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                       pose = 'bass';
                   } else if (labelLowerInst.includes('acoustic')) {
                       heldElement = <Models.AcousticGuitarModel held />;
-                      pose = 'guitar';
+                      pose = 'acoustic';
                   } else if (instType === InstrumentType.GUITAR) { // Electric
                       heldElement = <Models.ElectricGuitarModel held />;
                       pose = 'guitar';

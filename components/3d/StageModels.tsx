@@ -5,6 +5,7 @@ import * as THREE from 'three';
 // @ts-ignore
 import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
 import { malePose } from './male_pose';
+import { acousticBodyPose, acousticPose } from './acoustic_pose';
 
 const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
 
@@ -104,8 +105,29 @@ export const useStageModel = (url: string, color?: string) => {
 };
 
 // HELPER FOR HELD TRANSFORMS (Reusing Bass logic for guitars)
-const HELD_GUITAR_POS: [number, number, number] = [0.215851, 1.262, 0.086747];
+const HELD_GUITAR_POS: [number, number, number] = [0, 0, 0];
 const HELD_GUITAR_ROT: [number, number, number] = [0, 0, 0];
+
+// Helper to calculate world transform for acoustic guitar based on Hips + Offset
+const getAcousticGuitarWorldTransform = () => {
+    // 1. Convert Hips Position
+    const hipsPos = convertPosition(acousticBodyPose.position);
+    
+    // 2. Convert Guitar Local Position (Relative to Hips)
+    // We assume the offset is in the same space as the pose data
+    const guitarLocalPos = convertPosition(acousticPose.position);
+    
+    // 3. Add them up (Approximation, ignoring Hips rotation which is mostly identity in this pose)
+    const finalPos = hipsPos.add(guitarLocalPos);
+    
+    // 4. Convert Rotation
+    const finalRot = convertQuaternion(acousticPose.rotation);
+    
+    // 5. Scale
+    const finalScale = new THREE.Vector3(...acousticPose.scale);
+    
+    return { position: finalPos, rotation: finalRot, scale: finalScale };
+};
 
 export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.GUITAR_ELEC, color);
@@ -124,13 +146,15 @@ export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: bo
 
 export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.GUITAR_ACOUSTIC, color);
+  const transform = useMemo(() => getAcousticGuitarWorldTransform(), []);
+
   if (held) {
       return (
         <primitive 
             object={model} 
-            scale={1} 
-            position={HELD_GUITAR_POS} 
-            rotation={HELD_GUITAR_ROT} 
+            scale={transform.scale} 
+            position={transform.position} 
+            quaternion={transform.rotation} 
         />
       );
   }
@@ -211,7 +235,7 @@ export const StandModel = ({ color }: { color?: string }) => {
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 'stand' | 'guitar' | 'bass' }) => {
+export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 'stand' | 'guitar' | 'bass' | 'acoustic' }) => {
   const { scene } = useGLTF(URLS.PERSON);
 
   const model = useMemo(() => {
@@ -239,14 +263,18 @@ export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 
     });
 
     // Apply Pose
-    if (pose === 'guitar' || pose === 'bass') {
+    if (pose === 'guitar' || pose === 'bass' || pose === 'acoustic') {
         let hips: THREE.Object3D | undefined;
         cloned.traverse((node: any) => {
             if (node.name === 'Hips') hips = node;
         });
         
         if (hips) {
-            applyPose(malePose, hips);
+            if (pose === 'acoustic') {
+                applyPose(acousticBodyPose, hips);
+            } else {
+                applyPose(malePose, hips);
+            }
         }
     }
 
