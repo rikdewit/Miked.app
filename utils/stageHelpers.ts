@@ -27,6 +27,7 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
 
     // 2. Instruments & Gear
     let ampCount = 0;
+    let hasAssignedHeld = false; // Flag to ensure only one instrument is "held"
 
     member.instrumentIds.forEach((instId, idx) => {
         const inst = INSTRUMENTS.find(i => i.id === instId);
@@ -66,19 +67,29 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
            ampCount++;
         }
 
-        // INSTRUMENTS ON STANDS (Guitar/Bass/Brass)
+        // INSTRUMENTS ON STANDS OR HELD (Guitar/Bass/Brass)
         if ([InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type)) {
-            // Instrument Body (Core - e.g. "Guitar")
-            items.push({ 
-                id: `inst-${baseId}-${idx}`, 
-                memberId: member.id, 
-                type: 'member', 
-                label: inst.group, // Use Group Name (e.g. "Acoustic Guitar") instead of Type ("Guitar")
-                x: startX + spreadX, 
-                y: startY - 5,
-                fromInstrumentIndex: idx,
-                isPeripheral: false 
-            });
+            let isHeld = false;
+            
+            // If we haven't assigned a handheld instrument yet, this one becomes held.
+            if (!hasAssignedHeld) {
+                hasAssignedHeld = true;
+                isHeld = true;
+            }
+
+            if (!isHeld) {
+                // Instrument Body on Stand (Core)
+                items.push({ 
+                    id: `inst-${baseId}-${idx}`, 
+                    memberId: member.id, 
+                    type: 'member', 
+                    label: inst.group, // Use Group Name (e.g. "Acoustic Guitar") instead of Type ("Guitar")
+                    x: startX + spreadX, 
+                    y: startY - 5,
+                    fromInstrumentIndex: idx,
+                    isPeripheral: false 
+                });
+            }
 
             // Pedalboard / Modeler (Peripheral)
             if (instId.includes('modeler')) {

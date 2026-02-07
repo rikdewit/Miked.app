@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, Suspense } from 'react';
-import { StageItem } from '../types';
+import { StageItem, BandMember } from '../types';
 import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
@@ -18,6 +18,7 @@ interface StagePlotCanvasProps {
   ghostItems?: StageItem[];
   dragCoords?: { x: number; y: number; width: number; height: number } | null;
   onDragPosChange?: (x: number, y: number) => void;
+  members?: BandMember[];
 }
 
 const StagePlatform = () => {
@@ -77,7 +78,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   isPreview = false,
   ghostItems = [],
   dragCoords,
-  onDragPosChange
+  onDragPosChange,
+  members
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
@@ -249,6 +251,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onDown={handlePointerDown}
                 onMove={handlePlaneMove} 
                 onUp={handlePointerUp}
+                member={members?.find(m => m.id === item.memberId)}
               />
             ))}
 
@@ -261,6 +264,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onMove={() => {}} 
                 onUp={() => {}}
                 isGhost={true}
+                member={members?.find(m => m.id === item.memberId)}
               />
             ))}
         </Suspense>

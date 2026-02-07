@@ -2,11 +2,12 @@
 import React, { Suspense } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
-import { StageItem } from '../../types';
+import { StageItem, BandMember, InstrumentType } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ } from '../../utils/stageHelpers';
 import * as Models from './StageModels';
 import { MODEL_OFFSETS } from './StageModels';
+import { INSTRUMENTS } from '../../constants';
 
 interface DraggableItemProps {
   item: StageItem;
@@ -15,6 +16,7 @@ interface DraggableItemProps {
   onMove: (e: ThreeEvent<PointerEvent>) => void;
   onUp: (e: ThreeEvent<PointerEvent>) => void;
   isGhost?: boolean;
+  member?: BandMember;
 }
 
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({ 
@@ -23,7 +25,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onDown,
   onMove,
   onUp,
-  isGhost = false
+  isGhost = false,
+  member
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -44,7 +47,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   let offset = MODEL_OFFSETS.DEFAULT;
   
   // Only apply instrument-specific offsets if the item is NOT a person.
-  // This prevents a person named "Drummer" from inheriting the Drum Kit offset.
   if (shape !== 'person') {
     if (labelLower.includes('drum') || labelLower.includes('kit')) {
         offset = MODEL_OFFSETS.DRUMS;
@@ -69,7 +71,40 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     
     // --- 1. PERSON ---
     if (shape === 'person') {
-        return <Models.PersonModel color={isDragging ? '#fbbf24' : undefined} />;
+        let heldElement = null;
+
+        // Check if the member has an instrument that should be held
+        if (member) {
+             const heldInstId = member.instrumentIds.find(id => {
+                  const inst = INSTRUMENTS.find(i => i.id === id);
+                  return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
+             });
+             
+             if (heldInstId) {
+                  const inst = INSTRUMENTS.find(i => i.id === heldInstId);
+                  const instType = inst?.type;
+                  const labelLowerInst = (inst?.group || '').toLowerCase();
+
+                  if (labelLowerInst.includes('bass')) {
+                      heldElement = <Models.BassModel held />;
+                  } else if (labelLowerInst.includes('acoustic')) {
+                      heldElement = <Models.AcousticGuitarModel held />;
+                  } else if (instType === InstrumentType.GUITAR) { // Electric
+                      heldElement = <Models.ElectricGuitarModel held />;
+                  } else if (labelLowerInst.includes('sax')) {
+                      heldElement = <Models.SaxModel held />;
+                  } else if (labelLowerInst.includes('trumpet') || labelLowerInst.includes('tpt')) {
+                      heldElement = <Models.TrumpetModel held />;
+                  }
+             }
+        }
+
+        return (
+            <group>
+                <Models.PersonModel color={isDragging ? '#fbbf24' : undefined} />
+                {heldElement}
+            </group>
+        );
     }
 
     // --- 2. DRUMS ---
@@ -101,7 +136,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         return <Models.MicStandModel color={isDragging ? '#fbbf24' : color} />;
     }
 
-    // --- 6. INSTRUMENTS ---
+    // --- 6. INSTRUMENTS (On Stand) ---
 
     // Check Bass BEFORE Guitar to prevent "Bass Guitar" from being caught by the "guitar" check
     if (labelLower.includes('bass')) {
@@ -116,7 +151,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
          return <Models.ElectricGuitarModel color={isDragging ? '#fbbf24' : color} />;
     }
 
-    // --- 7. HORNS ---
+    // --- 7. HORNS (On Stand) ---
 
     if (labelLower.includes('sax')) {
          return <Models.SaxModel color={isDragging ? '#fbbf24' : color} />;

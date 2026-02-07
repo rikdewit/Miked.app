@@ -102,13 +102,37 @@ export const useStageModel = (url: string, color?: string) => {
   return model;
 };
 
-export const ElectricGuitarModel = ({ color }: { color?: string }) => {
+// HELPER FOR HELD TRANSFORMS (Reusing Bass logic for guitars)
+const HELD_GUITAR_POS: [number, number, number] = [0.215851, 1.262, 0.086747];
+const HELD_GUITAR_ROT: [number, number, number] = [0, 0, 0];
+
+export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.GUITAR_ELEC, color);
+  if (held) {
+      return (
+        <primitive 
+            object={model} 
+            scale={1} 
+            position={HELD_GUITAR_POS} 
+            rotation={HELD_GUITAR_ROT} 
+        />
+      );
+  }
   return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export const AcousticGuitarModel = ({ color }: { color?: string }) => {
+export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.GUITAR_ACOUSTIC, color);
+  if (held) {
+      return (
+        <primitive 
+            object={model} 
+            scale={1} 
+            position={HELD_GUITAR_POS} 
+            rotation={HELD_GUITAR_ROT} 
+        />
+      );
+  }
   return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
@@ -121,12 +145,8 @@ export const BassModel = ({ color, held }: { color?: string, held?: boolean }) =
             object={model} 
             scale={1} 
             // Positioned chest height, slightly left to center body mass, forward
-            position={[0.215851, 1.262, 0.086747]} 
-            rotation={[
-                THREE.MathUtils.degToRad(0), // X: Face Direction
-                THREE.MathUtils.degToRad(0), // Y: Rotate around
-                THREE.MathUtils.degToRad(0) // Z: Flip over
-            ]} 
+            position={HELD_GUITAR_POS} 
+            rotation={HELD_GUITAR_ROT} 
         />
       );
   }
@@ -155,13 +175,33 @@ export const MicStandModel = ({ color }: { color?: string }) => {
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} rotation={[0, Math.PI, 0]} />;
 };
 
-export const SaxModel = ({ color }: { color?: string }) => {
+export const SaxModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.SAX, color);
+  if (held) {
+      return (
+        <primitive 
+            object={model} 
+            scale={1} 
+            position={[0, 1.1, 0.25]} 
+            rotation={[0, 0, 0]} 
+        />
+      );
+  }
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.SAX} />;
 };
 
-export const TrumpetModel = ({ color }: { color?: string }) => {
+export const TrumpetModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.TRUMPET, color);
+  if (held) {
+      return (
+        <primitive 
+            object={model} 
+            scale={1} 
+            position={[0, 1.45, 0.2]} 
+            rotation={[0, 0, 0]} 
+        />
+      );
+  }
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.TRUMPET} />;
 };
 
