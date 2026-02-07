@@ -6,6 +6,7 @@ import * as THREE from 'three';
 import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
 import { malePose } from './male_pose';
 import { acousticBodyPose, acousticPose } from './acoustic_pose';
+import { bassBodyPose, bassPose } from './bass_pose';
 
 const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
 
@@ -108,25 +109,25 @@ export const useStageModel = (url: string, color?: string) => {
 const HELD_GUITAR_POS: [number, number, number] = [0, 0, 0];
 const HELD_GUITAR_ROT: [number, number, number] = [0, 0, 0];
 
-// Helper to calculate world transform for acoustic guitar based on Hips + Offset
-const getAcousticGuitarWorldTransform = () => {
+// Standardized helper to calculate world transform for held instruments
+const getHeldTransform = (bodyPose: any, instrumentPose: any) => {
     // 1. Convert Hips Position
-    const hipsPos = convertPosition(acousticBodyPose.position);
+    const hipsPos = convertPosition(bodyPose.position);
     
-    // 2. Convert Guitar Local Position (Relative to Hips)
+    // 2. Convert Instrument Local Position (Relative to Hips)
     // We assume the offset is in the same space as the pose data
-    const guitarLocalPos = convertPosition(acousticPose.position);
+    const instLocalPos = convertPosition(instrumentPose.position);
     
     // 3. Add them up (Approximation, ignoring Hips rotation which is mostly identity in this pose)
-    const finalPos = hipsPos.add(guitarLocalPos);
+    const finalPos = hipsPos.add(instLocalPos);
     
     // 4. Convert Rotation
-    const finalRot = convertQuaternion(acousticPose.rotation);
+    const finalRot = convertQuaternion(instrumentPose.rotation);
     
     // 5. Scale
-    const finalScale = new THREE.Vector3(...acousticPose.scale);
+    const finalScale = new THREE.Vector3(...instrumentPose.scale);
     
-    return { position: finalPos, rotation: finalRot, scale: finalScale };
+    return { position: finalPos, quaternion: finalRot, scale: finalScale };
 };
 
 export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
@@ -146,7 +147,7 @@ export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: bo
 
 export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.GUITAR_ACOUSTIC, color);
-  const transform = useMemo(() => getAcousticGuitarWorldTransform(), []);
+  const transform = useMemo(() => getHeldTransform(acousticBodyPose, acousticPose), []);
 
   if (held) {
       return (
@@ -154,7 +155,7 @@ export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: bo
             object={model} 
             scale={transform.scale} 
             position={transform.position} 
-            quaternion={transform.rotation} 
+            quaternion={transform.quaternion} 
         />
       );
   }
@@ -163,15 +164,15 @@ export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: bo
 
 export const BassModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.BASS, color);
+  const transform = useMemo(() => getHeldTransform(bassBodyPose, bassPose), []);
 
   if (held) {
       return (
         <primitive 
             object={model} 
-            scale={1} 
-            // Positioned chest height, slightly left to center body mass, forward
-            position={HELD_GUITAR_POS} 
-            rotation={HELD_GUITAR_ROT} 
+            scale={transform.scale} 
+            position={transform.position} 
+            quaternion={transform.quaternion} 
         />
       );
   }
@@ -272,6 +273,8 @@ export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 
         if (hips) {
             if (pose === 'acoustic') {
                 applyPose(acousticBodyPose, hips);
+            } else if (pose === 'bass') {
+                applyPose(bassBodyPose, hips);
             } else {
                 applyPose(malePose, hips);
             }
