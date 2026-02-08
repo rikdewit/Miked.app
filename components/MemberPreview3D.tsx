@@ -1,12 +1,12 @@
 
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Html } from '@react-three/drei';
+import { OrbitControls, ContactShadows } from '@react-three/drei';
 import { BandMember, InstrumentType } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { COLORS } from '../utils/stageConfig';
 import * as Models from './3d/StageModels';
-import { MODEL_OFFSETS } from './3d/StageModels';
+import { MODEL_OFFSETS, PersonPose } from './3d/StageModels';
 
 interface MemberPreview3DProps {
   member: BandMember;
@@ -18,9 +18,9 @@ interface SceneItem {
   size: [number, number, number];
   color: string;
   label: string;
-  type: string; // Used for model selection
+  type: string;
   held?: boolean;
-  pose?: 'stand' | 'guitar' | 'bass' | 'acoustic';
+  pose?: PersonPose;
 }
 
 interface PreviewItemProps {
@@ -30,26 +30,17 @@ interface PreviewItemProps {
   label?: string;
   type: string;
   held?: boolean;
-  pose?: 'stand' | 'guitar' | 'bass' | 'acoustic';
+  pose?: PersonPose;
 }
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held, pose }) => {
     const [width, height, depth] = args;
     
-    // Determine offset
-    let offset = MODEL_OFFSETS.DEFAULT;
-    if (type === 'drums') offset = MODEL_OFFSETS.DRUMS;
-    else if (type === 'sax') offset = MODEL_OFFSETS.SAX;
-    else if (type === 'trumpet') offset = MODEL_OFFSETS.TRUMPET;
-
-    // const [offX, offY, offZ] = offset; // Unused if labels are removed
-
     const renderMesh = () => {
         if (type === 'person') return <Models.PersonModel pose={pose} />;
         if (type === 'drums') return <Models.DrumsModel />; 
         if (type === 'amp') return <Models.AmpModel color={color} />;
         
-        // Keys with Stand, No Color
         if (type === 'keys') {
             return (
                  <group>
@@ -63,17 +54,11 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
         
         if (type === 'mic') return <Models.MicStandModel color={color} />;
         
-        // Guitars No Stand
+        // Instruments
         if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} held={held} />;
         if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} held={held} />;
-        
-        // Bass
         if (type === 'bass') return <Models.BassModel color={color} held={held} />;
-        
-        // Sax No Stand
         if (type === 'sax') return <Models.SaxModel color={color} held={held} />;
-        
-        // Trumpet No Stand
         if (type === 'trumpet') return <Models.TrumpetModel color={color} held={held} />;
 
         if (type === 'wedge') {
@@ -85,7 +70,6 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
             );
         }
 
-        // Default Box
         return (
             <mesh castShadow receiveShadow position={[0, height/2, 0]}>
                 <boxGeometry args={[width, height, depth]} />
@@ -106,25 +90,37 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
   const sceneItems = useMemo(() => {
     const items: SceneItem[] = [];
 
-    // --- DETERMINE HELD INSTRUMENT & POSE ---
-    // Match logic in StageDraggableItem: First valid held instrument gets the spot.
-    let pose: 'stand' | 'guitar' | 'bass' | 'acoustic' = 'stand';
+    // --- DETERMINE POSE ---
+    let pose: PersonPose = 'stand';
     let heldInstId: string | undefined;
 
-    heldInstId = member.instrumentIds.find(id => {
-        const inst = INSTRUMENTS.find(i => i.id === id);
-        return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
-    });
+    // 1. Check for specific Roles (Drums/Keys)
+    const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
+    const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
 
-    if (heldInstId) {
-        const inst = INSTRUMENTS.find(i => i.id === heldInstId);
-        if (inst?.type === InstrumentType.BASS) pose = 'bass';
-        else if (inst?.id === 'gtr_ac') pose = 'acoustic';
-        else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
-        // Brass keeps 'stand'
+    if (hasDrums) {
+        pose = 'drums';
+    } else if (hasKeys) {
+        pose = 'keys';
+    } else {
+        // 2. Check for Held Instruments
+        heldInstId = member.instrumentIds.find(id => {
+            const inst = INSTRUMENTS.find(i => i.id === id);
+            return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
+        });
+
+        if (heldInstId) {
+            const inst = INSTRUMENTS.find(i => i.id === heldInstId);
+            const labelLower = (inst?.group || '').toLowerCase();
+            
+            if (inst?.type === InstrumentType.BASS) pose = 'bass';
+            else if (inst?.id === 'gtr_ac' || labelLower.includes('acoustic')) pose = 'acoustic';
+            else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
+            else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) pose = 'trumpet';
+        }
     }
     
-    // 1. The Person (Center)
+    // 1. The Person
     items.push({ 
       id: 'person', 
       pos: [0, 0, 0], 
@@ -146,15 +142,15 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       if (inst.type === InstrumentType.DRUMS) {
         items.push({ 
             id: `drum-${instId}`, 
-            pos: [0, 0, -1.0], 
-            size: [1.8, 0.9, 1.5], 
+            pos: [0, 0, 0], 
+            size: [1, 1, 1], 
             color: COLORS.drum, 
             label: 'Kit',
             type: 'drums'
         });
       }
       
-      // --- AMPS (Guitar/Bass) ---
+      // --- AMPS ---
       else if (instId.includes('amp') || instId.includes('combined')) {
         const offset = ampCount % 2 === 0 ? -0.9 : 0.9;
         items.push({ 
@@ -168,11 +164,14 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         ampCount++;
       }
 
-      // --- KEYS / DJ ---
+      // --- KEYS ---
       else if (inst.type === InstrumentType.KEYS || inst.id === 'dj') {
+        // Place keys in front of the player if they are a keyboardist
+        const pos: [number, number, number] = (pose === 'keys') ? [0, 0, 0.5] : [0.7, 0, 0.4];
+        
         items.push({ 
             id: `keys-${instId}`, 
-            pos: [0.7, 0, 0.4], 
+            pos: pos, 
             size: [1.2, 0.9, 0.4], 
             color: COLORS.keys, 
             label: inst.group,
@@ -204,16 +203,21 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
           else if (inst.id.includes('sax')) type = 'sax';
           else if (inst.id.includes('tpt') || inst.id.includes('trumpet')) type = 'trumpet';
 
-          // Determine if this specific instrument instance is the one being held
           const isHeld = (instId === heldInstId);
 
-          // The Instrument
           if (isHeld) {
-              // If it's acoustic guitar, do not add it as a separate item because the person model includes it
-              if (inst.id !== 'gtr_ac') {
+              // If it's a baked instrument, do NOT add separate item
+              // Baked: Guitar, Acoustic, Bass, Trumpet
+              const isBaked = 
+                  type === 'guitar_elec' || 
+                  type === 'guitar_ac' || 
+                  type === 'bass' || 
+                  type === 'trumpet';
+
+              if (!isBaked) {
                   items.push({
                       id: `inst-body-${instId}`,
-                      pos: [0, 0, 0], // Positioned at origin, model handles 'held' offsets
+                      pos: [0, 0, 0], 
                       size: [0.4, 1.0, 0.3], 
                       color: COLORS.instrument,
                       label: inst.type,
@@ -232,7 +236,6 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
               });
           }
           
-          // Pedalboard / Modeler
           if (instId.includes('modeler')) {
               items.push({
                   id: `modeler-${instId}`,
@@ -242,17 +245,15 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                   label: 'Modeler',
                   type: 'box'
               });
-          } else if (inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS) {
-               if (inst.id !== 'gtr_ac') {
-                   items.push({
-                       id: `pedal-${instId}`,
-                       pos: [sideOffset, 0, 0.7],
-                       size: [0.6, 0.1, 0.3],
-                       color: COLORS.pedalboard,
-                       label: 'Pedals',
-                       type: 'box'
-                   });
-               }
+          } else if ((inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS) && inst.id !== 'gtr_ac') {
+               items.push({
+                   id: `pedal-${instId}`,
+                   pos: [sideOffset, 0, 0.7],
+                   size: [0.6, 0.1, 0.3],
+                   color: COLORS.pedalboard,
+                   label: 'Pedals',
+                   type: 'box'
+               });
           }
 
           instrumentCount++;

@@ -6,7 +6,7 @@ import { StageItem, BandMember, InstrumentType } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ } from '../../utils/stageHelpers';
 import * as Models from './StageModels';
-import { MODEL_OFFSETS } from './StageModels';
+import { MODEL_OFFSETS, PersonPose } from './StageModels';
 import { INSTRUMENTS } from '../../constants';
 
 interface DraggableItemProps {
@@ -22,11 +22,11 @@ interface DraggableItemProps {
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({ 
   item, 
   activeId, 
-  onDown,
-  onMove,
-  onUp,
-  isGhost = false,
-  member
+  onDown, 
+  onMove, 
+  onUp, 
+  isGhost = false, 
+  member 
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -37,16 +37,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const transparent = isGhost;
   const materialProps = { opacity, transparent, roughness: 0.4 };
 
-  // Always show label for better visibility
   const showLabel = true;
-
   const labelLower = (item.label || '').toLowerCase();
   
-  // Logic to determine which offset to apply to the Label and Hitbox
-  // This must match the model used in renderModel
   let offset = MODEL_OFFSETS.DEFAULT;
   
-  // Only apply instrument-specific offsets if the item is NOT a person.
   if (shape !== 'person') {
     if (labelLower.includes('drum') || labelLower.includes('kit')) {
         offset = MODEL_OFFSETS.DRUMS;
@@ -59,12 +54,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   const [offX, offY, offZ] = offset;
 
-  // Custom vertical label adjustment
-  let labelYPadding = 0.3; // Default padding
+  let labelYPadding = 0.3;
   if (shape === 'person') {
-      labelYPadding = 0.65; // Higher for person
+      labelYPadding = 0.65;
   } else if (labelLower.includes('sax')) {
-      labelYPadding = 0.05; // Lower for sax
+      labelYPadding = 0.05;
   }
 
   const renderModel = () => {
@@ -72,35 +66,46 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     // --- 1. PERSON ---
     if (shape === 'person') {
         let heldElement = null;
-        let pose: 'stand' | 'guitar' | 'bass' | 'acoustic' = 'stand';
+        let pose: PersonPose = 'stand';
 
-        // Check if the member has an instrument that should be held
         if (member) {
-             const heldInstId = member.instrumentIds.find(id => {
-                  const inst = INSTRUMENTS.find(i => i.id === id);
-                  return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
-             });
-             
-             if (heldInstId) {
-                  const inst = INSTRUMENTS.find(i => i.id === heldInstId);
-                  const instType = inst?.type;
-                  const labelLowerInst = (inst?.group || '').toLowerCase();
+             // 1. Check for specific roles that define posture (Drums/Keys)
+             const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
+             const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
 
-                  if (labelLowerInst.includes('bass')) {
-                      heldElement = <Models.BassModel held />;
-                      pose = 'bass';
-                  } else if (labelLowerInst.includes('acoustic')) {
-                      // Acoustic guitar is baked into the model for 'acoustic' pose
-                      heldElement = null;
-                      pose = 'acoustic';
-                  } else if (instType === InstrumentType.GUITAR) { // Electric
-                      heldElement = <Models.ElectricGuitarModel held />;
-                      pose = 'guitar';
-                  } else if (labelLowerInst.includes('sax')) {
-                      heldElement = <Models.SaxModel held />;
-                  } else if (labelLowerInst.includes('trumpet') || labelLowerInst.includes('tpt')) {
-                      heldElement = <Models.TrumpetModel held />;
-                  }
+             if (hasDrums) {
+                 pose = 'drums';
+             } else if (hasKeys) {
+                 pose = 'keys';
+             } else {
+                 // 2. Check for held instruments
+                 const heldInstId = member.instrumentIds.find(id => {
+                      const inst = INSTRUMENTS.find(i => i.id === id);
+                      return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
+                 });
+                 
+                 if (heldInstId) {
+                      const inst = INSTRUMENTS.find(i => i.id === heldInstId);
+                      const instType = inst?.type;
+                      const labelLowerInst = (inst?.group || '').toLowerCase();
+
+                      if (labelLowerInst.includes('bass')) {
+                          pose = 'bass';
+                          // Bass is baked in
+                      } else if (labelLowerInst.includes('acoustic')) {
+                          pose = 'acoustic';
+                          // Acoustic is baked in
+                      } else if (instType === InstrumentType.GUITAR) { // Electric
+                          pose = 'guitar';
+                          // Guitar is baked in
+                      } else if (labelLowerInst.includes('trumpet') || labelLowerInst.includes('tpt')) {
+                          pose = 'trumpet';
+                          // Trumpet is baked in
+                      } else if (labelLowerInst.includes('sax')) {
+                          heldElement = <Models.SaxModel held />;
+                          // Sax is NOT baked in, keep standing pose
+                      }
+                 }
              }
         }
 
@@ -114,7 +119,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
     // --- 2. DRUMS ---
     if (labelLower.includes('drum') || labelLower.includes('kit')) {
-        // Remove coloring, only highlight on drag
         return <Models.DrumsModel color={isDragging ? '#fbbf24' : undefined} />;
     }
     
@@ -125,7 +129,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     
     // --- 4. KEYS / SYNTH ---
     if (labelLower.includes('keys') || labelLower.includes('synth')) {
-        // Add Stand, Remove coloring unless dragging
         return (
             <group>
                 <Models.StandModel color={isDragging ? '#fbbf24' : '#64748b'} />
@@ -142,8 +145,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     }
 
     // --- 6. INSTRUMENTS (On Stand) ---
-
-    // Check Bass BEFORE Guitar to prevent "Bass Guitar" from being caught by the "guitar" check
     if (labelLower.includes('bass')) {
          return <Models.BassModel color={isDragging ? '#fbbf24' : color} />;
     }
@@ -152,12 +153,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
          return <Models.AcousticGuitarModel color={isDragging ? '#fbbf24' : color} />;
     }
     
-    if (labelLower.includes('guitar')) { // Electric
+    if (labelLower.includes('guitar')) { 
          return <Models.ElectricGuitarModel color={isDragging ? '#fbbf24' : color} />;
     }
 
     // --- 7. HORNS (On Stand) ---
-
     if (labelLower.includes('sax')) {
          return <Models.SaxModel color={isDragging ? '#fbbf24' : color} />;
     }
@@ -167,7 +167,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     }
     
     // --- 8. FALLBACKS ---
-    
     if (shape === 'wedge') {
         return (
              <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow={!isGhost} receiveShadow>
@@ -177,7 +176,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         );
     }
     
-    // Default Box
     return (
          <mesh position={[0, height/2, 0]} castShadow={!isGhost} receiveShadow>
             <boxGeometry args={[width, height, depth]} />
@@ -190,7 +188,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     <group position={[x, 0, z]}>
       {showLabel && (
         <Html 
-            // Apply offset to Label
             position={[0 + offX, height + labelYPadding + offY, 0 + offZ]} 
             center 
             zIndexRange={isDragging ? [500, 400] : [100, 0]} 
@@ -207,7 +204,6 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         onPointerMove={!isGhost ? onMove : undefined}
         onPointerUp={!isGhost ? onUp : undefined}
       >
-        {/* HIT BOX - Invisible mesh with OFFSET applied to match the model's visual location */}
         <mesh position={[0 + offX, height / 2 + offY, 0 + offZ]}>
              <boxGeometry args={[Math.max(width, 0.6), height, Math.max(depth, 0.6)]} />
              <meshBasicMaterial transparent opacity={0} />
