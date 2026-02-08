@@ -22,6 +22,9 @@ const URLS = {
   MALE_GUITAR: BASE_URL + 'Male_Guitar_Playing.glb',
   MALE_KEYS: BASE_URL + 'Male_Keys_Playing.glb',
   MALE_TRUMPET: BASE_URL + 'Male_Trumpet_Playing.glb',
+  MALE_SAX: BASE_URL + 'Male_Sax_Playing.glb',
+  MALE_SINGING: BASE_URL + 'Male_Singing.glb',
+  MALE_DJ: BASE_URL + 'Male_DJ.glb',
 
   MIC_STAND: BASE_URL + 'Microfon_Stand_B.glb',
   SAX: BASE_URL + 'Saxophone.glb',
@@ -122,14 +125,8 @@ export const MicStandModel = ({ color }: { color?: string }) => {
 export const SaxModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.SAX, color);
   if (held) {
-      return (
-        <primitive 
-            object={model} 
-            scale={1} 
-            position={[0, 1.1, 0.25]} 
-            rotation={[0, 0, 0]} 
-        />
-      );
+      // Held sax is now part of the PersonModel 'sax' pose
+      return null;
   }
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.SAX} />;
 };
@@ -148,7 +145,7 @@ export const StandModel = ({ color }: { color?: string }) => {
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export type PersonPose = 'stand' | 'guitar' | 'bass' | 'acoustic' | 'drums' | 'keys' | 'trumpet';
+export type PersonPose = 'stand' | 'guitar' | 'bass' | 'acoustic' | 'drums' | 'keys' | 'trumpet' | 'singing' | 'dj' | 'sax';
 
 export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: PersonPose }) => {
   let url = URLS.PERSON;
@@ -159,6 +156,9 @@ export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 
   else if (pose === 'drums') url = URLS.MALE_DRUMS;
   else if (pose === 'keys') url = URLS.MALE_KEYS;
   else if (pose === 'trumpet') url = URLS.MALE_TRUMPET;
+  else if (pose === 'sax') url = URLS.MALE_SAX;
+  else if (pose === 'singing') url = URLS.MALE_SINGING;
+  else if (pose === 'dj') url = URLS.MALE_DJ;
 
   const { scene } = useGLTF(url);
 

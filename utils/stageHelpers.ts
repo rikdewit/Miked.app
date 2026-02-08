@@ -37,16 +37,12 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
         const isRight = idx % 2 === 0;
         const spreadX = isRight ? 8 : -8; 
         
-        // DRUMS
-        if (inst.type === InstrumentType.DRUMS) {
-            items.push({ id: `drum-${baseId}`, memberId: member.id, type: 'member', label: 'Drum Kit', x: startX, y: startY - 15, fromInstrumentIndex: idx, isPeripheral: false });
-        }
-        
-        // KEYS
-        else if (inst.type === InstrumentType.KEYS) {
-            items.push({ id: `keys-${baseId}-${idx}`, memberId: member.id, type: 'member', label: inst.group, x: startX + spreadX, y: startY, fromInstrumentIndex: idx, isPeripheral: false });
-            
-            // Add DI Box
+        // Note: Drums, Keys (main body), and Vocals are now part of the Person model, 
+        // so we do not generate separate stage items for them.
+
+        // KEYS - Only add peripherals like DI
+        if (inst.type === InstrumentType.KEYS) {
+            // Add DI Box for Keys
             const diLabel = instId.includes('stereo') ? 'Stereo DI' : 'DI';
             items.push({ 
                 id: `di-${baseId}-${idx}`, 
@@ -102,11 +98,6 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
             if (inst.defaultDi || instId.includes('di')) {
                  items.push({ id: `di-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'DI', x: startX + spreadX + (isRight?2:-2), y: startY + 5, fromInstrumentIndex: idx, isPeripheral: true });
             }
-        }
-        
-        // MIC STAND (Vocals)
-        if (inst.type === InstrumentType.VOCAL) {
-             items.push({ id: `mic-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Mic', x: startX, y: startY + 5, fromInstrumentIndex: idx, isPeripheral: false });
         }
     });
 

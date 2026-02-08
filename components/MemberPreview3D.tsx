@@ -94,12 +94,16 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
     let pose: PersonPose = 'stand';
     let heldInstId: string | undefined;
 
-    // 1. Check for specific Roles (Drums/Keys)
+    // 1. Check for specific Roles that dictate whole-body posture
     const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
     const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
+    const hasDj = member.instrumentIds.includes('dj');
+    const hasVocal = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.VOCAL);
 
     if (hasDrums) {
         pose = 'drums';
+    } else if (hasDj) {
+        pose = 'dj';
     } else if (hasKeys) {
         pose = 'keys';
     } else {
@@ -117,6 +121,9 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
             else if (inst?.id === 'gtr_ac' || labelLower.includes('acoustic')) pose = 'acoustic';
             else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
             else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) pose = 'trumpet';
+            else if (labelLower.includes('sax')) pose = 'sax';
+        } else if (hasVocal) {
+            pose = 'singing';
         }
     }
     
@@ -138,20 +145,10 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       const inst = INSTRUMENTS.find(i => i.id === instId);
       if (!inst) return;
 
-      // --- DRUMS ---
-      if (inst.type === InstrumentType.DRUMS) {
-        items.push({ 
-            id: `drum-${instId}`, 
-            pos: [0, 0, 0], 
-            size: [1, 1, 1], 
-            color: COLORS.drum, 
-            label: 'Kit',
-            type: 'drums'
-        });
-      }
+      // Note: DRUMS, KEYS, DJ, VOCALS are now part of the person model, so we don't add separate items for them.
       
       // --- AMPS ---
-      else if (instId.includes('amp') || instId.includes('combined')) {
+      if (instId.includes('amp') || instId.includes('combined')) {
         const offset = ampCount % 2 === 0 ? -0.9 : 0.9;
         items.push({ 
             id: `amp-${instId}-${ampCount}`, 
@@ -164,33 +161,6 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         ampCount++;
       }
 
-      // --- KEYS ---
-      else if (inst.type === InstrumentType.KEYS || inst.id === 'dj') {
-        // Place keys in front of the player if they are a keyboardist
-        const pos: [number, number, number] = (pose === 'keys') ? [0, 0, 0.5] : [0.7, 0, 0.4];
-        
-        items.push({ 
-            id: `keys-${instId}`, 
-            pos: pos, 
-            size: [1.2, 0.9, 0.4], 
-            color: COLORS.keys, 
-            label: inst.group,
-            type: 'keys'
-        });
-      }
-
-      // --- MICS ---
-      else if (inst.type === InstrumentType.VOCAL || instId.includes('mic')) {
-        items.push({ 
-            id: `mic-${instId}`, 
-            pos: [0, 0, 0.6], 
-            size: [0.2, 1.5, 0.2], 
-            color: COLORS.mic, 
-            label: 'Mic',
-            type: 'mic'
-        });
-      }
-      
       // --- INSTRUMENTS ---
       if (inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS || inst.type === InstrumentType.BRASS) {
           const isRight = instrumentCount % 2 === 0;
@@ -207,12 +177,13 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
 
           if (isHeld) {
               // If it's a baked instrument, do NOT add separate item
-              // Baked: Guitar, Acoustic, Bass, Trumpet
+              // Baked: Guitar, Acoustic, Bass, Trumpet, Sax
               const isBaked = 
                   type === 'guitar_elec' || 
                   type === 'guitar_ac' || 
                   type === 'bass' || 
-                  type === 'trumpet';
+                  type === 'trumpet' ||
+                  type === 'sax';
 
               if (!isBaked) {
                   items.push({

@@ -69,12 +69,16 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         let pose: PersonPose = 'stand';
 
         if (member) {
-             // 1. Check for specific roles that define posture (Drums/Keys)
+             // 1. Check for specific roles that define posture (Drums/Keys/DJ)
              const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
              const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
+             const hasDj = member.instrumentIds.includes('dj');
+             const hasVocal = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.VOCAL);
 
              if (hasDrums) {
                  pose = 'drums';
+             } else if (hasDj) {
+                 pose = 'dj';
              } else if (hasKeys) {
                  pose = 'keys';
              } else {
@@ -102,9 +106,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                           pose = 'trumpet';
                           // Trumpet is baked in
                       } else if (labelLowerInst.includes('sax')) {
-                          heldElement = <Models.SaxModel held />;
-                          // Sax is NOT baked in, keep standing pose
+                          pose = 'sax';
+                          // Sax is baked in
                       }
+                 } else if (hasVocal) {
+                     pose = 'singing';
                  }
              }
         }
@@ -117,33 +123,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         );
     }
 
-    // --- 2. DRUMS ---
-    if (labelLower.includes('drum') || labelLower.includes('kit')) {
-        return <Models.DrumsModel color={isDragging ? '#fbbf24' : undefined} />;
-    }
-    
     // --- 3. AMPS ---
     if (labelLower.includes('amp')) {
         return <Models.AmpModel color={isDragging ? '#fbbf24' : color} />;
     }
     
-    // --- 4. KEYS / SYNTH ---
-    if (labelLower.includes('keys') || labelLower.includes('synth')) {
-        return (
-            <group>
-                <Models.StandModel color={isDragging ? '#fbbf24' : '#64748b'} />
-                <group position={[0, 0.8, 0]}>
-                    <Models.SynthModel color={isDragging ? '#fbbf24' : undefined} />
-                </group>
-            </group>
-        );
-    }
-    
-    // --- 5. MIC STANDS ---
-    if (labelLower.includes('mic')) {
-        return <Models.MicStandModel color={isDragging ? '#fbbf24' : color} />;
-    }
-
     // --- 6. INSTRUMENTS (On Stand) ---
     if (labelLower.includes('bass')) {
          return <Models.BassModel color={isDragging ? '#fbbf24' : color} />;
