@@ -130,7 +130,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       pos: [0, 0, 0], 
       size: [0.5, 1.7, 0.5], 
       color: COLORS.person, 
-      label: member.name || 'Musician',
+      label: member.name || 'Musician', 
       type: 'person',
       pose: pose
     });
@@ -209,15 +209,18 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
 
           // The Instrument
           if (isHeld) {
-              items.push({
-                  id: `inst-body-${instId}`,
-                  pos: [0, 0, 0], // Positioned at origin, model handles 'held' offsets
-                  size: [0.4, 1.0, 0.3], 
-                  color: COLORS.instrument,
-                  label: inst.type,
-                  type: type,
-                  held: true
-              });
+              // If it's acoustic guitar, do not add it as a separate item because the person model includes it
+              if (inst.id !== 'gtr_ac') {
+                  items.push({
+                      id: `inst-body-${instId}`,
+                      pos: [0, 0, 0], // Positioned at origin, model handles 'held' offsets
+                      size: [0.4, 1.0, 0.3], 
+                      color: COLORS.instrument,
+                      label: inst.type,
+                      type: type,
+                      held: true
+                  });
+              }
           } else {
               items.push({
                   id: `inst-body-${instId}`,

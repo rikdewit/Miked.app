@@ -5,7 +5,6 @@ import * as THREE from 'three';
 // @ts-ignore
 import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
 import { malePose } from './male_pose';
-import { acousticBodyPose, acousticPose } from './acoustic_pose';
 import { bassBodyPose, bassPose } from './bass_pose';
 
 const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
@@ -17,6 +16,7 @@ const URLS = {
   AMPLIFIER: BASE_URL + 'Amplifier.glb',
   DRUMS: BASE_URL + 'Drums_A.glb',
   PERSON: BASE_URL + 'Male_Strong.glb',
+  MALE_ACOUSTIC: BASE_URL + 'Male_Ac_Guitar_Playing.glb',
   MIC_STAND: BASE_URL + 'Microfon_Stand_B.glb',
   SAX: BASE_URL + 'Saxophone.glb',
   TRUMPET: BASE_URL + 'Trumpet.glb',
@@ -147,17 +147,10 @@ export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: bo
 
 export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
   const model = useStageModel(URLS.GUITAR_ACOUSTIC, color);
-  const transform = useMemo(() => getHeldTransform(acousticBodyPose, acousticPose), []);
-
+  
   if (held) {
-      return (
-        <primitive 
-            object={model} 
-            scale={transform.scale} 
-            position={transform.position} 
-            quaternion={transform.quaternion} 
-        />
-      );
+      // Held acoustic guitar is now part of the PersonModel 'acoustic' pose
+      return null;
   }
   return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
@@ -237,7 +230,9 @@ export const StandModel = ({ color }: { color?: string }) => {
 };
 
 export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 'stand' | 'guitar' | 'bass' | 'acoustic' }) => {
-  const { scene } = useGLTF(URLS.PERSON);
+  // Use specific model for acoustic (baked), generic model for others (posed)
+  const url = pose === 'acoustic' ? URLS.MALE_ACOUSTIC : URLS.PERSON;
+  const { scene } = useGLTF(url);
 
   const model = useMemo(() => {
     const cloned = cloneGLTF(scene);
@@ -263,23 +258,22 @@ export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 
         }
     });
 
-    // Apply Pose
-    if (pose === 'guitar' || pose === 'bass' || pose === 'acoustic') {
+    // Apply Pose if using generic model
+    if (pose === 'guitar' || pose === 'bass') {
         let hips: THREE.Object3D | undefined;
         cloned.traverse((node: any) => {
             if (node.name === 'Hips') hips = node;
         });
         
         if (hips) {
-            if (pose === 'acoustic') {
-                applyPose(acousticBodyPose, hips);
-            } else if (pose === 'bass') {
+            if (pose === 'bass') {
                 applyPose(bassBodyPose, hips);
             } else {
                 applyPose(malePose, hips);
             }
         }
     }
+    // Note: 'acoustic' pose is baked into the model file, so no applyPose needed.
 
     return cloned;
   }, [scene, color, pose]);

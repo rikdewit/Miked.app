@@ -90,7 +90,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                       heldElement = <Models.BassModel held />;
                       pose = 'bass';
                   } else if (labelLowerInst.includes('acoustic')) {
-                      heldElement = <Models.AcousticGuitarModel held />;
+                      // Acoustic guitar is baked into the model for 'acoustic' pose
+                      heldElement = null;
                       pose = 'acoustic';
                   } else if (instType === InstrumentType.GUITAR) { // Electric
                       heldElement = <Models.ElectricGuitarModel held />;
