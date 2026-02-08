@@ -10,6 +10,8 @@ export enum InstrumentType {
   OTHER = 'Other'
 }
 
+export type PersonPose = 'stand' | 'guitar' | 'bass' | 'acoustic' | 'drums' | 'keys' | 'trumpet' | 'singing' | 'dj' | 'sax';
+
 export interface InstrumentDefinition {
   id: string;
   name: string; // The specific name (e.g. "Guitar (Modeler)")

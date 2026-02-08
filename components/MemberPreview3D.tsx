@@ -2,11 +2,11 @@
 import React, { useMemo, Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
-import { BandMember, InstrumentType } from '../types';
+import { BandMember, InstrumentType, PersonPose } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { COLORS } from '../utils/stageConfig';
+import { getPersonPose } from '../utils/stageHelpers';
 import * as Models from './3d/StageModels';
-import { MODEL_OFFSETS, PersonPose } from './3d/StageModels';
 
 interface MemberPreview3DProps {
   member: BandMember;
@@ -19,7 +19,6 @@ interface SceneItem {
   color: string;
   label: string;
   type: string;
-  held?: boolean;
   pose?: PersonPose;
 }
 
@@ -29,11 +28,10 @@ interface PreviewItemProps {
   color: string;
   label?: string;
   type: string;
-  held?: boolean;
   pose?: PersonPose;
 }
 
-const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label, type, held, pose }) => {
+const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, pose }) => {
     const [width, height, depth] = args;
     
     const renderMesh = () => {
@@ -54,12 +52,12 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, label,
         
         if (type === 'mic') return <Models.MicStandModel color={color} />;
         
-        // Instruments
-        if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} held={held} />;
-        if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} held={held} />;
-        if (type === 'bass') return <Models.BassModel color={color} held={held} />;
-        if (type === 'sax') return <Models.SaxModel color={color} held={held} />;
-        if (type === 'trumpet') return <Models.TrumpetModel color={color} held={held} />;
+        // Instruments (Standalone)
+        if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} />;
+        if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} />;
+        if (type === 'bass') return <Models.BassModel color={color} />;
+        if (type === 'sax') return <Models.SaxModel color={color} />;
+        if (type === 'trumpet') return <Models.TrumpetModel color={color} />;
 
         if (type === 'wedge') {
             return (
@@ -91,41 +89,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
     const items: SceneItem[] = [];
 
     // --- DETERMINE POSE ---
-    let pose: PersonPose = 'stand';
-    let heldInstId: string | undefined;
-
-    // 1. Check for specific Roles that dictate whole-body posture
-    const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
-    const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
-    const hasDj = member.instrumentIds.includes('dj');
-    const hasVocal = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.VOCAL);
-
-    if (hasDrums) {
-        pose = 'drums';
-    } else if (hasDj) {
-        pose = 'dj';
-    } else if (hasKeys) {
-        pose = 'keys';
-    } else {
-        // 2. Check for Held Instruments
-        heldInstId = member.instrumentIds.find(id => {
-            const inst = INSTRUMENTS.find(i => i.id === id);
-            return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
-        });
-
-        if (heldInstId) {
-            const inst = INSTRUMENTS.find(i => i.id === heldInstId);
-            const labelLower = (inst?.group || '').toLowerCase();
-            
-            if (inst?.type === InstrumentType.BASS) pose = 'bass';
-            else if (inst?.id === 'gtr_ac' || labelLower.includes('acoustic')) pose = 'acoustic';
-            else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
-            else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) pose = 'trumpet';
-            else if (labelLower.includes('sax')) pose = 'sax';
-        } else if (hasVocal) {
-            pose = 'singing';
-        }
-    }
+    const { pose, heldInstrumentId } = getPersonPose(member);
     
     // 1. The Person
     items.push({ 
@@ -145,7 +109,8 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
       const inst = INSTRUMENTS.find(i => i.id === instId);
       if (!inst) return;
 
-      // Note: DRUMS, KEYS, DJ, VOCALS are now part of the person model, so we don't add separate items for them.
+      // Note: DRUMS, KEYS, DJ, VOCALS are part of the person model or main scene setup, 
+      // so we don't add separate items for them here unless they are peripherals.
       
       // --- AMPS ---
       if (instId.includes('amp') || instId.includes('combined')) {
@@ -161,7 +126,17 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
         ampCount++;
       }
 
-      // --- INSTRUMENTS ---
+      // --- INSTRUMENTS (Standalone on stands) ---
+      // We only add these if they are NOT the instrument currently being held/played in the model
+      const isHeld = (instId === heldInstrumentId);
+      const isBakedPose = ['guitar', 'bass', 'acoustic', 'sax', 'trumpet'].includes(pose);
+
+      if (isHeld && isBakedPose) {
+          // If this instrument is the one being played and the model supports it, 
+          // do NOT add a separate item. The GLB includes it.
+          return;
+      }
+
       if (inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS || inst.type === InstrumentType.BRASS) {
           const isRight = instrumentCount % 2 === 0;
           const sideOffset = isRight ? 0.6 : -0.6;
@@ -173,39 +148,18 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
           else if (inst.id.includes('sax')) type = 'sax';
           else if (inst.id.includes('tpt') || inst.id.includes('trumpet')) type = 'trumpet';
 
-          const isHeld = (instId === heldInstId);
-
-          if (isHeld) {
-              // If it's a baked instrument, do NOT add separate item
-              // Baked: Guitar, Acoustic, Bass, Trumpet, Sax
-              const isBaked = 
-                  type === 'guitar_elec' || 
-                  type === 'guitar_ac' || 
-                  type === 'bass' || 
-                  type === 'trumpet' ||
-                  type === 'sax';
-
-              if (!isBaked) {
-                  items.push({
-                      id: `inst-body-${instId}`,
-                      pos: [0, 0, 0], 
-                      size: [0.4, 1.0, 0.3], 
-                      color: COLORS.instrument,
-                      label: inst.type,
-                      type: type,
-                      held: true
-                  });
-              }
-          } else {
-              items.push({
-                  id: `inst-body-${instId}`,
-                  pos: [sideOffset, 0, 0.1], 
-                  size: [0.4, 1.0, 0.3], 
-                  color: COLORS.instrument,
-                  label: inst.type,
-                  type: type
-              });
-          }
+          // If it's held but not baked (e.g. some new instrument type), we might render it at [0,0,0]?
+          // For now, assuming all held instruments are baked if logic matches.
+          // So we only render items on stands here (side offsets).
+          
+          items.push({
+              id: `inst-body-${instId}`,
+              pos: [sideOffset, 0, 0.1], 
+              size: [0.4, 1.0, 0.3], 
+              color: COLORS.instrument,
+              label: inst.type,
+              type: type
+          });
           
           if (instId.includes('modeler')) {
               items.push({
@@ -251,7 +205,6 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member }) => {
                             color={item.color}
                             label={item.label}
                             type={item.type}
-                            held={item.held}
                             pose={item.pose}
                         />
                     ))}

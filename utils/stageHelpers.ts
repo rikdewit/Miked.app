@@ -1,5 +1,5 @@
 
-import { BandMember, StageItem, InstrumentType } from '../types';
+import { BandMember, StageItem, InstrumentType, PersonPose } from '../types';
 import { STAGE_WIDTH, STAGE_DEPTH } from './stageConfig';
 import { INSTRUMENTS } from '../constants';
 
@@ -102,4 +102,45 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
     });
 
     return items;
+};
+
+// --- Helper to determine Person Pose based on instruments ---
+export const getPersonPose = (member: BandMember): { pose: PersonPose; heldInstrumentId?: string } => {
+    let pose: PersonPose = 'stand';
+    let heldInstrumentId: string | undefined;
+
+    // 1. Roles (Drums, Keys, DJ, Vocals)
+    const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
+    const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
+    const hasDj = member.instrumentIds.includes('dj');
+    const hasVocal = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.VOCAL);
+
+    if (hasDrums) {
+        pose = 'drums';
+    } else if (hasDj) {
+        pose = 'dj';
+    } else if (hasKeys) {
+        pose = 'keys';
+    } else {
+        // 2. Held Instruments (Guitar, Bass, Brass)
+        heldInstrumentId = member.instrumentIds.find(id => {
+            const inst = INSTRUMENTS.find(i => i.id === id);
+            return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
+        });
+
+        if (heldInstrumentId) {
+            const inst = INSTRUMENTS.find(i => i.id === heldInstrumentId);
+            const labelLower = (inst?.group || '').toLowerCase();
+            
+            if (inst?.type === InstrumentType.BASS) pose = 'bass';
+            else if (inst?.id === 'gtr_ac' || labelLower.includes('acoustic')) pose = 'acoustic';
+            else if (inst?.type === InstrumentType.GUITAR) pose = 'guitar';
+            else if (labelLower.includes('trumpet') || labelLower.includes('tpt')) pose = 'trumpet';
+            else if (labelLower.includes('sax')) pose = 'sax';
+        } else if (hasVocal) {
+            pose = 'singing';
+        }
+    }
+
+    return { pose, heldInstrumentId };
 };

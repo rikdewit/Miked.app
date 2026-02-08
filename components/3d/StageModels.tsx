@@ -4,6 +4,7 @@ import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 // @ts-ignore
 import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
+import { PersonPose } from '../../types';
 
 const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
 
@@ -75,30 +76,20 @@ export const useStageModel = (url: string, color?: string) => {
   return model;
 };
 
-export const ElectricGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
+// --- Simplified Instrument Models ---
+
+export const ElectricGuitarModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.GUITAR_ELEC, color);
-  if (held) {
-      // Held guitar is now part of the PersonModel 'guitar' pose
-      return null;
-  }
   return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export const AcousticGuitarModel = ({ color, held }: { color?: string, held?: boolean }) => {
+export const AcousticGuitarModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.GUITAR_ACOUSTIC, color);
-  if (held) {
-      // Held acoustic guitar is part of the PersonModel 'acoustic' pose
-      return null;
-  }
   return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
-export const BassModel = ({ color, held }: { color?: string, held?: boolean }) => {
+export const BassModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.BASS, color);
-  if (held) {
-      // Held bass is now part of the PersonModel 'bass' pose
-      return null;
-  }
   return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
@@ -122,21 +113,13 @@ export const MicStandModel = ({ color }: { color?: string }) => {
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} rotation={[0, Math.PI, 0]} />;
 };
 
-export const SaxModel = ({ color, held }: { color?: string, held?: boolean }) => {
+export const SaxModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.SAX, color);
-  if (held) {
-      // Held sax is now part of the PersonModel 'sax' pose
-      return null;
-  }
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.SAX} />;
 };
 
-export const TrumpetModel = ({ color, held }: { color?: string, held?: boolean }) => {
+export const TrumpetModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.TRUMPET, color);
-  if (held) {
-      // Held trumpet is now part of the PersonModel 'trumpet' pose
-      return null;
-  }
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.TRUMPET} />;
 };
 
@@ -144,8 +127,6 @@ export const StandModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.STAND, color);
   return <primitive object={model} scale={1} position={MODEL_OFFSETS.DEFAULT} />;
 };
-
-export type PersonPose = 'stand' | 'guitar' | 'bass' | 'acoustic' | 'drums' | 'keys' | 'trumpet' | 'singing' | 'dj' | 'sax';
 
 export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: PersonPose }) => {
   let url = URLS.PERSON;
