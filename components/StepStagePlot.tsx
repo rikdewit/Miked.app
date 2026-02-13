@@ -81,9 +81,9 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
       if (!item) return;
 
       const currentRotation = item.rotation || 0;
-      const newRotation = direction === 'right' 
-          ? currentRotation + ROTATION_STEP
-          : currentRotation - ROTATION_STEP;
+      const newRotation = direction === 'right'
+          ? currentRotation - ROTATION_STEP
+          : currentRotation + ROTATION_STEP;
 
       // Normalize to 0-2π
       const normalizedRotation = ((newRotation % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
