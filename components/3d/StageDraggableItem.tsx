@@ -1,7 +1,8 @@
 
-import React, { Suspense } from 'react';
+import React, { Suspense, useRef } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { StageItem, BandMember, PersonPose } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ, getPersonPose } from '../../utils/stageHelpers';
@@ -16,6 +17,12 @@ interface DraggableItemProps {
   onUp: (e: ThreeEvent<PointerEvent>) => void;
   isGhost?: boolean;
   member?: BandMember;
+  isRotating?: boolean;
+  showRotationUI?: boolean;
+  onRequestRotationUI?: () => void;
+  onCloseRotationUI?: () => void;
+  onRotate?: (itemId: string, direction: 'left' | 'right') => void;
+  isEditable?: boolean;
 }
 
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({ 
@@ -25,7 +32,13 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onMove, 
   onUp, 
   isGhost = false, 
-  member 
+  member,
+  isRotating = false,
+  showRotationUI = false,
+  onRequestRotationUI,
+  onCloseRotationUI,
+  onRotate,
+  isEditable = false
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -36,6 +49,10 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const opacity = isGhost ? 0.6 : 1;
   const transparent = isGhost;
   const materialProps = { opacity, transparent, roughness: 0.4 };
+
+  // Track pointer position to detect clicks vs drags
+  const downPosRef = useRef<{ x: number; y: number } | null>(null);
+  const threshold = 1; // pixels - if movement > this, it's a drag
 
   const showLabel = true;
   const labelLower = (item.label || '').toLowerCase();
@@ -119,7 +136,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   };
 
   return (
-    <group position={[x, 0, z]}>
+    <group position={[x, 0, z]} rotation={[0, item.rotation || 0, 0]}>
       {showLabel && (
         <Html 
             position={[0 + offX, height + labelYPadding + offY, 0 + offZ]} 
@@ -133,10 +150,77 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         </Html>
       )}
 
+      {/* Rotation UI */}
+      {showRotationUI && !isGhost && isEditable && onRotate && (
+        <Html 
+            position={[0 + offX, height + 0.8 + offY, 0 + offZ]} 
+            center 
+            zIndexRange={[1000, 900]} 
+            style={{ pointerEvents: 'auto' }}
+        >
+          <div className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onRotate(item.id, 'left')}
+              className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+              title="Rotate left 22.5°"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              onClick={() => {
+                onCloseRotationUI?.();
+              }}
+              className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition-colors"
+              title="Done rotating"
+            >
+              Done
+            </button>
+            <button
+              onClick={() => onRotate(item.id, 'right')}
+              className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+              title="Rotate right 22.5°"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        </Html>
+      )}
+
       <group
-        onPointerDown={!isGhost ? (e) => onDown(e, item.id) : undefined}
-        onPointerMove={!isGhost ? onMove : undefined}
-        onPointerUp={!isGhost ? onUp : undefined}
+        onPointerDown={!isGhost ? (e) => {
+          e.stopPropagation();
+          // Track pointer position for click detection
+          downPosRef.current = { x: e.clientX, y: e.clientY };
+          
+          if (showRotationUI) {
+            // Click while rotation UI showing - close it
+            onCloseRotationUI?.();
+          } else {
+            // First click or switching items - initiate drag/selection
+            onDown(e, item.id);
+          }
+        } : undefined}
+        onPointerMove={!isGhost && !showRotationUI ? onMove : undefined}
+        onPointerUp={!isGhost ? (e) => {
+          e.stopPropagation();
+          
+          // Check if this was a click (no significant drag) or actual drag
+          const wasDrag = downPosRef.current && (
+            Math.abs(e.clientX - downPosRef.current.x) > threshold ||
+            Math.abs(e.clientY - downPosRef.current.y) > threshold
+          );
+          downPosRef.current = null;
+          
+          if (!showRotationUI) {
+            // Normal up handler for dragging
+            onUp(e);
+          }
+          
+          // Show rotation UI in response to a click (not a drag) on already-selected item
+          if (!wasDrag && isEditable && activeId === item.id && !showRotationUI) {
+            onRequestRotationUI?.();
+          }
+        } : undefined}
       >
         {/* Invisible Hit Box for easier selection */}
         <mesh position={[0 + offX, height / 2 + offY, 0 + offZ]}>

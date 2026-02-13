@@ -19,6 +19,8 @@ interface StagePlotCanvasProps {
   dragCoords?: { x: number; y: number; width: number; height: number } | null;
   onDragPosChange?: (x: number, y: number) => void;
   members?: BandMember[];
+  rotatingItemId?: string | null;
+  onRotateItem?: (itemId: string, direction: 'left' | 'right') => void;
 }
 
 const StagePlatform = () => {
@@ -79,9 +81,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   ghostItems = [],
   dragCoords,
   onDragPosChange,
-  members
+  members,
+  rotatingItemId,
+  onRotateItem
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [rotationUiItemId, setRotationUiItemId] = useState<string | null>(null);
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
 
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
@@ -232,6 +237,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
           <mesh 
             rotation={[-Math.PI / 2, 0, 0]} 
             position={[0, 0, 0]} 
+            onPointerDown={() => setRotationUiItemId(null)}
             onPointerMove={handlePlaneMove}
             onPointerUp={handlePointerUp}
           >
@@ -252,6 +258,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onMove={handlePlaneMove} 
                 onUp={handlePointerUp}
                 member={members?.find(m => m.id === item.memberId)}
+                isRotating={rotatingItemId === item.id}
+                showRotationUI={rotationUiItemId === item.id}
+                onRequestRotationUI={() => setRotationUiItemId(item.id)}
+                onCloseRotationUI={() => setRotationUiItemId(null)}
+                onRotate={onRotateItem}
+                isEditable={editable}
               />
             ))}
 

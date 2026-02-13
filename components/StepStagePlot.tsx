@@ -17,6 +17,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('isometric');
   const [draggingMemberId, setDraggingMemberId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [rotatingItemId, setRotatingItemId] = useState<string | null>(null);
   
   // Stores the Percentage Position (0-100) on the stage
   const [dragPos, setDragPos] = useState<{ x: number, y: number } | null>(null);
@@ -71,6 +72,27 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   const confirmClearStage = () => {
       updateStageItems([]);
       setShowClearConfirm(false);
+  };
+
+  // --- Rotation Handlers ---
+  const handleRotateItem = (itemId: string, direction: 'left' | 'right') => {
+      const ROTATION_STEP = 22.5 * (Math.PI / 180); // Convert degrees to radians
+      const item = data.stagePlot.find(i => i.id === itemId);
+      if (!item) return;
+
+      const currentRotation = item.rotation || 0;
+      const newRotation = direction === 'right' 
+          ? currentRotation + ROTATION_STEP
+          : currentRotation - ROTATION_STEP;
+
+      // Normalize to 0-2π
+      const normalizedRotation = ((newRotation % (Math.PI * 2)) + (Math.PI * 2)) % (Math.PI * 2);
+
+      updateStageItems(
+          data.stagePlot.map(i => 
+              i.id === itemId ? { ...i, rotation: normalizedRotation } : i
+          )
+      );
   };
 
   // --- Drag & Drop Handlers ---
@@ -405,6 +427,8 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     dragCoords={rawDragCoords}
                     onDragPosChange={handleGhostUpdate}
                     members={data.members}
+                    rotatingItemId={rotatingItemId}
+                    onRotateItem={handleRotateItem}
                 />
                 
                 {data.stagePlot.length === 0 && !draggingMemberId && (
