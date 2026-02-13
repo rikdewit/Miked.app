@@ -281,7 +281,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   }, [draggingMemberId, dragPos, data.members, data.stagePlot]);
 
   return (
-    <div className="w-full h-[calc(100vh-140px)] flex gap-6 relative">
+    <div className="w-full h-full flex gap-6 relative">
         
         {/* Hidden Custom Drag Image */}
         <div 

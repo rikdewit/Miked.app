@@ -46,10 +46,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
+    <div className="h-screen overflow-hidden bg-slate-900 text-slate-100 flex flex-col">
       <Header step={step} setStep={setStep} />
 
-      <main className="flex-grow p-4 md:p-8 flex flex-col items-center">
+      <main className="flex-1 min-h-0 overflow-y-auto p-4 md:p-8 flex flex-col items-center">
         {step === 0 && <Landing onStart={() => setStep(1)} />}
         
         {step === 1 && (
