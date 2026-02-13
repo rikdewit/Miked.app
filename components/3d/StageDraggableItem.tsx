@@ -2,7 +2,7 @@
 import React, { Suspense, useRef } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { StageItem, BandMember, PersonPose } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ, getPersonPose } from '../../utils/stageHelpers';
@@ -22,6 +22,7 @@ interface DraggableItemProps {
   onRequestRotationUI?: () => void;
   onCloseRotationUI?: () => void;
   onRotate?: (itemId: string, direction: 'left' | 'right') => void;
+  onDelete?: (itemId: string) => void;
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
 }
@@ -39,6 +40,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onRequestRotationUI,
   onCloseRotationUI,
   onRotate,
+  onDelete,
   isEditable = false,
   viewMode = 'isometric'
 }) => {
@@ -188,6 +190,14 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
               title="Rotate right 22.5°"
             >
               <ChevronRight size={14} />
+            </button>
+            <div className="w-px bg-slate-600" />
+            <button
+              onClick={() => onDelete?.(item.id)}
+              className="p-1.5 bg-red-700 hover:bg-red-600 text-white rounded transition-colors"
+              title="Delete"
+            >
+              <Trash2 size={14} />
             </button>
           </div>
         </Html>

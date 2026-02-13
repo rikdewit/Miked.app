@@ -89,6 +89,11 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   const [rotationUiItemId, setRotationUiItemId] = useState<string | null>(null);
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
 
+  const handleDeleteItem = (id: string) => {
+    setItems(items.filter(i => i.id !== id));
+    setRotationUiItemId(null);
+  };
+
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
     if (!editable) return;
     e.stopPropagation();
@@ -263,6 +268,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onRequestRotationUI={() => setRotationUiItemId(item.id)}
                 onCloseRotationUI={() => setRotationUiItemId(null)}
                 onRotate={onRotateItem}
+                onDelete={handleDeleteItem}
                 isEditable={editable}
                 viewMode={viewMode}
               />
