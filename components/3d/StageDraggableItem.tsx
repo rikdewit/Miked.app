@@ -23,6 +23,7 @@ interface DraggableItemProps {
   onCloseRotationUI?: () => void;
   onRotate?: (itemId: string, direction: 'left' | 'right') => void;
   isEditable?: boolean;
+  viewMode?: 'isometric' | 'top';
 }
 
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({ 
@@ -38,7 +39,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onRequestRotationUI,
   onCloseRotationUI,
   onRotate,
-  isEditable = false
+  isEditable = false,
+  viewMode = 'isometric'
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -153,12 +155,17 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       {/* Rotation UI */}
       {showRotationUI && !isGhost && isEditable && onRotate && (
         <Html 
-            position={[0 + offX, height + 0.8 + offY, 0 + offZ]} 
+            position={[0 + offX, height + (viewMode === 'top' ? 3.5 : 0.8) + offY, 0 + offZ]} 
             center 
             zIndexRange={[1000, 900]} 
             style={{ pointerEvents: 'auto' }}
         >
-          <div className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg" 
+            onClick={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
+          >
             <button
               onClick={() => onRotate(item.id, 'left')}
               className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"

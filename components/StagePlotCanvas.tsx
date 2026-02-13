@@ -264,6 +264,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onCloseRotationUI={() => setRotationUiItemId(null)}
                 onRotate={onRotateItem}
                 isEditable={editable}
+                viewMode={viewMode}
               />
             ))}
 
