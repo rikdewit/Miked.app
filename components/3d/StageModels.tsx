@@ -6,7 +6,7 @@ import * as THREE from 'three';
 import { clone as cloneGLTF } from 'three/examples/jsm/utils/SkeletonUtils';
 import { PersonPose } from '../../types';
 
-const BASE_URL = 'https://raw.githubusercontent.com/rikdewit/Miked.app/production/public/assets/';
+const BASE_URL = '/assets/';
 
 const URLS = {
   GUITAR_ELEC: BASE_URL + 'Electric_Guitar_Telecaster_Blue.glb',
