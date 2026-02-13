@@ -46,10 +46,10 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden bg-slate-900 text-slate-100 flex flex-col">
+    <div className="h-dvh overflow-hidden bg-slate-900 text-slate-100 flex flex-col">
       <Header step={step} setStep={setStep} />
 
-      <main className="flex-1 min-h-0 flex flex-col">
+      <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {/* Padding and centering for non-stage steps */}
         {step !== 2 && (
           <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center">
