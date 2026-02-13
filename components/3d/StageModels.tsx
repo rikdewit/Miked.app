@@ -1,5 +1,5 @@
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import { useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 // @ts-ignore
@@ -90,7 +90,7 @@ export const AcousticGuitarModel = ({ color }: { color?: string }) => {
 
 export const BassModel = ({ color }: { color?: string }) => {
   const model = useStageModel(URLS.BASS, color);
-  return <primitive object={model} scale={1} rotation={[0, Math.PI / 2, 0]} position={MODEL_OFFSETS.DEFAULT} />;
+  return <primitive object={model} scale={1} rotation={[0, 0, 0]} position={MODEL_OFFSETS.DEFAULT} />;
 };
 
 export const AmpModel = ({ color }: { color?: string }) => {
@@ -129,8 +129,8 @@ export const StandModel = ({ color }: { color?: string }) => {
 };
 
 export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: PersonPose }) => {
+  // Load the appropriate baked animation model based on pose
   let url = URLS.PERSON;
-  
   if (pose === 'acoustic') url = URLS.MALE_ACOUSTIC;
   else if (pose === 'bass') url = URLS.MALE_BASS;
   else if (pose === 'guitar') url = URLS.MALE_GUITAR;
@@ -143,31 +143,34 @@ export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 
 
   const { scene } = useGLTF(url);
 
-  const model = useMemo(() => {
+  const personModel = useMemo(() => {
     const cloned = cloneGLTF(scene);
-    
+
     cloned.traverse((node: any) => {
-        if (node.isMesh) {
-           const mesh = node as THREE.Mesh;
-           mesh.castShadow = true;
-           mesh.receiveShadow = true;
-           
-           if (color && mesh.material) {
-               const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-               const newMaterials = materials.map(m => {
-                   const nm = m.clone() as THREE.MeshStandardMaterial;
-                   nm.color.set(color);
-                   nm.metalness = 0.1;
-                   nm.roughness = 0.6;
-                   return nm;
-               });
-               mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
-           }
+      if (node.isMesh) {
+        const mesh = node as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        if (color && mesh.material) {
+          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          const newMaterials = materials.map(m => {
+            const nm = m.clone() as THREE.MeshStandardMaterial;
+            nm.color.set(color);
+            nm.metalness = 0.1;
+            nm.roughness = 0.6;
+            return nm;
+          });
+          mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
         }
+      }
     });
 
     return cloned;
   }, [scene, color]);
 
-  return <primitive object={model} scale={1.1} position={MODEL_OFFSETS.DEFAULT} />;
+  return (
+    <group>
+      <primitive object={personModel} scale={1} position={MODEL_OFFSETS.DEFAULT} />
+    </group>
+  );
 };
