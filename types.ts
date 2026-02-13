@@ -54,6 +54,9 @@ export interface RiderDetails {
   generalNotes?: string;
   showDuration?: string;
   soundcheckDuration?: string;
+  stageWidth?: number;
+  stageDepth?: number;
+  stageDimensionUnit?: 'm' | 'ft';
 }
 
 export interface RiderData {

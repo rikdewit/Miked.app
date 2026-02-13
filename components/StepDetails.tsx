@@ -83,6 +83,40 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
         </div>
 
         <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Stage Dimensions</label>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min={0}
+              value={data.details.stageWidth ?? ''}
+              onChange={(e) => setData(prev => ({ ...prev, details: { ...prev.details, stageWidth: e.target.value ? Number(e.target.value) : undefined } }))}
+              placeholder="Width"
+              className="w-28 bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+            <span className="text-slate-400 font-bold">×</span>
+            <input
+              type="number"
+              min={0}
+              value={data.details.stageDepth ?? ''}
+              onChange={(e) => setData(prev => ({ ...prev, details: { ...prev.details, stageDepth: e.target.value ? Number(e.target.value) : undefined } }))}
+              placeholder="Depth"
+              className="w-28 bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+            <div className="flex rounded-lg overflow-hidden border border-slate-600">
+              {(['m', 'ft'] as const).map((unit) => (
+                <button
+                  key={unit}
+                  onClick={() => setData(prev => ({ ...prev, details: { ...prev.details, stageDimensionUnit: unit } }))}
+                  className={`px-4 py-3 text-sm font-semibold transition-colors ${data.details.stageDimensionUnit === unit ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'}`}
+                >
+                  {unit}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div>
            <label className="block text-sm font-medium text-slate-300 mb-2">General Notes</label>
            <textarea 
              rows={4}

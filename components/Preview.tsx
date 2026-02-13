@@ -67,10 +67,13 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
                     <p><span className="font-bold">Contact:</span> {data.details.contactName}</p>
                     <p><span className="font-bold">Email:</span> {data.details.email}</p>
                 </div>
-                {(data.details.showDuration || data.details.soundcheckDuration) && (
+                {(data.details.showDuration || data.details.soundcheckDuration || (data.details.stageWidth && data.details.stageDepth)) && (
                     <div className="space-y-1 border-l border-slate-300 pl-8">
                          {data.details.showDuration && <p className="flex items-center gap-2"><Clock size={14} /> <span className="font-bold">Show:</span> {data.details.showDuration}</p>}
                          {data.details.soundcheckDuration && <p className="flex items-center gap-2"><Clock size={14} /> <span className="font-bold">Soundcheck:</span> {data.details.soundcheckDuration}</p>}
+                         {data.details.stageWidth && data.details.stageDepth && (
+                           <p className="flex items-center gap-2"><Layers size={14} /> <span className="font-bold">Stage:</span> {data.details.stageWidth}{data.details.stageDimensionUnit} × {data.details.stageDepth}{data.details.stageDimensionUnit}</p>
+                         )}
                     </div>
                 )}
             </div>

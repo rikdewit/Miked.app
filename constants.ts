@@ -48,5 +48,6 @@ export const INITIAL_RIDER_DATA = {
     generalNotes: '',
     showDuration: '',
     soundcheckDuration: '',
+    stageDimensionUnit: 'm' as const,
   },
 };
