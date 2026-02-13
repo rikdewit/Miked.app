@@ -1,7 +1,5 @@
 import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
-import { Mic, Music2, Layers, Box, Clock } from 'lucide-react';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
+import { Mic, Music2, Layers, Box, Clock, Printer } from 'lucide-react';
 import { RiderData } from '../types';
 import { InputList } from './InputList';
 import { StagePlotCanvas } from './StagePlotCanvas';
@@ -19,104 +17,19 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleDownloadPDF = async () => {
-    if (!previewRef.current) return;
     setIsGeneratingPdf(true);
     
-    // Cleanup any existing spacers from failed runs
-    document.querySelectorAll('.pdf-spacer').forEach(s => s.remove());
-
     try {
       // Wait for React to render any pending updates
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const element = previewRef.current;
-      // Calculate A4 Page Height in pixels based on the rendered width (A4 is 210mm x 297mm)
-      // We assume the rendered width corresponds to 210mm minus margins, but HTML2Canvas captures the whole element.
-      // If the CSS width is 210mm, then aspect ratio 1.414 gives height.
-      const width = element.offsetWidth;
-      const pageHeight = width * 1.414; 
-      
-      const breakAvoidElements = element.querySelectorAll('.break-inside-avoid');
-      const spacers: HTMLDivElement[] = [];
-      const containerTop = element.getBoundingClientRect().top;
-
-      // Logic: Iterate over 'break-inside-avoid' elements.
-      // If an element crosses a page boundary, insert a spacer before it to push it to the next page.
-      breakAvoidElements.forEach((el) => {
-          // Calculate position relative to the top of the preview container
-          // We must re-calculate rect here because previous loop iterations might have shifted the DOM
-          const currentRect = el.getBoundingClientRect();
-          const elTop = currentRect.top - containerTop;
-          const elBottom = elTop + currentRect.height;
-          
-          const startPage = Math.floor(elTop / pageHeight);
-          const endPage = Math.floor(elBottom / pageHeight);
-          
-          if (startPage !== endPage) {
-              // The element crosses a page break.
-              // Push it to the start of the next page.
-              const nextPageStart = (startPage + 1) * pageHeight;
-              const spacerHeight = nextPageStart - elTop + 20; // +20px buffer
-              
-              const spacer = document.createElement('div');
-              spacer.style.height = `${spacerHeight}px`;
-              spacer.style.width = '100%';
-              spacer.className = 'pdf-spacer';
-              
-              if (el.parentNode) {
-                  el.parentNode.insertBefore(spacer, el);
-                  spacers.push(spacer);
-              }
-          }
-      });
-
-      // Allow DOM to update layout with spacers
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      const canvas = await html2canvas(element, {
-        scale: 2, // Higher quality
-        useCORS: true,
-        logging: false,
-        windowWidth: 1200, // Force specific width to ensure layout consistency
-      });
-
-      // Restore DOM immediately after capture
-      spacers.forEach(s => s.remove());
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
-
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      
-      // We calculate the image width/height based on the PDF width
-      const imgWidth = pdfWidth;
-      const totalImgHeight = (canvas.height * imgWidth) / canvas.width;
-
-      let heightLeft = totalImgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, totalImgHeight);
-      heightLeft -= pdfHeight;
-
-      while (heightLeft > 0) {
-        position -= pdfHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, totalImgHeight);
-        heightLeft -= pdfHeight;
-      }
-
-      const safeName = data.details.bandName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || 'rider';
-      pdf.save(`${safeName}_technical_rider.pdf`);
+      // Use system print dialog for reliable PDF generation
+      // This avoids html2canvas text rendering issues
+      window.print();
     } catch (err) {
       console.error(err);
-      alert('Could not generate PDF automatically. You can try the "System Print" option instead.');
+      alert('Error opening print dialog. Please try again.');
     } finally {
-      document.querySelectorAll('.pdf-spacer').forEach(s => s.remove());
       setIsGeneratingPdf(false);
     }
   };
@@ -130,8 +43,16 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       <div className="no-print w-full max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
          <div>
            <h2 className="text-xl font-bold text-white">Your Rider is ready!</h2>
-           <p className="text-slate-400 text-sm">Review it below. Click "Download PDF" below to save.</p>
+           <p className="text-slate-400 text-sm">Review it below. Click "Print to PDF" or use your browser's print function (Ctrl+P / Cmd+P).</p>
          </div>
+         <button
+           onClick={handleDownloadPDF}
+           disabled={isGeneratingPdf}
+           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+         >
+           <Printer size={20} />
+           Print to PDF
+         </button>
       </div>
 
       {/* A4 PAPER PREVIEW */}
@@ -178,7 +99,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         </div>
 
         {/* Stageplot */}
-        <div className="flex-1 flex flex-col min-h-0 break-inside-avoid">
+        <div className="flex-1 flex flex-col min-h-0 break-inside-avoid pt-8">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Music2 size={20} /> Stage Plot
           </h3>
