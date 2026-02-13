@@ -173,7 +173,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   
   // Use tighter zoom for preview to minimize whitespace and fit the stage
   const camZoom = isPreview 
-    ? (isTopView ? 75 : 60) 
+    ? (isTopView ? 75 : 50) 
     : (isTopView ? 80 : 60);
   
   return (

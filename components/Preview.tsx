@@ -106,7 +106,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
           
           <div className="grid grid-cols-1 gap-6 mt-4">
               {/* Top View */}
-              <div className="relative w-full max-w-[80%] aspect-square mx-auto">
+              <div className="relative w-full max-w-[90%] aspect-[8/5] mx-auto">
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Layers size={24} className="text-black" />
                 </div>
@@ -114,7 +114,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
               </div>
 
               {/* 3D View */}
-              <div className="relative w-full max-w-[80%] aspect-square mx-auto">
+              <div className="relative w-full max-w-[90%] aspect-[8/5] mx-auto">
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Box size={24} className="text-black" />
                 </div>
