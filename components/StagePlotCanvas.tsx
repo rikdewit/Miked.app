@@ -94,6 +94,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     setRotationUiItemId(null);
   };
 
+  const handleQuantityChange = (id: string, quantity: number) => {
+    setItems(items.map(i =>
+      i.id === id ? { ...i, quantity } : i
+    ));
+  };
+
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
     if (!editable) return;
     e.stopPropagation();
@@ -255,12 +261,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
         <Suspense fallback={null}>
             {items.map((item) => (
-              <StageDraggableItem 
-                key={item.id} 
-                item={item} 
-                activeId={activeId} 
+              <StageDraggableItem
+                key={item.id}
+                item={item}
+                activeId={activeId}
                 onDown={handlePointerDown}
-                onMove={handlePlaneMove} 
+                onMove={handlePlaneMove}
                 onUp={handlePointerUp}
                 member={members?.find(m => m.id === item.memberId)}
                 isRotating={rotatingItemId === item.id}
@@ -269,6 +275,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onCloseRotationUI={() => setRotationUiItemId(null)}
                 onRotate={onRotateItem}
                 onDelete={handleDeleteItem}
+                onQuantityChange={handleQuantityChange}
                 isEditable={editable}
                 viewMode={viewMode}
               />

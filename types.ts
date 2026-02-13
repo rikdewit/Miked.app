@@ -41,6 +41,7 @@ export interface StageItem {
   rotation?: number;
   fromInstrumentIndex?: number; // Which instrument slot created this item
   isPeripheral?: boolean; // If true, this item is removed when swapping variants (e.g. Amp), vs Core items (Guitar Body)
+  quantity?: number; // For power items: number of outlets/strips
 }
 
 export interface RiderDetails {

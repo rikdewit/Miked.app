@@ -23,17 +23,18 @@ interface DraggableItemProps {
   onCloseRotationUI?: () => void;
   onRotate?: (itemId: string, direction: 'left' | 'right') => void;
   onDelete?: (itemId: string) => void;
+  onQuantityChange?: (itemId: string, quantity: number) => void;
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
 }
 
-export const StageDraggableItem: React.FC<DraggableItemProps> = ({ 
-  item, 
-  activeId, 
-  onDown, 
-  onMove, 
-  onUp, 
-  isGhost = false, 
+export const StageDraggableItem: React.FC<DraggableItemProps> = ({
+  item,
+  activeId,
+  onDown,
+  onMove,
+  onUp,
+  isGhost = false,
   member,
   isRotating = false,
   showRotationUI = false,
@@ -41,6 +42,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onCloseRotationUI,
   onRotate,
   onDelete,
+  onQuantityChange,
   isEditable = false,
   viewMode = 'isometric'
 }) => {
@@ -142,55 +144,84 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   return (
     <group position={[x, 0, z]} rotation={[0, item.rotation || 0, 0]}>
       {showLabel && (
-        <Html 
-            position={[0 + offX, height + labelYPadding + offY, 0 + offZ]} 
-            center 
-            zIndexRange={isDragging ? [500, 400] : [100, 0]} 
+        <Html
+            position={[0 + offX, height + labelYPadding + offY, 0 + offZ]}
+            center
+            zIndexRange={isDragging ? [500, 400] : [100, 0]}
             style={{ pointerEvents: 'none' }}
         >
           <div className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded backdrop-blur-sm border ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}>
-            {item.label}
+            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.label}
           </div>
         </Html>
       )}
 
       {/* Rotation UI */}
-      {showRotationUI && !isGhost && isEditable && onRotate && (
-        <Html 
-            position={[0 + offX, height + (viewMode === 'top' ? 3.5 : 0.8) + offY, 0 + offZ]} 
-            center 
-            zIndexRange={[1000, 900]} 
+      {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power') && (
+        <Html
+            position={[0 + offX, height + (viewMode === 'top' ? 3.5 : 0.8) + offY, 0 + offZ]}
+            center
+            zIndexRange={[1000, 900]}
             style={{ pointerEvents: 'auto' }}
         >
-          <div 
-            className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg" 
+          <div
+            className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
           >
-            <button
-              onClick={() => onRotate(item.id, 'left')}
-              className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-              title="Rotate left 22.5°"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <button
-              onClick={() => {
-                onCloseRotationUI?.();
-              }}
-              className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition-colors"
-              title="Done rotating"
-            >
-              Done
-            </button>
-            <button
-              onClick={() => onRotate(item.id, 'right')}
-              className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-              title="Rotate right 22.5°"
-            >
-              <ChevronRight size={14} />
-            </button>
+            {item.type === 'power' ? (
+              <>
+                <button
+                  onClick={() => {
+                    const newQty = Math.max(1, (item.quantity || 1) - 1);
+                    onQuantityChange?.(item.id, newQty);
+                  }}
+                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  title="Decrease quantity"
+                >
+                  −
+                </button>
+                <div className="px-2 py-1 text-white text-xs font-bold flex items-center bg-slate-800 rounded">
+                  {item.quantity || 1}
+                </div>
+                <button
+                  onClick={() => {
+                    onQuantityChange?.(item.id, (item.quantity || 1) + 1);
+                  }}
+                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  title="Increase quantity"
+                >
+                  +
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  onClick={() => onRotate?.(item.id, 'left')}
+                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  title="Rotate left 22.5°"
+                >
+                  <ChevronLeft size={14} />
+                </button>
+                <button
+                  onClick={() => {
+                    onCloseRotationUI?.();
+                  }}
+                  className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition-colors"
+                  title="Done rotating"
+                >
+                  Done
+                </button>
+                <button
+                  onClick={() => onRotate?.(item.id, 'right')}
+                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  title="Rotate right 22.5°"
+                >
+                  <ChevronRight size={14} />
+                </button>
+              </>
+            )}
             <div className="w-px bg-slate-600" />
             <button
               onClick={() => onDelete?.(item.id)}
