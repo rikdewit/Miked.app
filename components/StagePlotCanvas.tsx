@@ -31,18 +31,16 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, baseCamZoom }: { isTop
     camera.updateMatrixWorld();
 
     // Then set zoom
-    if (isTopView) {
-      const canvasAspect = size.width / size.height;
+    const canvasAspect = size.width / size.height;
+    const frustumSize = 580; // (far - near)
 
+    if (isTopView) {
       // Calculate zoom so stage fits with asymmetric padding
       // Minimal padding on sides, 20% padding on top
       const SIDE_PADDING = 0.02; // minimal side padding
       const TOP_PADDING = 0.2; // 20% top padding
       const stagePaddedWidth = STAGE_WIDTH * (1 + SIDE_PADDING);
       const stagePaddedHeight = STAGE_DEPTH * (1 + TOP_PADDING);
-
-      // Frustum size based on near/far planes
-      const frustumSize = 580; // (far - near)
 
       // Calculate zoom needed to fit stage in both dimensions
       const zoomForHeight = frustumSize / stagePaddedHeight;
@@ -53,7 +51,22 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, baseCamZoom }: { isTop
 
       (camera as THREE.OrthographicCamera).zoom = adjustedZoom;
     } else {
-      (camera as THREE.OrthographicCamera).zoom = baseCamZoom;
+      // Apply padding to isometric view - use more aggressive padding
+      // for top/bottom due to camera angle creating visual compression
+      const SIDE_PADDING = 0.1; // 10% on sides
+      const TOP_BOTTOM_PADDING = 0.35; // 35% on top/bottom for depth
+
+      const stagePaddedWidth = STAGE_WIDTH * (1 + SIDE_PADDING);
+      const stagePaddedHeight = STAGE_DEPTH * (1 + TOP_BOTTOM_PADDING);
+
+      // Calculate zoom needed to fit stage in both dimensions
+      const zoomForHeight = frustumSize / stagePaddedHeight;
+      const zoomForWidth = (frustumSize * canvasAspect) / stagePaddedWidth;
+
+      // Use the smaller zoom to ensure the stage fits in both dimensions
+      const adjustedZoom = Math.min(zoomForHeight, zoomForWidth);
+
+      (camera as THREE.OrthographicCamera).zoom = adjustedZoom;
     }
 
     camera.updateProjectionMatrix();
