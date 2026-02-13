@@ -62,7 +62,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   const showLabel = true;
   const labelLower = (item.label || '').toLowerCase();
-  
+
   // --- Offset Logic for Visual Alignment ---
   let offset = MODEL_OFFSETS.DEFAULT;
   if (shape !== 'person') {
@@ -83,6 +83,12 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   } else if (labelLower.includes('sax')) {
       labelYPadding = 0.05;
   }
+
+  // Context menu position is relative to label position (fixed offset above label)
+  const labelBaseY = height + labelYPadding + offY;
+  // In top view, Z is vertical on screen (up=-Z), in isometric Y is vertical
+  const contextMenuPosY = viewMode === 'isometric' ? labelBaseY + 1 : labelBaseY;
+  const contextMenuPosZ = viewMode === 'top' ? (0 + offZ - .5) : (0 + offZ); // Move up on screen in top view
 
   const renderModel = () => {
     // --- PERSON ---
@@ -142,7 +148,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   };
 
   return (
-    <group position={[x, 0, z]} rotation={[0, item.rotation || 0, 0]}>
+    <group position={[x, 0, z]}>
       {showLabel && (
         <Html
             position={[0 + offX, height + labelYPadding + offY, 0 + offZ]}
@@ -156,10 +162,10 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         </Html>
       )}
 
-      {/* Rotation UI */}
+      {/* Rotation UI - not inside rotating group so it stays fixed */}
       {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power') && (
         <Html
-            position={[0 + offX, height + (viewMode === 'top' ? 3.5 : 0.8) + offY, 0 + offZ]}
+            position={[0 + offX, contextMenuPosY, contextMenuPosZ]}
             center
             zIndexRange={[1000, 900]}
             style={{ pointerEvents: 'auto' }}
@@ -235,6 +241,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       )}
 
       <group
+        rotation={[0, item.rotation || 0, 0]}
         onPointerDown={!isGhost ? (e) => {
           e.stopPropagation();
           // Track pointer position for click detection
