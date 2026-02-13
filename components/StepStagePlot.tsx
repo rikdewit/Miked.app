@@ -391,20 +391,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                         + Stand
                      </button>
                      <button
-                        onClick={() => {
-                          const existingPower = data.stagePlot.find(item => item.type === 'power');
-                          if (existingPower) {
-                            // Increase quantity of existing power
-                            updateStageItems(data.stagePlot.map(item =>
-                              item.id === existingPower.id
-                                ? { ...item, quantity: (item.quantity || 1) + 1 }
-                                : item
-                            ));
-                          } else {
-                            // Add new power item
-                            updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: 'Power', quantity: 1 }]);
-                          }
-                        }}
+                        onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: 'Power', quantity: 1 }])}
                         className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
                      >
                         + Power
