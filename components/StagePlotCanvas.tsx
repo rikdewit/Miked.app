@@ -266,7 +266,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
   return (
     <div
-      className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative"
+      className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
       style={{ touchAction: 'none' }}
     >
       <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} className="w-full h-full">
