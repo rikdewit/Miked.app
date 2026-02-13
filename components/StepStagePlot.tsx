@@ -361,8 +361,8 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
 
         {/* MOBILE: Members as horizontal scrollable list at top */}
         <div className="lg:hidden flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-white px-1">Drag members onto the stage</h3>
-            <div className="flex gap-2 overflow-x-auto pb-2 px-1">
+            <h3 className="text-sm font-bold text-white px-4">Drag members onto the stage</h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 px-4">
                 {data.members.map((member) => {
                     const status = getPlacementStatus(member);
                     const isFull = status === 'full';
@@ -394,17 +394,17 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
         {/* MAIN AREA: Canvas */}
         <div className="flex-1 flex flex-col min-w-0">
              {/* Toolbar with all buttons wrapping together */}
-             <div className="flex flex-wrap gap-2 mb-4">
+             <div className="flex flex-wrap gap-2 mb-4 w-full lg:w-auto">
                 {/* View mode buttons */}
                 <button
                     onClick={() => setStageViewMode('isometric')}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                 >
                     <Box size={16} /> <span className="hidden sm:inline">3D View</span>
                 </button>
                 <button
                     onClick={() => setStageViewMode('top')}
-                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                 >
                     <Layers size={16} /> <span className="hidden sm:inline">Top View</span>
                 </button>
@@ -415,19 +415,19 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                 {/* Action buttons */}
                 <button
                     onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                    className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                 >
                     + Mon
                 </button>
                 <button
                     onClick={() => updateStageItems([...data.stagePlot, { id: `stand-${Date.now()}`, type: 'stand', x: 50, y: 50, label: 'Mic Stand' }])}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                    className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                 >
                     + Stand
                 </button>
                 <button
                     onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: 'Power', quantity: 1 }])}
-                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                    className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                 >
                     + Power
                 </button>
@@ -435,7 +435,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     type="button"
                     onClick={requestClearStage}
                     disabled={data.stagePlot.length === 0}
-                    className={`px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors ${
+                    className={`flex-1 sm:flex-none px-2 sm:px-3 py-2 rounded text-xs flex items-center justify-center gap-1 border transition-colors ${
                         data.stagePlot.length === 0
                         ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'
                         : 'bg-red-900/30 hover:bg-red-900/50 text-red-200 border-red-900/50 cursor-pointer'

@@ -8,6 +8,60 @@ import { percentToX, percentToZ, xToPercent, zToPercent } from '../utils/stageHe
 import { StageDraggableItem } from './3d/StageDraggableItem';
 import { MODEL_OFFSETS } from './3d/StageModels';
 
+// Component to handle responsive camera zoom and orientation
+const ResponsiveCameraAdjuster = ({ isTopView, isPreview, baseCamZoom }: { isTopView: boolean; isPreview: boolean; baseCamZoom: number }) => {
+  const { camera, size } = useThree();
+
+  useEffect(() => {
+    if (!camera) return;
+
+    // Set camera up vector FIRST (before lookAt)
+    if (isTopView) {
+      camera.up.set(0, 0, -1);
+    } else {
+      camera.up.set(0, 1, 0);
+    }
+
+    // Then set position and look at
+    camera.position.set(isTopView ? 0 : -20, isTopView ? 70 : 30, isTopView ? -1 : 20);
+    camera.lookAt(0, isTopView ? -30 : 0, isTopView ? 1 : 0);
+
+    // Update matrices before changing zoom
+    camera.updateMatrix();
+    camera.updateMatrixWorld();
+
+    // Then set zoom
+    if (isTopView) {
+      const canvasAspect = size.width / size.height;
+
+      // Calculate zoom so stage fits with asymmetric padding
+      // Minimal padding on sides, 20% padding on top
+      const SIDE_PADDING = 0.02; // minimal side padding
+      const TOP_PADDING = 0.2; // 20% top padding
+      const stagePaddedWidth = STAGE_WIDTH * (1 + SIDE_PADDING);
+      const stagePaddedHeight = STAGE_DEPTH * (1 + TOP_PADDING);
+
+      // Frustum size based on near/far planes
+      const frustumSize = 580; // (far - near)
+
+      // Calculate zoom needed to fit stage in both dimensions
+      const zoomForHeight = frustumSize / stagePaddedHeight;
+      const zoomForWidth = (frustumSize * canvasAspect) / stagePaddedWidth;
+
+      // Use the smaller zoom to ensure the stage fits in both dimensions
+      const adjustedZoom = Math.min(zoomForHeight, zoomForWidth);
+
+      (camera as THREE.OrthographicCamera).zoom = adjustedZoom;
+    } else {
+      (camera as THREE.OrthographicCamera).zoom = baseCamZoom;
+    }
+
+    camera.updateProjectionMatrix();
+  }, [size, camera, isTopView, baseCamZoom]);
+
+  return null;
+};
+
 interface StagePlotCanvasProps {
   items: StageItem[];
   setItems: (items: StageItem[]) => void;
@@ -185,28 +239,31 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   };
 
   const isTopView = viewMode === 'top';
-  const camPosition: [number, number, number] = isTopView ? [0, 50, 0] : [-20, 30, 20];
+  const camPosition: [number, number, number] = isTopView ? [0, 70, -1] : [-20, 30, 20];
   
   // Use tighter zoom for preview to minimize whitespace and fit the stage
-  const camZoom = isPreview 
-    ? (isTopView ? 75 : 50) 
-    : (isTopView ? 80 : 60);
-  
+  // Top view zoom is reduced to fit smaller monitors
+  const camZoom = isPreview
+    ? (isTopView ? 30 : 50)
+    : (isTopView ? 60 : 60);
+
+  // Responsive font sizes for stage and audience labels
+  const stageFontSize = isPreview ? 0.6 : 1.2;
+  const audienceFontSize = 0.5; // Smaller for audience
+
   return (
     <div className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative">
       <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} className="w-full h-full">
-        <OrthographicCamera 
+        <OrthographicCamera
             key={viewMode}
-            makeDefault 
-            position={camPosition} 
-            zoom={camZoom} 
-            near={-50} 
+            makeDefault
+            position={camPosition}
+            zoom={camZoom}
+            near={-50}
             far={200}
-            onUpdate={c => {
-                c.lookAt(0, 0, 0);
-                if (isTopView) c.up.set(0, 0, -1); else c.up.set(0, 1, 0);
-            }}
         />
+
+        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} baseCamZoom={camZoom} />
 
         <ambientLight intensity={0.6} />
         <directionalLight 
@@ -233,10 +290,10 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
           />
           
           {showAudienceLabel && (
-            <Text 
-              position={[0, 0.05, STAGE_DEPTH / 2 + 0.8]} 
+            <Text
+              position={[0, 0.05, STAGE_DEPTH / 2 + 0.3]}
               rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={0.8}
+              fontSize={audienceFontSize}
               color="#64748b"
               anchorX="center"
               anchorY="middle"
