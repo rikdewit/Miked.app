@@ -18,13 +18,13 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   const [draggingMemberId, setDraggingMemberId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [rotatingItemId, setRotatingItemId] = useState<string | null>(null);
-  
+
   // Stores the Percentage Position (0-100) on the stage
   const [dragPos, setDragPos] = useState<{ x: number, y: number } | null>(null);
-  
+
   // Stores the raw pixel coordinates for the canvas to process
   const [rawDragCoords, setRawDragCoords] = useState<{ x: number, y: number, width: number, height: number } | null>(null);
-  
+
   // Ref for the custom drag image
   const dragLabelRef = useRef<HTMLDivElement>(null);
   const [dragLabelText, setDragLabelText] = useState("");
@@ -195,7 +195,45 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
       setDraggingMemberId(null);
       setDragPos(null);
       setRawDragCoords(null);
-  }
+  };
+
+  // --- Click to Place Handler ---
+  const handleMemberClick = (memberId: string) => {
+      const member = data.members.find(m => m.id === memberId);
+      if (!member) return;
+
+      const status = getPlacementStatus(member);
+      if (status === 'full') {
+          alert(`${member.name} is already on the stage.`);
+          return;
+      }
+
+      // Place at center of stage
+      const centerX = 50;
+      const centerY = 50;
+
+      const potentialItems = generateMemberItems(member, centerX, centerY);
+      const hasPerson = data.stagePlot.some(i => i.memberId === memberId && i.type === 'person');
+
+      const itemsToAdd = potentialItems.filter(newItem => {
+          if (newItem.type === 'person' && hasPerson) return false;
+          if (newItem.fromInstrumentIndex !== undefined) {
+              const index = newItem.fromInstrumentIndex;
+              const existingCore = data.stagePlot.find(
+                  i => i.memberId === memberId && i.fromInstrumentIndex === index && !i.isPeripheral
+              );
+              if (!newItem.isPeripheral && existingCore) return false;
+
+              const existingSameItem = data.stagePlot.find(
+                  i => i.memberId === memberId && i.fromInstrumentIndex === index && i.label === newItem.label
+              );
+              if (existingSameItem) return false;
+          }
+          return true;
+      });
+
+      updateStageItems([...data.stagePlot, ...itemsToAdd]);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -295,7 +333,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
         <div className="hidden lg:flex w-[320px] shrink-0 flex-col bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
             <div className="p-4 bg-slate-900 border-b border-slate-700">
                 <h3 className="font-bold text-lg text-white">Band Members</h3>
-                <p className="text-xs text-slate-400">Drag members onto the stage</p>
+                <p className="text-xs text-slate-400">Click or drag members onto the stage</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -310,6 +348,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                             draggable={!isFull}
                             onDragStart={(e) => handleDragStart(e, member.id, member.name)}
                             onDragEnd={handleDragEnd}
+                            onClick={() => handleMemberClick(member.id)}
                             className={`rounded-lg transition-all group relative border ${
                                 isFull
                                 ? 'bg-slate-900/40 border-slate-700 p-3 cursor-default'
@@ -343,8 +382,8 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
 
                             {/* 3D Preview - HIDE when fully placed, SHOW when partial or none */}
                             {!isFull && (
-                                <div className="h-[120px] w-full rounded bg-slate-900/50 mb-1 pointer-events-none mt-2">
-                                    <MemberPreview3D member={member} />
+                                <div className="h-[120px] w-full rounded bg-slate-900/50 mb-1 mt-2">
+                                    <MemberPreview3D member={member} isDragging={!!draggingMemberId} isSidebarPreview={true} />
                                 </div>
                             )}
 
@@ -361,7 +400,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
 
         {/* MOBILE: Members as horizontal scrollable list at top */}
         <div className="lg:hidden flex flex-col gap-2">
-            <h3 className="text-sm font-bold text-white px-4">Drag members onto the stage</h3>
+            <h3 className="text-sm font-bold text-white px-4">Click members to place on stage</h3>
             <div className="flex gap-2 overflow-x-auto pb-2 px-4">
                 {data.members.map((member) => {
                     const status = getPlacementStatus(member);
@@ -370,13 +409,11 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     return (
                         <div
                             key={member.id}
-                            draggable={!isFull}
-                            onDragStart={(e) => handleDragStart(e, member.id, member.name)}
-                            onDragEnd={handleDragEnd}
+                            onClick={() => handleMemberClick(member.id)}
                             className={`flex-shrink-0 rounded-lg transition-all group relative border p-2 text-center min-w-[100px] ${
                                 isFull
                                 ? 'bg-slate-900/40 border-slate-700 cursor-default'
-                                : 'bg-slate-700/50 border-transparent hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
+                                : 'bg-slate-700/50 border-transparent hover:bg-slate-700 hover:border-indigo-500/50 cursor-pointer hover:shadow-lg'
                             }`}
                         >
                             <span className={`block font-bold text-xs truncate ${isFull ? 'text-slate-500' : 'text-white'}`}>
@@ -463,6 +500,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     members={data.members}
                     rotatingItemId={rotatingItemId}
                     onRotateItem={handleRotateItem}
+                    isDragging={!!draggingMemberId}
                 />
 
                 {data.stagePlot.length === 0 && !draggingMemberId && (

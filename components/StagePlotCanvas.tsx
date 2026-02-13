@@ -88,6 +88,7 @@ interface StagePlotCanvasProps {
   members?: BandMember[];
   rotatingItemId?: string | null;
   onRotateItem?: (itemId: string, direction: 'left' | 'right') => void;
+  isDragging?: boolean;
 }
 
 const StagePlatform = () => {
@@ -138,19 +139,20 @@ const ExternalDragHandler = ({
   return null;
 };
 
-export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({ 
-  items, 
-  setItems, 
-  editable, 
-  viewMode = 'isometric', 
-  showAudienceLabel = true, 
+export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
+  items,
+  setItems,
+  editable,
+  viewMode = 'isometric',
+  showAudienceLabel = true,
   isPreview = false,
   ghostItems = [],
   dragCoords,
   onDragPosChange,
   members,
   rotatingItemId,
-  onRotateItem
+  onRotateItem,
+  isDragging = false
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rotationUiItemId, setRotationUiItemId] = useState<string | null>(null);
@@ -264,8 +266,21 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   const stageFontSize = isPreview ? 0.6 : 1.2;
   const audienceFontSize = 0.5; // Smaller for audience
 
+  const handleContainerPointerDown = (e: React.PointerEvent) => {
+    if (isDragging) e.preventDefault();
+  };
+
+  const handleContainerTouchStart = (e: React.TouchEvent) => {
+    if (isDragging) e.preventDefault();
+  };
+
   return (
-    <div className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative" style={{ touchAction: 'none' }}>
+    <div
+      className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative"
+      style={{ touchAction: isDragging ? 'none' : 'auto' }}
+      onPointerDown={handleContainerPointerDown}
+      onTouchStart={handleContainerTouchStart}
+    >
       <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} className="w-full h-full">
         <OrthographicCamera
             key={viewMode}
