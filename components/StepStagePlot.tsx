@@ -393,58 +393,57 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
 
         {/* MAIN AREA: Canvas */}
         <div className="flex-1 flex flex-col min-w-0">
-             {/* Toolbar with responsive layout */}
-             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+             {/* Toolbar with all buttons wrapping together */}
+             <div className="flex flex-wrap gap-2 mb-4">
                 {/* View mode buttons */}
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setStageViewMode('isometric')}
-                        className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
-                    >
-                        <Box size={16} /> <span className="hidden sm:inline">3D View</span>
-                    </button>
-                    <button
-                        onClick={() => setStageViewMode('top')}
-                        className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
-                    >
-                        <Layers size={16} /> <span className="hidden sm:inline">Top View</span>
-                    </button>
-                </div>
+                <button
+                    onClick={() => setStageViewMode('isometric')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                >
+                    <Box size={16} /> <span className="hidden sm:inline">3D View</span>
+                </button>
+                <button
+                    onClick={() => setStageViewMode('top')}
+                    className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                >
+                    <Layers size={16} /> <span className="hidden sm:inline">Top View</span>
+                </button>
 
-                {/* Action buttons - responsive wrap */}
-                <div className="flex flex-wrap gap-2 lg:ml-auto">
-                     <button
-                        onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
-                        className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
-                     >
-                        + Mon
-                     </button>
-                     <button
-                        onClick={() => updateStageItems([...data.stagePlot, { id: `stand-${Date.now()}`, type: 'stand', x: 50, y: 50, label: 'Mic Stand' }])}
-                        className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
-                     >
-                        + Stand
-                     </button>
-                     <button
-                        onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: 'Power', quantity: 1 }])}
-                        className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
-                     >
-                        + Power
-                     </button>
-                     <button
-                        type="button"
-                        onClick={requestClearStage}
-                        disabled={data.stagePlot.length === 0}
-                        className={`flex-1 sm:flex-none px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors justify-center sm:justify-start ${
-                            data.stagePlot.length === 0
-                            ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'
-                            : 'bg-red-900/30 hover:bg-red-900/50 text-red-200 border-red-900/50 cursor-pointer'
-                        }`}
-                        title="Remove all items from the stage"
-                     >
-                        <Trash2 size={14} className="pointer-events-none" /> <span className="hidden sm:inline">Clear</span>
-                     </button>
-                </div>
+                {/* Spacer for desktop to push remaining buttons right */}
+                <div className="hidden lg:flex flex-1"></div>
+
+                {/* Action buttons */}
+                <button
+                    onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                >
+                    + Mon
+                </button>
+                <button
+                    onClick={() => updateStageItems([...data.stagePlot, { id: `stand-${Date.now()}`, type: 'stand', x: 50, y: 50, label: 'Mic Stand' }])}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                >
+                    + Stand
+                </button>
+                <button
+                    onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: 'Power', quantity: 1 }])}
+                    className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                >
+                    + Power
+                </button>
+                <button
+                    type="button"
+                    onClick={requestClearStage}
+                    disabled={data.stagePlot.length === 0}
+                    className={`px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors ${
+                        data.stagePlot.length === 0
+                        ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'
+                        : 'bg-red-900/30 hover:bg-red-900/50 text-red-200 border-red-900/50 cursor-pointer'
+                    }`}
+                    title="Remove all items from the stage"
+                >
+                    <Trash2 size={14} className="pointer-events-none" /> <span className="hidden sm:inline">Clear</span>
+                </button>
              </div>
 
              <div
