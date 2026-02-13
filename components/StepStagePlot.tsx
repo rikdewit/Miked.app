@@ -363,6 +363,12 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                         + Mon
                      </button>
                      <button 
+                        onClick={() => updateStageItems([...data.stagePlot, { id: `stand-${Date.now()}`, type: 'stand', x: 50, y: 50, label: 'Mic Stand' }])}
+                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
+                     >
+                        + Stand
+                     </button>
+                     <button 
                         onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: '230V' }])}
                         className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
                      >

@@ -34,7 +34,7 @@ export interface BandMember {
 export interface StageItem {
   id: string;
   memberId?: string; // If linked to a band member
-  type: 'member' | 'monitor' | 'power' | 'drumriser' | 'person';
+  type: 'member' | 'monitor' | 'power' | 'drumriser' | 'person' | 'stand';
   x: number; // Percentage 0-100
   y: number; // Percentage 0-100
   label: string;

@@ -24,6 +24,7 @@ export const getItemConfig = (item: StageItem) => {
   const isPerson = item.type === 'person';
   const isMonitor = item.type === 'monitor';
   const isPower = item.type === 'power';
+  const isStand = item.type === 'stand';
   const label = (item.label || '').toLowerCase();
 
   // Specific Item Detection based on labels generated in StepStagePlot
@@ -37,6 +38,10 @@ export const getItemConfig = (item: StageItem) => {
 
   if (isPower) {
     return { width: 0.3, depth: 0.3, height: 0.3, color: COLORS.power, shape: 'box' };
+  }
+
+  if (isStand) {
+    return { width: 0.2, depth: 0.2, height: 1.5, color: COLORS.stand, shape: 'pole' };
   }
 
   // Instrument / Gear detection

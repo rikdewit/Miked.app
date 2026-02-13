@@ -68,6 +68,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         return <Models.PersonModel color={isDragging ? activeColor : undefined} pose={pose} />;
     }
 
+    // --- MIC STAND ---
+    if (item.type === 'stand') {
+        return <Models.MicStandModel />;
+    }
+
     const modelColor = isDragging ? activeColor : color;
 
     // --- INSTRUMENTS & GEAR ---
