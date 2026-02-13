@@ -409,8 +409,8 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     <Layers size={16} /> <span className="hidden sm:inline">Top View</span>
                 </button>
 
-                {/* Spacer for desktop to push remaining buttons right */}
-                <div className="hidden lg:flex flex-1"></div>
+                {/* Spacer to push remaining buttons right (except on mobile when buttons fill width) */}
+                <div className="hidden sm:flex flex-1"></div>
 
                 {/* Action buttons */}
                 <button
