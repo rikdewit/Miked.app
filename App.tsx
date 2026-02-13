@@ -49,40 +49,48 @@ const App: React.FC = () => {
     <div className="h-screen overflow-hidden bg-slate-900 text-slate-100 flex flex-col">
       <Header step={step} setStep={setStep} />
 
-      <main className="flex-1 min-h-0 overflow-y-auto p-4 md:p-8 flex flex-col items-center">
-        {step === 0 && <Landing onStart={() => setStep(1)} />}
-        
-        {step === 1 && (
-          <StepInstruments 
-            data={data}
-            addMember={addMember}
-            applyRockTemplate={applyRockTemplate}
-            updateMemberName={updateMemberName}
-            updateMemberNotes={updateMemberNotes}
-            updateMemberInstrument={updateMemberInstrument}
-            removeMemberInstrument={removeMemberInstrument}
-            addMemberInstrument={addMemberInstrument}
-            removeMember={removeMember}
-          />
+      <main className="flex-1 min-h-0 flex flex-col">
+        {/* Padding and centering for non-stage steps */}
+        {step !== 2 && (
+          <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center">
+            {step === 0 && <Landing onStart={() => setStep(1)} />}
+
+            {step === 1 && (
+              <StepInstruments
+                data={data}
+                addMember={addMember}
+                applyRockTemplate={applyRockTemplate}
+                updateMemberName={updateMemberName}
+                updateMemberNotes={updateMemberNotes}
+                updateMemberInstrument={updateMemberInstrument}
+                removeMemberInstrument={removeMemberInstrument}
+                addMemberInstrument={addMemberInstrument}
+                removeMember={removeMember}
+              />
+            )}
+
+            {step === 3 && (
+              <StepDetails
+                data={data}
+                setData={setData}
+              />
+            )}
+
+            {step === 4 && (
+              <Preview data={data} ref={previewRef} />
+            )}
+          </div>
         )}
 
+        {/* Full height for stage plot */}
         {step === 2 && (
-          <StepStagePlot 
-            data={data}
-            setData={setData}
-            updateStageItems={updateStageItems}
-          />
-        )}
-
-        {step === 3 && (
-          <StepDetails 
-            data={data}
-            setData={setData}
-          />
-        )}
-
-        {step === 4 && (
-          <Preview data={data} ref={previewRef} />
+          <div className="flex-1 min-h-0 p-4 md:p-8 overflow-hidden">
+            <StepStagePlot
+              data={data}
+              setData={setData}
+              updateStageItems={updateStageItems}
+            />
+          </div>
         )}
       </main>
 

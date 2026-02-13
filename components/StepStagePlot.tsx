@@ -281,23 +281,23 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
   }, [draggingMemberId, dragPos, data.members, data.stagePlot]);
 
   return (
-    <div className="w-full h-full flex gap-6 relative">
-        
+    <div className="w-full h-full flex flex-col lg:flex-row gap-4 lg:gap-6 relative">
+
         {/* Hidden Custom Drag Image */}
-        <div 
-            ref={dragLabelRef} 
+        <div
+            ref={dragLabelRef}
             className="absolute top-[-9999px] left-[-9999px] bg-slate-900 text-white text-xs font-bold px-3 py-1.5 rounded-md border border-slate-600 shadow-xl whitespace-nowrap z-50 pointer-events-none"
         >
             {dragLabelText}
         </div>
 
-        {/* SIDEBAR: Member List & Previews */}
-        <div className="w-[320px] shrink-0 flex flex-col bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
+        {/* SIDEBAR: Member List & Previews - Desktop only */}
+        <div className="hidden lg:flex w-[320px] shrink-0 flex-col bg-slate-800 rounded-xl overflow-hidden border border-slate-700 shadow-xl">
             <div className="p-4 bg-slate-900 border-b border-slate-700">
                 <h3 className="font-bold text-lg text-white">Band Members</h3>
                 <p className="text-xs text-slate-400">Drag members onto the stage</p>
             </div>
-            
+
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {data.members.map((member) => {
                     const status = getPlacementStatus(member);
@@ -305,14 +305,14 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     const isPartial = status === 'partial';
 
                     return (
-                        <div 
-                            key={member.id} 
+                        <div
+                            key={member.id}
                             draggable={!isFull}
                             onDragStart={(e) => handleDragStart(e, member.id, member.name)}
                             onDragEnd={handleDragEnd}
                             className={`rounded-lg transition-all group relative border ${
                                 isFull
-                                ? 'bg-slate-900/40 border-slate-700 p-3 cursor-default' 
+                                ? 'bg-slate-900/40 border-slate-700 p-3 cursor-default'
                                 : isPartial
                                     ? 'bg-slate-800/80 border-indigo-900/50 p-3 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing'
                                     : 'bg-slate-700/50 border-transparent p-2 hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
@@ -340,14 +340,14 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                                     </span>
                                 )}
                             </div>
-                            
+
                             {/* 3D Preview - HIDE when fully placed, SHOW when partial or none */}
                             {!isFull && (
                                 <div className="h-[120px] w-full rounded bg-slate-900/50 mb-1 pointer-events-none mt-2">
                                     <MemberPreview3D member={member} />
                                 </div>
                             )}
-                            
+
                             {!isFull && (
                                 <div className="text-[10px] text-center text-indigo-300 font-medium py-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     {isPartial ? 'Drag to Add New Gear' : 'Drag to Stage'}
@@ -359,70 +359,105 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
             </div>
         </div>
 
+        {/* MOBILE: Members as horizontal scrollable list at top */}
+        <div className="lg:hidden flex flex-col gap-2">
+            <h3 className="text-sm font-bold text-white px-1">Drag members onto the stage</h3>
+            <div className="flex gap-2 overflow-x-auto pb-2 px-1">
+                {data.members.map((member) => {
+                    const status = getPlacementStatus(member);
+                    const isFull = status === 'full';
+
+                    return (
+                        <div
+                            key={member.id}
+                            draggable={!isFull}
+                            onDragStart={(e) => handleDragStart(e, member.id, member.name)}
+                            onDragEnd={handleDragEnd}
+                            className={`flex-shrink-0 rounded-lg transition-all group relative border p-2 text-center min-w-[100px] ${
+                                isFull
+                                ? 'bg-slate-900/40 border-slate-700 cursor-default'
+                                : 'bg-slate-700/50 border-transparent hover:bg-slate-700 hover:border-indigo-500/50 cursor-grab active:cursor-grabbing hover:shadow-lg'
+                            }`}
+                        >
+                            <span className={`block font-bold text-xs truncate ${isFull ? 'text-slate-500' : 'text-white'}`}>
+                                {member.name}
+                            </span>
+                            {isFull && (
+                                <span className="text-[8px] text-green-400 font-medium">Placed ✓</span>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+
         {/* MAIN AREA: Canvas */}
         <div className="flex-1 flex flex-col min-w-0">
-             <div className="flex justify-between items-center mb-4">
+             {/* Toolbar with responsive layout */}
+             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
+                {/* View mode buttons */}
                 <div className="flex gap-2">
-                    <button 
+                    <button
                         onClick={() => setStageViewMode('isometric')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                     >
-                        <Box size={16} /> 3D View
+                        <Box size={16} /> <span className="hidden sm:inline">3D View</span>
                     </button>
-                    <button 
+                    <button
                         onClick={() => setStageViewMode('top')}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                        className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                     >
-                        <Layers size={16} /> Top View
+                        <Layers size={16} /> <span className="hidden sm:inline">Top View</span>
                     </button>
                 </div>
 
-                <div className="flex gap-2">
-                     <button 
+                {/* Action buttons - responsive wrap */}
+                <div className="flex flex-wrap gap-2 lg:ml-auto">
+                     <button
                         onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
-                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
+                        className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                      >
                         + Mon
                      </button>
-                     <button 
+                     <button
                         onClick={() => updateStageItems([...data.stagePlot, { id: `stand-${Date.now()}`, type: 'stand', x: 50, y: 50, label: 'Mic Stand' }])}
-                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
+                        className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                      >
                         + Stand
                      </button>
                      <button
                         onClick={() => updateStageItems([...data.stagePlot, { id: `pwr-${Date.now()}`, type: 'power', x: 50, y: 50, label: 'Power', quantity: 1 }])}
-                        className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600"
+                        className="flex-1 sm:flex-none px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                      >
                         + Power
                      </button>
-                     <button 
+                     <button
                         type="button"
                         onClick={requestClearStage}
                         disabled={data.stagePlot.length === 0}
-                        className={`px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors ${
-                            data.stagePlot.length === 0 
-                            ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed' 
+                        className={`flex-1 sm:flex-none px-3 py-2 rounded text-xs flex items-center gap-1 border transition-colors justify-center sm:justify-start ${
+                            data.stagePlot.length === 0
+                            ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed'
                             : 'bg-red-900/30 hover:bg-red-900/50 text-red-200 border-red-900/50 cursor-pointer'
                         }`}
                         title="Remove all items from the stage"
                      >
-                        <Trash2 size={14} className="pointer-events-none" /> Clear
+                        <Trash2 size={14} className="pointer-events-none" /> <span className="hidden sm:inline">Clear</span>
                      </button>
                 </div>
              </div>
 
-             <div 
-                className="flex-1 bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700 relative"
+             <div
+                className="flex-1 bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700 relative min-h-[300px] sm:min-h-[500px]"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
              >
-                <StagePlotCanvas 
-                    items={data.stagePlot} 
-                    setItems={updateStageItems} 
-                    editable={true} 
-                    viewMode={stageViewMode} 
+                <StagePlotCanvas
+                    items={data.stagePlot}
+                    setItems={updateStageItems}
+                    editable={true}
+                    viewMode={stageViewMode}
                     ghostItems={ghostItems}
                     dragCoords={rawDragCoords}
                     onDragPosChange={handleGhostUpdate}
@@ -430,13 +465,13 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     rotatingItemId={rotatingItemId}
                     onRotateItem={handleRotateItem}
                 />
-                
+
                 {data.stagePlot.length === 0 && !draggingMemberId && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="bg-slate-900/80 backdrop-blur-sm p-6 rounded-xl border border-slate-700 text-center max-w-sm">
-                            <Box size={48} className="mx-auto text-slate-500 mb-4" />
-                            <h3 className="text-white font-bold mb-2">The Stage is Empty</h3>
-                            <p className="text-slate-400 text-sm">Drag band members from the sidebar onto the stage area to place them.</p>
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none p-4">
+                        <div className="bg-slate-900/80 backdrop-blur-sm p-4 sm:p-6 rounded-xl border border-slate-700 text-center max-w-sm">
+                            <Box size={40} className="mx-auto text-slate-500 mb-4" />
+                            <h3 className="text-white font-bold mb-2 text-base sm:text-lg">The Stage is Empty</h3>
+                            <p className="text-slate-400 text-xs sm:text-sm">Click "Members" to add band members to the stage.</p>
                         </div>
                     </div>
                 )}
