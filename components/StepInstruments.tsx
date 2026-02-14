@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, Trash2, Info, Music2, X } from 'lucide-react';
+import { Plus, Trash2, X, Music2 } from 'lucide-react';
 import { RiderData } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { MemberPreview3D } from './MemberPreview3D';
@@ -42,25 +42,6 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
         Instruments & Members
       </h2>
       
-      {data.members.length === 0 && (
-        <div className="mb-6 animate-fadeIn">
-          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Start Templates</h3>
-          <button 
-            onClick={applyRockTemplate}
-            className="w-full sm:w-auto bg-gradient-to-r from-indigo-900 to-slate-800 border border-indigo-500/30 hover:border-indigo-500 p-4 rounded-xl text-left transition-all hover:shadow-lg hover:shadow-indigo-500/20 group"
-          >
-            <div className="flex items-center gap-3 mb-1">
-              <div className="bg-indigo-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
-                 <Music2 size={20} />
-              </div>
-              <span className="font-bold text-white text-lg">Rock Band</span>
-            </div>
-            <p className="text-slate-400 text-sm pl-[52px]">
-              Drums, Bass, Electric Guitar, Lead Vocals
-            </p>
-          </button>
-        </div>
-      )}
 
       <div className="bg-slate-800 rounded-xl p-6 shadow-xl border border-slate-700">
         <div className="space-y-6">
@@ -169,21 +150,34 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
             </div>
           ))}
 
-          <button 
+          <button
             onClick={addMember}
             className="w-full py-6 border-2 border-dashed border-slate-600 rounded-xl text-slate-400 hover:border-indigo-500 hover:text-indigo-400 hover:bg-slate-800/50 transition-all flex items-center justify-center gap-2 font-bold text-lg group"
           >
             <div className="bg-slate-700 group-hover:bg-indigo-900 p-2 rounded-full transition-colors">
-                 <Plus className="group-hover:text-white" /> 
+                 <Plus className="group-hover:text-white" />
             </div>
             Add Band Member
           </button>
         </div>
-        
+
         {data.members.length === 0 && (
-          <div className="mt-6 p-4 bg-blue-900/20 border border-blue-800/50 text-blue-200 rounded-lg text-sm flex gap-3 items-center">
-            <Info className="shrink-0" />
-            <p>Start by adding your band members. You can assign multiple instruments per person.</p>
+          <div className="mt-6">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">Quick Start Templates</h3>
+            <button
+              onClick={applyRockTemplate}
+              className="w-full sm:w-auto bg-gradient-to-r from-indigo-900 to-slate-800 border border-indigo-500/30 hover:border-indigo-500 p-4 rounded-xl text-left transition-all hover:shadow-lg hover:shadow-indigo-500/20 group"
+            >
+              <div className="flex items-center gap-3 mb-1">
+                <div className="bg-indigo-600 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                   <Music2 size={20} />
+                </div>
+                <span className="font-bold text-white text-lg">Rock Band</span>
+              </div>
+              <p className="text-slate-400 text-sm pl-[52px]">
+                Drums, Bass, Electric Guitar, Lead Vocals
+              </p>
+            </button>
           </div>
         )}
       </div>
