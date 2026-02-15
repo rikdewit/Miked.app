@@ -26,6 +26,7 @@ interface DraggableItemProps {
   onQuantityChange?: (itemId: string, quantity: number) => void;
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
+  isPreview?: boolean;
 }
 
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({
@@ -44,7 +45,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onDelete,
   onQuantityChange,
   isEditable = false,
-  viewMode = 'isometric'
+  viewMode = 'isometric',
+  isPreview = false
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -154,9 +156,18 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
             position={[0 + offX, height + labelYPadding + offY, 0 + offZ]}
             center
             zIndexRange={isDragging ? [500, 400] : [100, 0]}
-            style={{ pointerEvents: 'none' }}
+            style={{ pointerEvents: isPreview ? 'none' : 'auto' }}
         >
-          <div className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded backdrop-blur-sm border ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}>
+          <div
+            className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded border text-center inline-block ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}
+            style={{
+              lineHeight: '1.2',
+              padding: '2px 4px',
+              minHeight: '16px',
+              display: 'inline-block',
+              verticalAlign: 'baseline'
+            }}
+          >
             {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.label}
           </div>
         </Html>
