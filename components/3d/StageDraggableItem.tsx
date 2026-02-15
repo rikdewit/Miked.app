@@ -1,5 +1,5 @@
 
-import React, { Suspense, useRef } from 'react';
+import React, { Suspense, useRef, useState, useEffect } from 'react';
 import { ThreeEvent } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
@@ -62,6 +62,55 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const downPosRef = useRef<{ x: number; y: number } | null>(null);
   const threshold = 1; // pixels - if movement > this, it's a drag
 
+  // Context menu positioning
+  const contextMenuRef = useRef<HTMLDivElement>(null);
+  const [contextMenuOffset, setContextMenuOffset] = useState<{ y: number; z: number }>({ y: 0, z: 0 });
+
+  // Adjust context menu position if it goes off-screen
+  useEffect(() => {
+    if (!showRotationUI || !contextMenuRef.current) return;
+
+    let rafId: number;
+    const checkPosition = () => {
+      if (!contextMenuRef.current) return;
+
+      const rect = contextMenuRef.current.getBoundingClientRect();
+      const offset = { y: 0, z: 0 };
+      const padding = 10;
+
+      // If menu goes above viewport, shift it down significantly
+      if (rect.top < padding) {
+        offset.y = -2.4;
+      }
+      // If menu goes below viewport, shift it up
+      else if (rect.bottom > window.innerHeight - padding) {
+        offset.y = 2.4;
+      }
+
+      // Horizontal: shift right if off left edge
+      if (rect.left < padding) {
+        offset.z = 1.0;
+      }
+      // Shift left if off right edge
+      else if (rect.right > window.innerWidth - padding) {
+        offset.z = -1.0;
+      }
+
+      setContextMenuOffset(offset);
+      rafId = requestAnimationFrame(checkPosition);
+    };
+
+    // Delay to ensure element is rendered
+    const startDelay = setTimeout(() => {
+      rafId = requestAnimationFrame(checkPosition);
+    }, 100);
+
+    return () => {
+      clearTimeout(startDelay);
+      cancelAnimationFrame(rafId);
+    };
+  }, [showRotationUI]);
+
   const showLabel = true;
   const labelLower = (item.label || '').toLowerCase();
 
@@ -86,11 +135,16 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       labelYPadding = 0.05;
   }
 
-  // Context menu position is relative to label position (fixed offset above label)
+  // Context menu position is relative to label position - place below/away from item
   const labelBaseY = height + labelYPadding + offY;
   // In top view, Z is vertical on screen (up=-Z), in isometric Y is vertical
-  const contextMenuPosY = viewMode === 'isometric' ? labelBaseY + 1 : labelBaseY;
-  const contextMenuPosZ = viewMode === 'top' ? (0 + offZ - .5) : (0 + offZ); // Move up on screen in top view
+  // Default: place away from item with generous offset
+  const contextMenuPosY = viewMode === 'isometric' ? labelBaseY - 1.5 : labelBaseY;
+  const contextMenuPosZ = viewMode === 'top' ? (0 + offZ + 0.6) : (0 + offZ);
+
+  // Hitbox dimensions - make it deeper in Z for top view so it covers label area
+  const hitboxDepth = viewMode === 'top' ? Math.max(depth, 2) : Math.max(depth, 0.6);
+  const hitboxZOffset = viewMode === 'top' ? (height + labelYPadding / 2 + offZ) : (0 + offZ);
 
   const renderModel = () => {
     // --- PERSON ---
@@ -156,7 +210,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
             position={[0 + offX, height + labelYPadding + offY, 0 + offZ]}
             center
             zIndexRange={isDragging ? [500, 400] : [100, 0]}
-            style={{ pointerEvents: isPreview ? 'none' : 'auto' }}
+            style={{ pointerEvents: isPreview ? 'none' : 'none' }}
         >
           <div
             className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded border text-center inline-block ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}
@@ -176,12 +230,13 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       {/* Rotation UI - not inside rotating group so it stays fixed */}
       {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power') && (
         <Html
-            position={[0 + offX, contextMenuPosY, contextMenuPosZ]}
+            position={[0 + offX, contextMenuPosY + contextMenuOffset.y, contextMenuPosZ + contextMenuOffset.z]}
             center
             zIndexRange={[1000, 900]}
             style={{ pointerEvents: 'auto' }}
         >
           <div
+            ref={contextMenuRef}
             className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg"
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
@@ -289,8 +344,9 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         } : undefined}
       >
         {/* Invisible Hit Box for easier selection */}
-        <mesh position={[0 + offX, height / 2 + offY, 0 + offZ]}>
-             <boxGeometry args={[Math.max(width, 0.6), height, Math.max(depth, 0.6)]} />
+        {/* In top view, make it deeper to cover label area */}
+        <mesh position={[0 + offX, height / 2 + offY, hitboxZOffset]}>
+             <boxGeometry args={[Math.max(width, 0.6), height, hitboxDepth]} />
              <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
