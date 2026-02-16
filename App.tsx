@@ -13,25 +13,26 @@ const App: React.FC = () => {
   const previewRef = useRef<PreviewHandle>(null);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  const { 
-    data, 
-    setData, 
-    addMember, 
-    applyRockTemplate, 
-    updateMemberName, 
-    updateMemberNotes, 
-    addMemberInstrument, 
-    updateMemberInstrument, 
-    removeMemberInstrument, 
-    removeMember, 
-    updateStageItems 
+  const {
+    data,
+    setData,
+    addMember,
+    applyRockTemplate,
+    updateMemberName,
+    updateMemberNotes,
+    addMemberInstrument,
+    updateMemberInstrument,
+    removeMemberInstrument,
+    removeMember,
+    updateStageItems,
+    updateInstrumentNotes
   } = useRiderState();
 
   // --- Navigation & Validation ---
   const canProceed = () => {
     if (step === 1) {
-        return data.members.length > 0 && 
-               data.members.every(m => m.name.trim() !== '' && m.instrumentIds.length > 0);
+        return data.members.length > 0 &&
+               data.members.every(m => m.name.trim() !== '' && m.instruments.length > 0);
     }
     if (step === 3) return data.details.bandName.trim() !== '' && data.details.contactName.trim() !== '';
     return true;
@@ -66,6 +67,7 @@ const App: React.FC = () => {
                 removeMemberInstrument={removeMemberInstrument}
                 addMemberInstrument={addMemberInstrument}
                 removeMember={removeMember}
+                updateInstrumentNotes={updateInstrumentNotes}
               />
             )}
 

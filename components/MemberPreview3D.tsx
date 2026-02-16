@@ -105,8 +105,9 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
 
     let ampCount = 0;
     let instrumentCount = 0;
-    
-    member.instrumentIds.forEach((instId) => {
+
+    member.instruments.forEach((slot) => {
+      const instId = slot.instrumentId;
       const inst = INSTRUMENTS.find(i => i.id === instId);
       if (!inst) return;
 

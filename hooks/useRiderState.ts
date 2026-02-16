@@ -10,7 +10,7 @@ export const useRiderState = () => {
     const newMember: BandMember = {
       id: Math.random().toString(36).substr(2, 9),
       name: '',
-      instrumentIds: [INSTRUMENTS[0].id],
+      instruments: [{ instrumentId: INSTRUMENTS[0].id }],
       notes: ''
     };
     setData(prev => ({ ...prev, members: [...prev.members, newMember] }));
@@ -18,10 +18,10 @@ export const useRiderState = () => {
 
   const applyRockTemplate = useCallback(() => {
     const newMembers: BandMember[] = [
-      { id: Math.random().toString(36).substr(2, 9), name: 'Drummer', instrumentIds: ['drums'], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instrumentIds: ['bass_amp'], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instrumentIds: ['gtr_amp'], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Lead Singer', instrumentIds: ['voc_lead'], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Drummer', instruments: [{ instrumentId: 'drums' }], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instruments: [{ instrumentId: 'bass_amp' }], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instruments: [{ instrumentId: 'gtr_amp' }], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Lead Singer', instruments: [{ instrumentId: 'voc_lead' }], notes: '' },
     ];
     // Reset members AND clear stage plot entirely when applying a full template
     setData(prev => ({ ...prev, members: newMembers, stagePlot: [] }));
@@ -53,7 +53,7 @@ export const useRiderState = () => {
       ...prev,
       members: prev.members.map(m => {
         if (m.id === memberId) {
-          return { ...m, instrumentIds: [...m.instrumentIds, INSTRUMENTS[0].id] };
+          return { ...m, instruments: [...m.instruments, { instrumentId: INSTRUMENTS[0].id }] };
         }
         return m;
       }),
@@ -66,7 +66,7 @@ export const useRiderState = () => {
       const member = prev.members.find(m => m.id === memberId);
       if (!member) return prev;
 
-      const oldInstrumentId = member.instrumentIds[index];
+      const oldInstrumentId = member.instruments[index].instrumentId;
       const oldInstDef = INSTRUMENTS.find(i => i.id === oldInstrumentId);
       const newInstDef = INSTRUMENTS.find(i => i.id === newInstrumentId);
 
@@ -78,9 +78,9 @@ export const useRiderState = () => {
       // Update Member
       const updatedMembers = prev.members.map(m => {
         if (m.id === memberId) {
-          const newIds = [...m.instrumentIds];
-          newIds[index] = newInstrumentId;
-          return { ...m, instrumentIds: newIds };
+          const newSlots = [...m.instruments];
+          newSlots[index] = { ...newSlots[index], instrumentId: newInstrumentId };
+          return { ...m, instruments: newSlots };
         }
         return m;
       });
@@ -127,8 +127,8 @@ export const useRiderState = () => {
       ...prev,
       members: prev.members.map(m => {
         if (m.id === memberId) {
-           const newIds = m.instrumentIds.filter((_, i) => i !== indexToRemove);
-           return { ...m, instrumentIds: newIds };
+           const newSlots = m.instruments.filter((_, i) => i !== indexToRemove);
+           return { ...m, instruments: newSlots };
         }
         return m;
       }),
@@ -163,6 +163,20 @@ export const useRiderState = () => {
     setData(prev => ({ ...prev, stagePlot: newItems }));
   }, []);
 
+  const updateInstrumentNotes = useCallback((memberId: string, index: number, notes: string) => {
+    setData(prev => ({
+      ...prev,
+      members: prev.members.map(m => {
+        if (m.id === memberId) {
+          const newSlots = [...m.instruments];
+          newSlots[index] = { ...newSlots[index], notes };
+          return { ...m, instruments: newSlots };
+        }
+        return m;
+      })
+    }));
+  }, []);
+
   return {
     data,
     setData,
@@ -174,6 +188,7 @@ export const useRiderState = () => {
     updateMemberInstrument,
     removeMemberInstrument,
     removeMember,
-    updateStageItems
+    updateStageItems,
+    updateInstrumentNotes
   };
 };

@@ -29,7 +29,8 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
     let ampCount = 0;
     let hasAssignedHeld = false; // Flag to ensure only one instrument is "held"
 
-    member.instrumentIds.forEach((instId, idx) => {
+    member.instruments.forEach((slot, idx) => {
+        const instId = slot.instrumentId;
         const inst = INSTRUMENTS.find(i => i.id === instId);
         if (!inst) return;
 
@@ -110,10 +111,10 @@ export const getPersonPose = (member: BandMember): { pose: PersonPose; heldInstr
     let heldInstrumentId: string | undefined;
 
     // 1. Roles (Drums, Keys, DJ, Vocals)
-    const hasDrums = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.DRUMS);
-    const hasKeys = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.KEYS);
-    const hasDj = member.instrumentIds.includes('dj');
-    const hasVocal = member.instrumentIds.some(id => INSTRUMENTS.find(i => i.id === id)?.type === InstrumentType.VOCAL);
+    const hasDrums = member.instruments.some(slot => INSTRUMENTS.find(i => i.id === slot.instrumentId)?.type === InstrumentType.DRUMS);
+    const hasKeys = member.instruments.some(slot => INSTRUMENTS.find(i => i.id === slot.instrumentId)?.type === InstrumentType.KEYS);
+    const hasDj = member.instruments.some(slot => slot.instrumentId === 'dj');
+    const hasVocal = member.instruments.some(slot => INSTRUMENTS.find(i => i.id === slot.instrumentId)?.type === InstrumentType.VOCAL);
 
     if (hasDrums) {
         pose = 'drums';
@@ -123,10 +124,11 @@ export const getPersonPose = (member: BandMember): { pose: PersonPose; heldInstr
         pose = 'keys';
     } else {
         // 2. Held Instruments (Guitar, Bass, Brass)
-        heldInstrumentId = member.instrumentIds.find(id => {
-            const inst = INSTRUMENTS.find(i => i.id === id);
+        const heldSlot = member.instruments.find(slot => {
+            const inst = INSTRUMENTS.find(i => i.id === slot.instrumentId);
             return inst && [InstrumentType.GUITAR, InstrumentType.BASS, InstrumentType.BRASS].includes(inst.type);
         });
+        heldInstrumentId = heldSlot?.instrumentId;
 
         if (heldInstrumentId) {
             const inst = INSTRUMENTS.find(i => i.id === heldInstrumentId);

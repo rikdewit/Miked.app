@@ -9,9 +9,9 @@ interface InputListProps {
 export const InputList: React.FC<InputListProps> = ({ members }) => {
   // Helper to get instrument names string for a member
   const getMemberInstrumentString = (member: BandMember) => {
-    return member.instrumentIds
-      .map(id => {
-          const inst = INSTRUMENTS.find(i => i.id === id);
+    return member.instruments
+      .map(slot => {
+          const inst = INSTRUMENTS.find(i => i.id === slot.instrumentId);
           return inst ? (inst.group + (inst.variantLabel ? ` (${inst.variantLabel})` : '')) : 'Unknown';
       })
       .join(', ');
@@ -22,7 +22,8 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
   const inputs: any[] = [];
 
   members.forEach((member) => {
-    member.instrumentIds.forEach((instId) => {
+    member.instruments.forEach((slot) => {
+      const instId = slot.instrumentId;
       // Handle Drums Splitting
       if (instId === 'drums') {
         const drumChannels = [
@@ -41,12 +42,12 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
             instrument: kitPiece.name,
             micDi: kitPiece.mic,
             stand: kitPiece.stand,
-            notes: idx === 0 ? member.notes : '' 
+            notes: idx === 0 ? (slot.notes || '') : ''
           });
         });
         return;
-      } 
-      
+      }
+
       // Handle Stereo Keys Splitting
       if (instId === 'keys_stereo') {
           inputs.push({
@@ -54,7 +55,7 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
             instrument: 'Keys L',
             micDi: 'DI',
             stand: '',
-            notes: member.notes
+            notes: slot.notes || ''
           });
           inputs.push({
             channel: channelCounter++,
@@ -94,7 +95,7 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
           instrument: instrument.group, // Use Group Name for cleaner list (e.g. "Electric Guitar" instead of "Electric Guitar (Amp)")
           micDi: micDi,
           stand: stand,
-          notes: member.notes || ''
+          notes: slot.notes || ''
         });
       }
     });

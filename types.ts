@@ -24,10 +24,15 @@ export interface InstrumentDefinition {
   icon: string; // Icon name reference
 }
 
+export interface InstrumentSlot {
+  instrumentId: string;
+  notes?: string;
+}
+
 export interface BandMember {
   id: string;
   name: string;
-  instrumentIds: string[];
+  instruments: InstrumentSlot[];
   notes?: string;
 }
 

@@ -14,6 +14,7 @@ interface StepInstrumentsProps {
   removeMemberInstrument: (memberId: string, index: number) => void;
   addMemberInstrument: (memberId: string) => void;
   removeMember: (id: string) => void;
+  updateInstrumentNotes: (memberId: string, index: number, notes: string) => void;
 }
 
 export const StepInstruments: React.FC<StepInstrumentsProps> = ({
@@ -25,7 +26,8 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
   updateMemberInstrument,
   removeMemberInstrument,
   addMemberInstrument,
-  removeMember
+  removeMember,
+  updateInstrumentNotes
 }) => {
   // Get unique groups for the dropdown
   const uniqueGroups = Array.from(new Set(INSTRUMENTS.map(i => i.group)));
@@ -83,14 +85,14 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                     <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-600/50">
                         <label className="text-xs text-slate-400 block mb-3 font-bold uppercase tracking-wide">Instruments & Gear</label>
                         <div className="space-y-3">
-                            {member.instrumentIds.map((instId, iIndex) => {
-                                const currentInstrument = INSTRUMENTS.find(i => i.id === instId);
+                            {member.instruments.map((slot, iIndex) => {
+                                const currentInstrument = INSTRUMENTS.find(i => i.id === slot.instrumentId);
                                 const variants = INSTRUMENTS.filter(i => i.group === currentInstrument?.group);
 
                                 return (
                                 <div key={iIndex} className="flex flex-col gap-2 bg-slate-800/50 p-2 rounded border border-slate-700/50">
                                     <div className="flex gap-2 items-center">
-                                        <select 
+                                        <select
                                             value={currentInstrument?.group || uniqueGroups[0]}
                                             onChange={(e) => updateMemberInstrument(member.id, iIndex, getDefaultIdForGroup(e.target.value))}
                                             className="flex-1 bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-sm focus:outline-none focus:border-indigo-500 cursor-pointer"
@@ -99,16 +101,16 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                             <option key={group} value={group}>{group}</option>
                                         ))}
                                         </select>
-                                        <button 
+                                        <button
                                             onClick={() => removeMemberInstrument(member.id, iIndex)}
-                                            disabled={member.instrumentIds.length === 1}
-                                            className={`p-2 rounded transition-colors ${member.instrumentIds.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
+                                            disabled={member.instruments.length === 1}
+                                            className={`p-2 rounded transition-colors ${member.instruments.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
                                             title="Remove instrument"
                                         >
                                             <X size={16} />
                                         </button>
                                     </div>
-                                    
+
                                     {/* Variants Selection (if multiple options exist) */}
                                     {variants.length > 1 && (
                                         <div className="flex flex-wrap gap-2">
@@ -117,8 +119,8 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                                     key={variant.id}
                                                     onClick={() => updateMemberInstrument(member.id, iIndex, variant.id)}
                                                     className={`text-[10px] sm:text-xs px-2 py-1.5 rounded-md border font-medium transition-all ${
-                                                        instId === variant.id 
-                                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm' 
+                                                        slot.instrumentId === variant.id
+                                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-sm'
                                                         : 'bg-slate-800 border-slate-600 text-slate-400 hover:border-slate-400 hover:text-slate-200'
                                                     }`}
                                                 >
@@ -127,9 +129,18 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                             ))}
                                         </div>
                                     )}
+
+                                    {/* Notes per instrument */}
+                                    <input
+                                        type="text"
+                                        value={slot.notes || ''}
+                                        onChange={(e) => updateInstrumentNotes(member.id, iIndex, e.target.value)}
+                                        placeholder="e.g. Own mic"
+                                        className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors"
+                                    />
                                 </div>
                             )})}
-                            <button 
+                            <button
                                 onClick={() => addMemberInstrument(member.id)}
                                 className="text-xs text-indigo-400 hover:text-indigo-300 hover:underline flex items-center gap-1 mt-3 font-medium px-1"
                             >
