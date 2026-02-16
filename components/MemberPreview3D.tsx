@@ -5,7 +5,7 @@ import { OrbitControls, ContactShadows } from '@react-three/drei';
 import { BandMember, InstrumentType, PersonPose } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { COLORS } from '../utils/stageConfig';
-import { getPersonPose } from '../utils/stageHelpers';
+import { getPersonPose, getAmpCount, getDiLabel, shouldCreateModeller } from '../utils/stageHelpers';
 import * as Models from './3d/StageModels';
 
 interface MemberPreview3DProps {
@@ -35,25 +35,108 @@ interface PreviewItemProps {
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, pose }) => {
     const [width, height, depth] = args;
-    
+
     const renderMesh = () => {
         if (type === 'person') return <Models.PersonModel pose={pose} />;
-        if (type === 'drums') return <Models.DrumsModel />; 
+        if (type === 'drums') return <Models.DrumsModel />;
         if (type === 'amp') return <Models.AmpModel color={color} />;
-        
+
         if (type === 'keys') {
             return (
-                 <group>
+                // @ts-expect-error - React Three Fiber intrinsic elements
+                <group>
                     <Models.StandModel color="#64748b" />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <group position={[0, 0.8, 0]}>
                         <Models.SynthModel />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </group>
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </group>
             );
         }
-        
+
         if (type === 'mic') return <Models.MicStandModel color={color} />;
-        
+
+        if (type === 'modeller') {
+            return (
+                // @ts-expect-error - React Three Fiber intrinsic elements
+                <group position={[0, 0.05, 0]}>
+                    {/* Main body - looks like an effects unit */}
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh castShadow receiveShadow position={[0, 0, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.55, 0.08, 0.3]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#111827" roughness={0.5} metalness={0.4} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                    {/* Top panel highlight */}
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh position={[0, 0.041, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.5, 0.002, 0.25]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#374151" roughness={0.3} metalness={0.6} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                    {/* Control buttons/indicators */}
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh position={[-0.15, 0.045, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.08, 0.015, 0.04]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.8} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh position={[0, 0.045, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.08, 0.015, 0.04]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.8} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh position={[0.15, 0.045, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.08, 0.015, 0.04]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.8} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                </group>
+            );
+        }
+
+        if (type === 'di') {
+            return (
+                // @ts-expect-error - React Three Fiber intrinsic elements
+                <group position={[0, 0.02, 0]}>
+                    {/* DI box body */}
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh castShadow receiveShadow position={[0, 0, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.25, 0.08, 0.15]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#ea580c" roughness={0.5} metalness={0.3} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                    {/* Panel detail */}
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    <mesh position={[0, 0.041, 0]}>
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <boxGeometry args={[0.22, 0.002, 0.12]} />
+                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                        <meshStandardMaterial color="#f97316" roughness={0.3} metalness={0.5} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                    </mesh>
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
+                </group>
+            );
+        }
+
         // Instruments (Standalone)
         if (type === 'guitar_elec') return <Models.ElectricGuitarModel color={color} />;
         if (type === 'guitar_ac') return <Models.AcousticGuitarModel color={color} />;
@@ -63,69 +146,101 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, 
 
         if (type === 'wedge') {
             return (
+                // @ts-expect-error - React Three Fiber intrinsic elements
                 <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow receiveShadow>
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <boxGeometry args={[width, height, depth]} />
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <meshStandardMaterial color={color} roughness={0.4} />
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </mesh>
             );
         }
 
         return (
+            // @ts-expect-error - React Three Fiber intrinsic elements
             <mesh castShadow receiveShadow position={[0, height/2, 0]}>
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 <boxGeometry args={[width, height, depth]} />
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 <meshStandardMaterial color={color} roughness={0.4} />
+            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             </mesh>
         );
     };
 
     return (
+        // @ts-expect-error - React Three Fiber intrinsic elements
         <group position={position}>
             {renderMesh()}
+        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
         </group>
     );
 };
 
 export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDragging = false, isSidebarPreview = false }) => {
+
   const sceneItems = useMemo(() => {
     const items: SceneItem[] = [];
 
     // --- DETERMINE POSE ---
     const { pose, heldInstrumentId } = getPersonPose(member);
-    
+
     // 1. The Person
-    items.push({ 
-      id: 'person', 
-      pos: [0, 0, 0], 
-      size: [0.5, 1.7, 0.5], 
-      color: COLORS.person, 
-      label: member.name || 'Musician', 
+    items.push({
+      id: 'person',
+      pos: [0, 0, 0],
+      size: [0.5, 1.7, 0.5],
+      color: COLORS.person,
+      label: member.name || 'Musician',
       type: 'person',
       pose: pose
     });
 
     let ampCount = 0;
     let instrumentCount = 0;
+    let diCount = 0;
 
     member.instruments.forEach((slot) => {
       const instId = slot.instrumentId;
       const inst = INSTRUMENTS.find(i => i.id === instId);
       if (!inst) return;
 
-      // Note: DRUMS, KEYS, DJ, VOCALS are part of the person model or main scene setup, 
+      // Note: DRUMS, KEYS, DJ, VOCALS are part of the person model or main scene setup,
       // so we don't add separate items for them here unless they are peripherals.
-      
+
       // --- AMPS ---
       if (instId.includes('amp') || instId.includes('combined')) {
-        const offset = ampCount % 2 === 0 ? -0.9 : 0.9;
-        items.push({ 
-            id: `amp-${instId}-${ampCount}`, 
-            pos: [offset, 0, -0.6], 
-            size: [0.7, 0.7, 0.4], 
-            color: COLORS.amp, 
-            label: 'Amp',
-            type: 'amp'
+        const numAmps = getAmpCount(instId);
+        for (let ampIdx = 0; ampIdx < numAmps; ampIdx++) {
+          const offset = ampCount % 2 === 0 ? -0.9 : 0.9;
+          items.push({
+              id: `amp-${instId}-${ampCount}-${ampIdx}`,
+              pos: [offset, 0, -0.6],
+              size: [0.7, 0.7, 0.4],
+              color: COLORS.amp,
+              label: 'Amp',
+              type: 'amp'
+          });
+          ampCount++;
+        }
+      }
+
+      // --- DI BOXES ---
+      // Skip DJ (has XLR inputs instead)
+      if ((inst.defaultDi || instId.includes('di')) && instId !== 'dj') {
+        const diLabel = getDiLabel(instId);
+        const diOffset = diCount % 2 === 0 ? -0.35 : 0.35;
+
+        items.push({
+            id: `di-${instId}-${diCount}`,
+            pos: [diOffset, 0, -1.2],
+            size: [0.3, 0.1, 0.2],
+            color: COLORS.di,
+            label: diLabel,
+            type: 'di'
         });
-        ampCount++;
+        diCount++;
       }
 
       // --- INSTRUMENTS (Standalone on stands) ---
@@ -133,44 +248,41 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
       const isHeld = (instId === heldInstrumentId);
       const isBakedPose = ['guitar', 'bass', 'acoustic', 'sax', 'trumpet'].includes(pose);
 
-      if (isHeld && isBakedPose) {
-          // If this instrument is the one being played and the model supports it, 
-          // do NOT add a separate item. The GLB includes it.
-          return;
-      }
+      // Note: We skip the instrument BODY if held with baked pose,
+      // but we still add DI/Modeller/Pedals (those are always peripherals)
 
       if (inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS || inst.type === InstrumentType.BRASS) {
           const isRight = instrumentCount % 2 === 0;
           const sideOffset = isRight ? 0.6 : -0.6;
-          
-          let type = 'box';
-          if (inst.id === 'gtr_ac') type = 'guitar_ac';
-          else if (inst.type === InstrumentType.BASS) type = 'bass';
-          else if (inst.type === InstrumentType.GUITAR) type = 'guitar_elec';
-          else if (inst.id.includes('sax')) type = 'sax';
-          else if (inst.id.includes('tpt') || inst.id.includes('trumpet')) type = 'trumpet';
 
-          // If it's held but not baked (e.g. some new instrument type), we might render it at [0,0,0]?
-          // For now, assuming all held instruments are baked if logic matches.
-          // So we only render items on stands here (side offsets).
-          
-          items.push({
-              id: `inst-body-${instId}`,
-              pos: [sideOffset, 0, 0.1], 
-              size: [0.4, 1.0, 0.3], 
-              color: COLORS.instrument,
-              label: inst.type,
-              type: type
-          });
-          
-          if (instId.includes('modeler')) {
+          // Only add instrument body if it's NOT held with a baked pose
+          if (!isHeld || !isBakedPose) {
+              let type = 'box';
+              if (inst.id === 'gtr_ac') type = 'guitar_ac';
+              else if (inst.type === InstrumentType.BASS) type = 'bass';
+              else if (inst.type === InstrumentType.GUITAR) type = 'guitar_elec';
+              else if (inst.id.includes('sax')) type = 'sax';
+              else if (inst.id.includes('tpt') || inst.id.includes('trumpet')) type = 'trumpet';
+
               items.push({
-                  id: `modeler-${instId}`,
+                  id: `inst-body-${instId}`,
+                  pos: [sideOffset, 0, 0.1],
+                  size: [0.4, 1.0, 0.3],
+                  color: COLORS.instrument,
+                  label: inst.type,
+                  type: type
+              });
+          }
+
+          // Modeller and Pedals are always added (peripherals)
+          if (shouldCreateModeller(instId)) {
+              items.push({
+                  id: `modeller-${instId}`,
                   pos: [sideOffset, 0, 0.7],
                   size: [0.6, 0.1, 0.3],
                   color: COLORS.pedalboard,
-                  label: 'Modeler',
-                  type: 'box'
+                  label: 'Modeller',
+                  type: 'modeller'
               });
           } else if ((inst.type === InstrumentType.GUITAR || inst.type === InstrumentType.BASS) && inst.id !== 'gtr_ac') {
                items.push({
@@ -196,11 +308,15 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
       style={{ touchAction: isSidebarPreview ? 'auto' : 'none' }}
     >
         <Canvas shadows camera={{ position: [2.5, 2.5, 3.5], fov: 35 }} style={{ touchAction: isSidebarPreview ? 'auto' : 'none', pointerEvents: isSidebarPreview ? 'none' : 'auto' }}>
+            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             <ambientLight intensity={0.6} />
+            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
+            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             <pointLight position={[-5, 2, -5]} intensity={0.5} color="#3b82f6" />
 
             <Suspense fallback={null}>
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 <group position={[0, -0.8, 0]}>
                     {sceneItems.map((item, idx) => (
                         <PreviewItem
@@ -208,13 +324,14 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
                             position={item.pos}
                             args={item.size}
                             color={item.color}
-                            label={item.label}
                             type={item.type}
                             pose={item.pose}
                         />
                     ))}
+                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
                     <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />
+                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </group>
             </Suspense>
 

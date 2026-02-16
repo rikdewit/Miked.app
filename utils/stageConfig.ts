@@ -57,7 +57,7 @@ export const getItemConfig = (item: StageItem) => {
   if (label.includes('di')) {
     return { width: 0.2, depth: 0.2, height: 0.1, color: COLORS.di, shape: 'box' };
   }
-  if (label.includes('pedal') || label.includes('modeler')) {
+  if (label.includes('pedal') || label.includes('modeller')) {
     return { width: 0.6, depth: 0.3, height: 0.1, color: COLORS.pedalboard, shape: 'box' };
   }
   if (label.includes('mic')) {

@@ -23,9 +23,9 @@ export function getDefaultInputsForSlot(
       { label: 'OH R', micDi: 'Condenser', stand: 'Tall Boom' },
     ];
 
-    return drumChannels.map((kit, idx) => ({
+    return drumChannels.map((kit) => ({
       ...kit,
-      notes: idx === 0 ? (slot.notes || '') : ''
+      notes: ''
     }));
   }
 
@@ -36,12 +36,13 @@ export function getDefaultInputsForSlot(
         label: 'DJ L',
         micDi: 'DI',
         stand: '',
-        notes: slot.notes || ''
+        notes: ''
       },
       {
         label: 'DJ R',
         micDi: 'DI',
-        stand: ''
+        stand: '',
+        notes: ''
       }
     ];
   }
@@ -53,12 +54,13 @@ export function getDefaultInputsForSlot(
         label: 'Keys L',
         micDi: 'DI',
         stand: '',
-        notes: slot.notes || ''
+        notes: ''
       },
       {
         label: 'Keys R',
         micDi: 'DI',
-        stand: ''
+        stand: '',
+        notes: ''
       }
     ];
   }
@@ -70,12 +72,49 @@ export function getDefaultInputsForSlot(
         label: 'Tracks L',
         micDi: 'DI',
         stand: '',
-        notes: slot.notes || ''
+        notes: ''
       },
       {
         label: 'Tracks R',
         micDi: 'DI',
-        stand: ''
+        stand: '',
+        notes: ''
+      }
+    ];
+  }
+
+  // Handle Guitar 2 Amps (2 inputs)
+  if (instId === 'gtr_amp_2') {
+    return [
+      {
+        label: 'Electric Guitar Amp 1',
+        micDi: 'SM57',
+        stand: 'Short Boom',
+        notes: ''
+      },
+      {
+        label: 'Electric Guitar Amp 2',
+        micDi: 'SM57',
+        stand: 'Short Boom',
+        notes: ''
+      }
+    ];
+  }
+
+  // Handle Guitar Modeller Stereo (2 inputs)
+  if (instId === 'gtr_modeler_stereo') {
+    return [
+      {
+        label: 'Modeller L',
+        micDi: 'DI',
+        stand: '',
+        notes: ''
+      },
+      {
+        label: 'Modeller R',
+        micDi: 'DI',
+        stand: '',
+        notes: ''
       }
     ];
   }
@@ -87,12 +126,13 @@ export function getDefaultInputsForSlot(
         label: 'Bass DI',
         micDi: 'DI',
         stand: '',
-        notes: slot.notes || ''
+        notes: ''
       },
       {
         label: 'Bass Amp',
         micDi: 'D112 MKII',
-        stand: 'Short Boom'
+        stand: 'Short Boom',
+        notes: ''
       }
     ];
   }
@@ -131,7 +171,7 @@ export function getDefaultInputsForSlot(
       label: instrument.group,
       micDi: micDi,
       stand: stand,
-      notes: slot.notes || ''
+      notes: ''
     });
   }
 

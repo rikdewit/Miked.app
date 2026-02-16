@@ -10,18 +10,17 @@ export const useRiderState = () => {
     const newMember: BandMember = {
       id: Math.random().toString(36).substr(2, 9),
       name: '',
-      instruments: [{ instrumentId: INSTRUMENTS[0].id }],
-      notes: ''
+      instruments: [{ instrumentId: INSTRUMENTS[0].id }]
     };
     setData(prev => ({ ...prev, members: [...prev.members, newMember] }));
   }, []);
 
   const applyRockTemplate = useCallback(() => {
     const newMembers: BandMember[] = [
-      { id: Math.random().toString(36).substr(2, 9), name: 'Drummer', instruments: [{ instrumentId: 'drums' }], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instruments: [{ instrumentId: 'bass_amp' }], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instruments: [{ instrumentId: 'gtr_amp' }], notes: '' },
-      { id: Math.random().toString(36).substr(2, 9), name: 'Lead Singer', instruments: [{ instrumentId: 'voc_lead' }], notes: '' },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Drummer', instruments: [{ instrumentId: 'drums' }] },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Bassist', instruments: [{ instrumentId: 'bass_amp' }] },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Guitarist', instruments: [{ instrumentId: 'gtr_amp' }] },
+      { id: Math.random().toString(36).substr(2, 9), name: 'Lead Singer', instruments: [{ instrumentId: 'voc_lead' }] },
     ];
     // Reset members AND clear stage plot entirely when applying a full template
     setData(prev => ({ ...prev, members: newMembers, stagePlot: [] }));
@@ -38,13 +37,6 @@ export const useRiderState = () => {
         }
         return item;
       })
-    }));
-  }, []);
-
-  const updateMemberNotes = useCallback((id: string, notes: string) => {
-    setData(prev => ({
-      ...prev,
-      members: prev.members.map(m => m.id === id ? { ...m, notes } : m)
     }));
   }, []);
 
@@ -164,20 +156,6 @@ export const useRiderState = () => {
     setData(prev => ({ ...prev, stagePlot: newItems }));
   }, []);
 
-  const updateInstrumentNotes = useCallback((memberId: string, index: number, notes: string) => {
-    setData(prev => ({
-      ...prev,
-      members: prev.members.map(m => {
-        if (m.id === memberId) {
-          const newSlots = [...m.instruments];
-          newSlots[index] = { ...newSlots[index], notes };
-          return { ...m, instruments: newSlots };
-        }
-        return m;
-      })
-    }));
-  }, []);
-
   const updateInstrumentInputs = useCallback((memberId: string, index: number, inputs: InputConfig[]) => {
     setData(prev => ({
       ...prev,
@@ -198,13 +176,11 @@ export const useRiderState = () => {
     addMember,
     applyRockTemplate,
     updateMemberName,
-    updateMemberNotes,
     addMemberInstrument,
     updateMemberInstrument,
     removeMemberInstrument,
     removeMember,
     updateStageItems,
-    updateInstrumentNotes,
     updateInstrumentInputs
   };
 };

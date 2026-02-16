@@ -3,6 +3,30 @@ import { BandMember, StageItem, InstrumentType, PersonPose } from '../types';
 import { STAGE_WIDTH, STAGE_DEPTH } from './stageConfig';
 import { INSTRUMENTS } from '../constants';
 
+// --- Instrument Equipment Helpers ---
+export const getAmpCount = (instId: string): number => {
+  // gtr_amp_2 has 2 amps, all others with 'amp' have 1
+  return instId === 'gtr_amp_2' ? 2 : 1;
+};
+
+export const getDiInputCount = (instId: string): number => {
+  if (instId === 'dj') return 2; // DJ L + DJ R
+  if (instId === 'keys_stereo') return 2; // Keys L + Keys R
+  if (instId === 'tracks_stereo') return 2; // Tracks L + Tracks R
+  if (instId === 'gtr_modeler_stereo') return 2; // Modeller L + Modeller R
+  if (instId === 'bass_combined') return 2; // Bass DI + Bass Amp (though amp is mic)
+  return 1; // Everything else with DI is mono
+};
+
+export const getDiLabel = (instId: string): string => {
+  const count = getDiInputCount(instId);
+  return count > 1 ? `DI (${count})` : 'DI';
+};
+
+export const shouldCreateModeller = (instId: string): boolean => {
+  return instId.includes('modeler');
+};
+
 // --- Coordinate Helpers (Data % <-> World) ---
 export const percentToX = (p: number) => ((p / 100) * STAGE_WIDTH) - (STAGE_WIDTH / 2);
 export const percentToZ = (p: number) => ((p / 100) * STAGE_DEPTH) - (STAGE_DEPTH / 2);
@@ -44,24 +68,28 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
         // KEYS - Only add peripherals like DI
         if (inst.type === InstrumentType.KEYS) {
             // Add DI Box for Keys
-            const diLabel = instId.includes('stereo') ? 'Stereo DI' : 'DI';
-            items.push({ 
-                id: `di-${baseId}-${idx}`, 
-                memberId: member.id, 
-                type: 'member', 
-                label: diLabel, 
-                x: startX + spreadX + (isRight ? 3 : -3), 
-                y: startY + 5, 
-                fromInstrumentIndex: idx, 
-                isPeripheral: true 
+            const diInputCount = instId.includes('stereo') ? 2 : 1;
+            const diLabel = diInputCount > 1 ? `DI (${diInputCount})` : 'DI';
+            items.push({
+                id: `di-${baseId}-${idx}`,
+                memberId: member.id,
+                type: 'member',
+                label: diLabel,
+                x: startX + spreadX + (isRight ? 3 : -3),
+                y: startY + 5,
+                fromInstrumentIndex: idx,
+                isPeripheral: true
             });
         }
 
         // AMPS
         else if (instId.includes('amp') || instId.includes('combined')) {
-           const ampX = startX + (ampCount % 2 === 0 ? -12 : 12);
-           items.push({ id: `amp-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Amp', x: ampX, y: startY - 10, fromInstrumentIndex: idx, isPeripheral: true });
-           ampCount++;
+           const numAmps = getAmpCount(instId);
+           for (let ampIdx = 0; ampIdx < numAmps; ampIdx++) {
+               const ampX = startX + (ampCount % 2 === 0 ? -12 : 12);
+               items.push({ id: `amp-${baseId}-${idx}-${ampIdx}`, memberId: member.id, type: 'member', label: 'Amp', x: ampX, y: startY - 10, fromInstrumentIndex: idx, isPeripheral: true });
+               ampCount++;
+           }
         }
 
         // INSTRUMENTS ON STANDS OR HELD (Guitar/Bass/Brass)
@@ -88,16 +116,17 @@ export const generateMemberItems = (member: BandMember, startX: number, startY: 
                 });
             }
 
-            // Pedalboard / Modeler (Peripheral)
-            if (instId.includes('modeler')) {
-                 items.push({ id: `mod-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Modeler', x: startX + spreadX, y: startY + 8, fromInstrumentIndex: idx, isPeripheral: true });
+            // Pedalboard / Modeller (Peripheral)
+            if (shouldCreateModeller(instId)) {
+                 items.push({ id: `mod-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Modeller', x: startX + spreadX, y: startY + 8, fromInstrumentIndex: idx, isPeripheral: true });
             } else if (inst.type !== InstrumentType.BRASS && inst.id !== 'gtr_ac') {
                  items.push({ id: `pedal-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'Pedals', x: startX + spreadX, y: startY + 8, fromInstrumentIndex: idx, isPeripheral: true });
             }
             
             // DI Box (Peripheral)
             if (inst.defaultDi || instId.includes('di')) {
-                 items.push({ id: `di-${baseId}-${idx}`, memberId: member.id, type: 'member', label: 'DI', x: startX + spreadX + (isRight?2:-2), y: startY + 5, fromInstrumentIndex: idx, isPeripheral: true });
+                 const diLabel = getDiLabel(instId);
+                 items.push({ id: `di-${baseId}-${idx}`, memberId: member.id, type: 'member', label: diLabel, x: startX + spreadX + (isRight?2:-2), y: startY + 5, fromInstrumentIndex: idx, isPeripheral: true });
             }
         }
     });

@@ -14,9 +14,9 @@ export type PersonPose = 'stand' | 'guitar' | 'bass' | 'acoustic' | 'drums' | 'k
 
 export interface InstrumentDefinition {
   id: string;
-  name: string; // The specific name (e.g. "Guitar (Modeler)")
+  name: string; // The specific name (e.g. "Guitar (Modeller)")
   group: string; // The UI Label (e.g. "Electric Guitar")
-  variantLabel?: string; // Short label for the toggle (e.g. "Modeler")
+  variantLabel?: string; // Short label for the toggle (e.g. "Modeller")
   type: InstrumentType;
   defaultMic?: string;
   defaultDi?: boolean;
@@ -33,7 +33,6 @@ export interface InputConfig {
 
 export interface InstrumentSlot {
   instrumentId: string;
-  notes?: string;
   inputs?: InputConfig[];
 }
 
@@ -41,7 +40,6 @@ export interface BandMember {
   id: string;
   name: string;
   instruments: InstrumentSlot[];
-  notes?: string;
 }
 
 export interface StageItem {

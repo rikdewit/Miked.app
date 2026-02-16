@@ -6,15 +6,16 @@ export const INSTRUMENTS: InstrumentDefinition[] = [
   { id: 'voc_back', group: 'Vocals', name: 'Backing Vocals', type: InstrumentType.VOCAL, defaultMic: 'SM58', requiresMonitor: true, icon: 'Mic' },
   
   // Electric Guitar
-  { id: 'gtr_amp', group: 'Electric Guitar', variantLabel: '1 Amp', name: 'Electric Guitar (Amp)', type: InstrumentType.GUITAR, defaultMic: 'SM57 / e609', icon: 'Guitar' },
+  { id: 'gtr_amp', group: 'Electric Guitar', variantLabel: 'amp', name: 'Electric Guitar (Amp)', type: InstrumentType.GUITAR, defaultMic: 'SM57 / e609', icon: 'Guitar' },
   { id: 'gtr_amp_2', group: 'Electric Guitar', variantLabel: '2 Amps', name: 'Electric Guitar (2 Amps)', type: InstrumentType.GUITAR, defaultMic: '2x SM57', icon: 'Guitar' },
-  { id: 'gtr_modeler', group: 'Electric Guitar', variantLabel: 'Modeler (DI)', name: 'Electric Guitar (Modeler)', type: InstrumentType.GUITAR, defaultDi: true, icon: 'Guitar' },
+  { id: 'gtr_modeler_mono', group: 'Electric Guitar', variantLabel: 'Modeller (Mono)', name: 'Electric Guitar (Modeller Mono)', type: InstrumentType.GUITAR, defaultDi: true, icon: 'Guitar' },
+  { id: 'gtr_modeler_stereo', group: 'Electric Guitar', variantLabel: 'Modeller (Stereo)', name: 'Electric Guitar (Modeller Stereo)', type: InstrumentType.GUITAR, defaultDi: true, icon: 'Guitar' },
   
   // Acoustic Guitar
   { id: 'gtr_ac', group: 'Acoustic Guitar', name: 'Acoustic Guitar', type: InstrumentType.GUITAR, defaultDi: true, requiresMonitor: true, icon: 'Guitar' },
   
   // Bass
-  { id: 'bass_amp', group: 'Bass Guitar', variantLabel: 'Amp Only', name: 'Bass (Amp)', type: InstrumentType.BASS, defaultMic: 'D112 / Beta52', icon: 'Speaker' },
+  { id: 'bass_amp', group: 'Bass Guitar', variantLabel: 'amp', name: 'Bass (Amp)', type: InstrumentType.BASS, defaultMic: 'D112 / Beta52', icon: 'Speaker' },
   { id: 'bass_di', group: 'Bass Guitar', variantLabel: 'DI Only', name: 'Bass (DI)', type: InstrumentType.BASS, defaultDi: true, icon: 'Speaker' },
   { id: 'bass_combined', group: 'Bass Guitar', variantLabel: 'Amp + DI', name: 'Bass (Amp + DI)', type: InstrumentType.BASS, defaultDi: true, defaultMic: 'D112', icon: 'Speaker' },
   
@@ -34,7 +35,7 @@ export const INSTRUMENTS: InstrumentDefinition[] = [
   { id: 'tpt_clip', group: 'Trumpet', variantLabel: 'Clip-on', name: 'Trumpet (Clip-on)', type: InstrumentType.BRASS, defaultMic: 'Clip-on (XLR)', icon: 'Music' },
   
   // DJ
-  { id: 'dj', group: 'DJ', name: 'DJ Set', type: InstrumentType.OTHER, defaultDi: true, requiresMonitor: true, icon: 'Disc' },
+  { id: 'dj', group: 'DJ', name: 'DJ Set', type: InstrumentType.OTHER, defaultMic: 'XLR', defaultDi: true, requiresMonitor: true, icon: 'Disc' },
 
   // Tracks
   { id: 'tracks_mono', group: 'Tracks', variantLabel: 'Mono', name: 'Tracks (Mono)', type: InstrumentType.OTHER, defaultDi: true, icon: 'Laptop' },

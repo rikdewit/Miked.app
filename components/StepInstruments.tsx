@@ -10,12 +10,10 @@ interface StepInstrumentsProps {
   addMember: () => void;
   applyRockTemplate: () => void;
   updateMemberName: (id: string, name: string) => void;
-  updateMemberNotes: (id: string, notes: string) => void;
   updateMemberInstrument: (memberId: string, index: number, instrumentId: string) => void;
   removeMemberInstrument: (memberId: string, index: number) => void;
   addMemberInstrument: (memberId: string) => void;
   removeMember: (id: string) => void;
-  updateInstrumentNotes: (memberId: string, index: number, notes: string) => void;
   updateInstrumentInputs: (memberId: string, index: number, inputs: InputConfig[]) => void;
 }
 
@@ -24,19 +22,16 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
   addMember,
   applyRockTemplate,
   updateMemberName,
-  updateMemberNotes,
   updateMemberInstrument,
   removeMemberInstrument,
   addMemberInstrument,
   removeMember,
-  updateInstrumentNotes,
   updateInstrumentInputs
 }) => {
   const [expandedInputs, setExpandedInputs] = useState<Set<string>>(new Set());
 
   // Constants for mic options (common mics used in live sound)
   const MIC_SUGGESTIONS = ['SM57', 'SM58', 'Beta58', 'Beta52A', 'D112 MKII', 'e604', 'e609', 'RE20', 'Condenser', 'Clip-on (XLR)', 'DI'];
-  const STAND_OPTIONS = ['', 'Short Boom', 'Tall Boom', 'Clip-on'];
 
   // Get unique groups for the dropdown
   const uniqueGroups = Array.from(new Set(INSTRUMENTS.map(i => i.group)));
@@ -88,21 +83,11 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
                             <label className="text-xs text-slate-400 block mb-1">Member Name</label>
-                            <input 
-                            type="text" 
+                            <input
+                            type="text"
                             value={member.name}
                             onChange={(e) => updateMemberName(member.id, e.target.value)}
                             placeholder="e.g. John"
-                            className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors"
-                            />
-                        </div>
-                        <div className="flex-1">
-                            <label className="text-xs text-slate-400 block mb-1">Notes (optional)</label>
-                            <input 
-                            type="text" 
-                            value={member.notes}
-                            onChange={(e) => updateMemberNotes(member.id, e.target.value)}
-                            placeholder="e.g. Own vocal mic"
                             className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white focus:outline-none focus:border-indigo-500 transition-colors"
                             />
                         </div>
@@ -156,15 +141,6 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                         </div>
                                     )}
 
-                                    {/* Notes per instrument */}
-                                    <input
-                                        type="text"
-                                        value={slot.notes || ''}
-                                        onChange={(e) => updateInstrumentNotes(member.id, iIndex, e.target.value)}
-                                        placeholder="e.g. Own mic"
-                                        className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors"
-                                    />
-
                                     {/* Expandable Inputs Section */}
                                     {(() => {
                                       const effectiveInputs = slot.inputs?.length
@@ -184,22 +160,27 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                           </button>
 
                                           {isExpanded && (
-                                            <div className="mt-3 space-y-2 bg-slate-900/30 p-3 rounded border border-slate-700/30">
+                                            <div className="mt-3 bg-slate-900/30 p-3 rounded border border-slate-700/30">
+                                              <div className="flex gap-2 items-center text-xs font-bold text-slate-400 mb-2 pb-2 border-b border-slate-700">
+                                                <div className="flex-1">Channel</div>
+                                                <div className="flex-1">Mic / DI</div>
+                                                <div className="flex-1">Notes</div>
+                                                <div className="w-8"></div>
+                                              </div>
+                                              <div className="space-y-2">
                                               {effectiveInputs.map((input, inputIdx) => (
-                                                <div key={inputIdx} className="flex gap-2 items-start text-xs">
-                                                  <div className="flex-1 space-y-1">
-                                                    <input
-                                                      type="text"
-                                                      value={input.label}
-                                                      onChange={(e) => {
-                                                        const updated = [...effectiveInputs];
-                                                        updated[inputIdx] = { ...updated[inputIdx], label: e.target.value };
-                                                        updateInstrumentInputs(member.id, iIndex, updated);
-                                                      }}
-                                                      placeholder="Label (e.g. Kick)"
-                                                      className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
-                                                    />
-                                                  </div>
+                                                <div key={inputIdx} className="flex gap-2 items-center text-xs">
+                                                  <input
+                                                    type="text"
+                                                    value={input.label}
+                                                    onChange={(e) => {
+                                                      const updated = [...effectiveInputs];
+                                                      updated[inputIdx] = { ...updated[inputIdx], label: e.target.value };
+                                                      updateInstrumentInputs(member.id, iIndex, updated);
+                                                    }}
+                                                    placeholder="e.g. Kick"
+                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                  />
                                                   <input
                                                     type="text"
                                                     list={`mic-suggestions-${member.id}-${iIndex}`}
@@ -217,26 +198,24 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                                       <option key={opt} value={opt} />
                                                     ))}
                                                   </datalist>
-                                                  <select
-                                                    value={input.stand}
+                                                  <input
+                                                    type="text"
+                                                    value={input.notes || ''}
                                                     onChange={(e) => {
                                                       const updated = [...effectiveInputs];
-                                                      updated[inputIdx] = { ...updated[inputIdx], stand: e.target.value };
+                                                      updated[inputIdx] = { ...updated[inputIdx], notes: e.target.value };
                                                       updateInstrumentInputs(member.id, iIndex, updated);
                                                     }}
-                                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500 cursor-pointer"
-                                                  >
-                                                    {STAND_OPTIONS.map(opt => (
-                                                      <option key={opt} value={opt}>{opt || 'None'}</option>
-                                                    ))}
-                                                  </select>
+                                                    placeholder="e.g. Own mic"
+                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                  />
                                                   <button
                                                     onClick={() => {
                                                       const updated = effectiveInputs.filter((_, idx) => idx !== inputIdx);
                                                       updateInstrumentInputs(member.id, iIndex, updated);
                                                     }}
                                                     disabled={effectiveInputs.length === 1}
-                                                    className={`p-1 rounded transition-colors ${effectiveInputs.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
+                                                    className={`w-8 p-1 rounded transition-colors flex items-center justify-center ${effectiveInputs.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
                                                   >
                                                     <X size={14} />
                                                   </button>
@@ -251,6 +230,7 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                               >
                                                 <Plus size={12} /> Add input
                                               </button>
+                                              </div>
                                             </div>
                                           )}
                                         </div>

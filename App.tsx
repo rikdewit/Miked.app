@@ -19,13 +19,11 @@ const App: React.FC = () => {
     addMember,
     applyRockTemplate,
     updateMemberName,
-    updateMemberNotes,
     addMemberInstrument,
     updateMemberInstrument,
     removeMemberInstrument,
     removeMember,
     updateStageItems,
-    updateInstrumentNotes,
     updateInstrumentInputs
   } = useRiderState();
 
@@ -63,12 +61,10 @@ const App: React.FC = () => {
                 addMember={addMember}
                 applyRockTemplate={applyRockTemplate}
                 updateMemberName={updateMemberName}
-                updateMemberNotes={updateMemberNotes}
                 updateMemberInstrument={updateMemberInstrument}
                 removeMemberInstrument={removeMemberInstrument}
                 addMemberInstrument={addMemberInstrument}
                 removeMember={removeMember}
-                updateInstrumentNotes={updateInstrumentNotes}
                 updateInstrumentInputs={updateInstrumentInputs}
               />
             )}

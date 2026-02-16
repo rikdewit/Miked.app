@@ -19,7 +19,6 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
   };
 
   // Generate inputs based on members and their instruments
-  let channelCounter = 1;
   const inputs: any[] = [];
 
   members.forEach((member) => {
@@ -31,8 +30,7 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
 
       effectiveInputs.forEach((input) => {
         inputs.push({
-          channel: channelCounter++,
-          instrument: input.label,
+          input: input.label,
           micDi: input.micDi,
           stand: input.stand,
           notes: input.notes || ''
@@ -61,7 +59,6 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
         <table className="w-full text-sm text-left">
           <thead className="bg-slate-100 text-slate-700 print:bg-slate-200 print:text-black">
             <tr>
-              <th className="py-2 px-3 font-bold w-12 border-r border-b border-slate-300 print:border-black text-black">CH</th>
               <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Instrument</th>
               <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Mic / DI</th>
               <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black text-black">Notes</th>
@@ -69,16 +66,15 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
           </thead>
           <tbody>
             {inputs.map((input) => (
-              <tr key={input.channel} className="border-b border-slate-200 last:border-0 print:border-slate-400">
-                <td className="py-2 px-3 font-mono font-bold text-black border-r border-slate-200 print:border-slate-400">{input.channel}</td>
-                <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 font-medium">{input.instrument}</td>
+              <tr key={input.input} className="border-b border-slate-200 last:border-0 print:border-slate-400">
+                <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 font-medium">{input.input}</td>
                 <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
                 <td className="py-2 px-3 text-black italic print:text-black">{input.notes}</td>
               </tr>
             ))}
             {inputs.length === 0 && (
                <tr>
-                 <td colSpan={4} className="py-4 text-center text-slate-400 italic">No instruments added yet.</td>
+                 <td colSpan={3} className="py-4 text-center text-slate-400 italic">No instruments added yet.</td>
                </tr>
             )}
           </tbody>
