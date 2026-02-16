@@ -270,30 +270,57 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                 </button>
               </>
             ) : item.type === 'monitor' ? (
-              <>
-                <button
-                  onClick={() => {
-                    const newNum = Math.max(0, (item.monitorNumber || 0) - 1);
-                    onMonitorNumberChange?.(item.id, newNum);
-                  }}
-                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-                  title="Decrease monitor number"
-                >
-                  −
-                </button>
-                <div className="px-2 py-1 text-white text-xs font-bold flex items-center bg-slate-800 rounded min-w-[32px] justify-center">
-                  {item.monitorNumber || 0}
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      const newNum = Math.max(0, (item.monitorNumber || 0) - 1);
+                      onMonitorNumberChange?.(item.id, newNum);
+                    }}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    title="Decrease monitor number"
+                  >
+                    −
+                  </button>
+                  <div className="px-2 py-1 text-white text-xs font-bold flex items-center bg-slate-800 rounded min-w-[32px] justify-center">
+                    {item.monitorNumber || 0}
+                  </div>
+                  <button
+                    onClick={() => {
+                      onMonitorNumberChange?.(item.id, (item.monitorNumber || 0) + 1);
+                    }}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                    title="Increase monitor number"
+                  >
+                    +
+                  </button>
                 </div>
-                <button
-                  onClick={() => {
-                    onMonitorNumberChange?.(item.id, (item.monitorNumber || 0) + 1);
-                  }}
-                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
-                  title="Increase monitor number"
-                >
-                  +
-                </button>
-              </>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => onRotate?.(item.id, 'left')}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors flex-1"
+                    title="Rotate left 22.5°"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => {
+                      onCloseRotationUI?.();
+                    }}
+                    className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition-colors flex-1"
+                    title="Done rotating"
+                  >
+                    Done
+                  </button>
+                  <button
+                    onClick={() => onRotate?.(item.id, 'right')}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors flex-1"
+                    title="Rotate right 22.5°"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <button

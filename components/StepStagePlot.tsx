@@ -451,7 +451,10 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
 
                 {/* Action buttons */}
                 <button
-                    onClick={() => updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon' }])}
+                    onClick={() => {
+                      const nextMonitorNum = Math.max(...data.stagePlot.filter(i => i.type === 'monitor').map(i => i.monitorNumber || 0), 0) + 1;
+                      updateStageItems([...data.stagePlot, { id: `mon-${Date.now()}`, type: 'monitor', x: 50, y: 50, label: 'Mon', monitorNumber: nextMonitorNum }])
+                    }}
                     className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
                 >
                     + Mon
