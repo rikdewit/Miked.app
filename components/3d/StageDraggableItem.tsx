@@ -24,6 +24,7 @@ interface DraggableItemProps {
   onRotate?: (itemId: string, direction: 'left' | 'right') => void;
   onDelete?: (itemId: string) => void;
   onQuantityChange?: (itemId: string, quantity: number) => void;
+  onMonitorNumberChange?: (itemId: string, monitorNumber: number) => void;
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
@@ -44,6 +45,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onRotate,
   onDelete,
   onQuantityChange,
+  onMonitorNumberChange,
   isEditable = false,
   viewMode = 'isometric',
   isPreview = false
@@ -222,13 +224,13 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
               verticalAlign: 'baseline'
             }}
           >
-            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.label}
+            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.type === 'monitor' && item.monitorNumber ? `${item.label} ${item.monitorNumber}` : item.label}
           </div>
         </Html>
       )}
 
       {/* Rotation UI - not inside rotating group so it stays fixed */}
-      {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power') && (
+      {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power' || item.type === 'monitor') && (
         <Html
             position={[0 + offX, contextMenuPosY + contextMenuOffset.y, contextMenuPosZ + contextMenuOffset.z]}
             center
@@ -263,6 +265,31 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                   }}
                   className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
                   title="Increase quantity"
+                >
+                  +
+                </button>
+              </>
+            ) : item.type === 'monitor' ? (
+              <>
+                <button
+                  onClick={() => {
+                    const newNum = Math.max(0, (item.monitorNumber || 0) - 1);
+                    onMonitorNumberChange?.(item.id, newNum);
+                  }}
+                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  title="Decrease monitor number"
+                >
+                  −
+                </button>
+                <div className="px-2 py-1 text-white text-xs font-bold flex items-center bg-slate-800 rounded min-w-[32px] justify-center">
+                  {item.monitorNumber || 0}
+                </div>
+                <button
+                  onClick={() => {
+                    onMonitorNumberChange?.(item.id, (item.monitorNumber || 0) + 1);
+                  }}
+                  className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                  title="Increase monitor number"
                 >
                   +
                 </button>

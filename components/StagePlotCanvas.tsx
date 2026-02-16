@@ -223,6 +223,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     ));
   };
 
+  const handleMonitorNumberChange = (id: string, monitorNumber: number) => {
+    setItems(items.map(i =>
+      i.id === id ? { ...i, monitorNumber } : i
+    ));
+  };
+
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
     if (!editable) return;
     e.stopPropagation();
@@ -422,6 +428,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onRotate={onRotateItem}
                 onDelete={handleDeleteItem}
                 onQuantityChange={handleQuantityChange}
+                onMonitorNumberChange={handleMonitorNumberChange}
                 isEditable={editable}
                 viewMode={viewMode}
                 isPreview={isPreview}
