@@ -66,6 +66,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
                 <div className="space-y-1">
                     <p><span className="font-bold">Contact:</span> {data.details.contactName}</p>
                     <p><span className="font-bold">Email:</span> {data.details.email}</p>
+                    {data.details.phone && <p><span className="font-bold">Phone:</span> {data.details.phone}</p>}
+                    {data.details.website && <p><span className="font-bold">Website:</span> {data.details.website}</p>}
                 </div>
                 {(data.details.showDuration || data.details.soundcheckDuration || (data.details.stageWidth && data.details.stageDepth)) && (
                     <div className="space-y-1 border-l border-slate-300 pl-8">
