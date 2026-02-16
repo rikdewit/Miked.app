@@ -360,13 +360,13 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
         <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} baseCamZoom={camZoom} />
 
-        <ambientLight intensity={0.6} />
-        <directionalLight 
-          position={[-10, 30, 20]} 
-          intensity={0.9} 
-          castShadow 
+        <ambientLight intensity={.9} />
+        <directionalLight
+          position={[-10, 30, 20]}
+          intensity={1}
+          castShadow
           shadow-mapSize={[2048, 2048]}
-          shadow-bias={-0.0001}
+          shadow-bias={0.01}
         />
         <directionalLight position={[10, 10, -10]} intensity={0.4} />
 
@@ -408,7 +408,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             <meshBasicMaterial visible={false} />
           </mesh>
 
-          <ContactShadows position={[0, 0.02, 0]} opacity={0.4} scale={20} blur={3} far={2} color="#000000" />
+          <ContactShadows position={[0, 0.02, 0]} opacity={0.2} scale={20} blur={10} far={2} color="#000000" />
         </group>
 
         <Suspense fallback={null}>
