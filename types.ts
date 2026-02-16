@@ -24,9 +24,17 @@ export interface InstrumentDefinition {
   icon: string; // Icon name reference
 }
 
+export interface InputConfig {
+  label: string;
+  micDi: string;
+  stand: string;
+  notes?: string;
+}
+
 export interface InstrumentSlot {
   instrumentId: string;
   notes?: string;
+  inputs?: InputConfig[];
 }
 
 export interface BandMember {

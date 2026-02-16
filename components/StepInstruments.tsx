@@ -1,7 +1,8 @@
-import React from 'react';
-import { Plus, Trash2, X, Music2 } from 'lucide-react';
-import { RiderData } from '../types';
+import React, { useState } from 'react';
+import { Plus, Trash2, X, Music2, ChevronDown } from 'lucide-react';
+import { RiderData, InputConfig } from '../types';
 import { INSTRUMENTS } from '../constants';
+import { getDefaultInputsForSlot } from '../utils/inputUtils';
 import { MemberPreview3D } from './MemberPreview3D';
 
 interface StepInstrumentsProps {
@@ -15,6 +16,7 @@ interface StepInstrumentsProps {
   addMemberInstrument: (memberId: string) => void;
   removeMember: (id: string) => void;
   updateInstrumentNotes: (memberId: string, index: number, notes: string) => void;
+  updateInstrumentInputs: (memberId: string, index: number, inputs: InputConfig[]) => void;
 }
 
 export const StepInstruments: React.FC<StepInstrumentsProps> = ({
@@ -27,10 +29,34 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
   removeMemberInstrument,
   addMemberInstrument,
   removeMember,
-  updateInstrumentNotes
+  updateInstrumentNotes,
+  updateInstrumentInputs
 }) => {
+  const [expandedInputs, setExpandedInputs] = useState<Set<string>>(new Set());
+
+  // Constants for mic options (common mics used in live sound)
+  const MIC_SUGGESTIONS = ['SM57', 'SM58', 'Beta58', 'Beta52A', 'D112 MKII', 'e604', 'e609', 'RE20', 'Condenser', 'Clip-on (XLR)', 'DI'];
+  const STAND_OPTIONS = ['', 'Short Boom', 'Tall Boom', 'Clip-on'];
+
   // Get unique groups for the dropdown
   const uniqueGroups = Array.from(new Set(INSTRUMENTS.map(i => i.group)));
+
+  // Toggle expanded state for inputs
+  const toggleInputsExpanded = (memberId: string, instrIndex: number) => {
+    const key = `${memberId}-${instrIndex}`;
+    const newExpanded = new Set(expandedInputs);
+    if (newExpanded.has(key)) {
+      newExpanded.delete(key);
+    } else {
+      newExpanded.add(key);
+    }
+    setExpandedInputs(newExpanded);
+  };
+
+  // Get effective inputs (custom or defaults)
+  const getEffectiveInputs = (slot: ReturnType<typeof getDefaultInputsForSlot>) => {
+    return slot;
+  };
 
   // Helper to find valid default ID when switching groups
   const getDefaultIdForGroup = (groupName: string) => {
@@ -138,6 +164,98 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                         placeholder="e.g. Own mic"
                                         className="w-full bg-slate-900 border border-slate-600 rounded px-3 py-2 text-white text-xs focus:outline-none focus:border-indigo-500 transition-colors"
                                     />
+
+                                    {/* Expandable Inputs Section */}
+                                    {(() => {
+                                      const effectiveInputs = slot.inputs?.length
+                                        ? slot.inputs
+                                        : getDefaultInputsForSlot(slot, INSTRUMENTS);
+                                      const isExpanded = expandedInputs.has(`${member.id}-${iIndex}`);
+                                      const inputCount = effectiveInputs.length;
+
+                                      return (
+                                        <div className="border-t border-slate-700/50 pt-2 mt-2">
+                                          <button
+                                            onClick={() => toggleInputsExpanded(member.id, iIndex)}
+                                            className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium px-1 py-1"
+                                          >
+                                            <ChevronDown size={14} className={`transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                                            Inputs ({inputCount} CH)
+                                          </button>
+
+                                          {isExpanded && (
+                                            <div className="mt-3 space-y-2 bg-slate-900/30 p-3 rounded border border-slate-700/30">
+                                              {effectiveInputs.map((input, inputIdx) => (
+                                                <div key={inputIdx} className="flex gap-2 items-start text-xs">
+                                                  <div className="flex-1 space-y-1">
+                                                    <input
+                                                      type="text"
+                                                      value={input.label}
+                                                      onChange={(e) => {
+                                                        const updated = [...effectiveInputs];
+                                                        updated[inputIdx] = { ...updated[inputIdx], label: e.target.value };
+                                                        updateInstrumentInputs(member.id, iIndex, updated);
+                                                      }}
+                                                      placeholder="Label (e.g. Kick)"
+                                                      className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                    />
+                                                  </div>
+                                                  <input
+                                                    type="text"
+                                                    list={`mic-suggestions-${member.id}-${iIndex}`}
+                                                    value={input.micDi}
+                                                    onChange={(e) => {
+                                                      const updated = [...effectiveInputs];
+                                                      updated[inputIdx] = { ...updated[inputIdx], micDi: e.target.value };
+                                                      updateInstrumentInputs(member.id, iIndex, updated);
+                                                    }}
+                                                    placeholder="e.g. SM57, DI"
+                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                  />
+                                                  <datalist id={`mic-suggestions-${member.id}-${iIndex}`}>
+                                                    {MIC_SUGGESTIONS.map(opt => (
+                                                      <option key={opt} value={opt} />
+                                                    ))}
+                                                  </datalist>
+                                                  <select
+                                                    value={input.stand}
+                                                    onChange={(e) => {
+                                                      const updated = [...effectiveInputs];
+                                                      updated[inputIdx] = { ...updated[inputIdx], stand: e.target.value };
+                                                      updateInstrumentInputs(member.id, iIndex, updated);
+                                                    }}
+                                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500 cursor-pointer"
+                                                  >
+                                                    {STAND_OPTIONS.map(opt => (
+                                                      <option key={opt} value={opt}>{opt || 'None'}</option>
+                                                    ))}
+                                                  </select>
+                                                  <button
+                                                    onClick={() => {
+                                                      const updated = effectiveInputs.filter((_, idx) => idx !== inputIdx);
+                                                      updateInstrumentInputs(member.id, iIndex, updated);
+                                                    }}
+                                                    disabled={effectiveInputs.length === 1}
+                                                    className={`p-1 rounded transition-colors ${effectiveInputs.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
+                                                  >
+                                                    <X size={14} />
+                                                  </button>
+                                                </div>
+                                              ))}
+                                              <button
+                                                onClick={() => {
+                                                  const updated = [...effectiveInputs, { label: '', micDi: 'DI', stand: '' }];
+                                                  updateInstrumentInputs(member.id, iIndex, updated);
+                                                }}
+                                                className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 font-medium px-1 mt-2"
+                                              >
+                                                <Plus size={12} /> Add input
+                                              </button>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                 </div>
                             )})}
                             <button

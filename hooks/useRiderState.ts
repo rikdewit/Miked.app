@@ -1,6 +1,6 @@
 
 import { useState, useCallback } from 'react';
-import { RiderData, BandMember, StageItem, InstrumentType } from '../types';
+import { RiderData, BandMember, StageItem, InstrumentType, InputConfig } from '../types';
 import { INITIAL_RIDER_DATA, INSTRUMENTS } from '../constants';
 
 export const useRiderState = () => {
@@ -79,7 +79,8 @@ export const useRiderState = () => {
       const updatedMembers = prev.members.map(m => {
         if (m.id === memberId) {
           const newSlots = [...m.instruments];
-          newSlots[index] = { ...newSlots[index], instrumentId: newInstrumentId };
+          // When changing instrument, reset inputs to defaults
+          newSlots[index] = { ...newSlots[index], instrumentId: newInstrumentId, inputs: undefined };
           return { ...m, instruments: newSlots };
         }
         return m;
@@ -177,6 +178,20 @@ export const useRiderState = () => {
     }));
   }, []);
 
+  const updateInstrumentInputs = useCallback((memberId: string, index: number, inputs: InputConfig[]) => {
+    setData(prev => ({
+      ...prev,
+      members: prev.members.map(m => {
+        if (m.id === memberId) {
+          const newSlots = [...m.instruments];
+          newSlots[index] = { ...newSlots[index], inputs };
+          return { ...m, instruments: newSlots };
+        }
+        return m;
+      })
+    }));
+  }, []);
+
   return {
     data,
     setData,
@@ -189,6 +204,7 @@ export const useRiderState = () => {
     removeMemberInstrument,
     removeMember,
     updateStageItems,
-    updateInstrumentNotes
+    updateInstrumentNotes,
+    updateInstrumentInputs
   };
 };

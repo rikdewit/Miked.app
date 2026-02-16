@@ -33,9 +33,12 @@ export const INSTRUMENTS: InstrumentDefinition[] = [
   { id: 'tpt_mic', group: 'Trumpet', variantLabel: 'Mic on Stand', name: 'Trumpet (Stand Mic)', type: InstrumentType.BRASS, defaultMic: 'SM57 / MD421', icon: 'Music' },
   { id: 'tpt_clip', group: 'Trumpet', variantLabel: 'Clip-on', name: 'Trumpet (Clip-on)', type: InstrumentType.BRASS, defaultMic: 'Clip-on (XLR)', icon: 'Music' },
   
-  // Other
-  { id: 'dj', group: 'DJ / Playback', name: 'DJ Set', type: InstrumentType.OTHER, defaultDi: true, requiresMonitor: true, icon: 'Disc' },
-  { id: 'laptop', group: 'DJ / Playback', name: 'Laptop / Tracks', type: InstrumentType.OTHER, defaultDi: true, icon: 'Laptop' },
+  // DJ
+  { id: 'dj', group: 'DJ', name: 'DJ Set', type: InstrumentType.OTHER, defaultDi: true, requiresMonitor: true, icon: 'Disc' },
+
+  // Tracks
+  { id: 'tracks_mono', group: 'Tracks', variantLabel: 'Mono', name: 'Tracks (Mono)', type: InstrumentType.OTHER, defaultDi: true, icon: 'Laptop' },
+  { id: 'tracks_stereo', group: 'Tracks', variantLabel: 'Stereo', name: 'Tracks (Stereo)', type: InstrumentType.OTHER, defaultDi: true, icon: 'Laptop' },
 ];
 
 export const INITIAL_RIDER_DATA = {

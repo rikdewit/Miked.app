@@ -1,6 +1,7 @@
 import React from 'react';
 import { BandMember } from '../types';
 import { INSTRUMENTS } from '../constants';
+import { getDefaultInputsForSlot } from '../utils/inputUtils';
 
 interface InputListProps {
   members: BandMember[];
@@ -23,81 +24,20 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
 
   members.forEach((member) => {
     member.instruments.forEach((slot) => {
-      const instId = slot.instrumentId;
-      // Handle Drums Splitting
-      if (instId === 'drums') {
-        const drumChannels = [
-          { name: 'Kick', mic: 'Beta52 / D112', stand: 'Short Boom' },
-          { name: 'Snare', mic: 'SM57', stand: 'Short Boom' },
-          { name: 'Tom 1', mic: 'e604 / Clip', stand: 'Clip' },
-          { name: 'Tom 2', mic: 'e604 / Clip', stand: 'Clip' },
-          { name: 'Floor Tom', mic: 'e604 / Clip', stand: 'Clip' },
-          { name: 'OH L', mic: 'Condenser', stand: 'Tall Boom' },
-          { name: 'OH R', mic: 'Condenser', stand: 'Tall Boom' },
-        ];
+      // Get effective inputs (custom or defaults)
+      const effectiveInputs = slot.inputs?.length
+        ? slot.inputs
+        : getDefaultInputsForSlot(slot, INSTRUMENTS);
 
-        drumChannels.forEach((kitPiece, idx) => {
-          inputs.push({
-            channel: channelCounter++,
-            instrument: kitPiece.name,
-            micDi: kitPiece.mic,
-            stand: kitPiece.stand,
-            notes: idx === 0 ? (slot.notes || '') : ''
-          });
-        });
-        return;
-      }
-
-      // Handle Stereo Keys Splitting
-      if (instId === 'keys_stereo') {
-          inputs.push({
-            channel: channelCounter++,
-            instrument: 'Keys L',
-            micDi: 'DI',
-            stand: '',
-            notes: slot.notes || ''
-          });
-          inputs.push({
-            channel: channelCounter++,
-            instrument: 'Keys R',
-            micDi: 'DI',
-            stand: '',
-            notes: ''
-          });
-          return;
-      }
-
-      // Handle Standard Instruments
-      const instrument = INSTRUMENTS.find(i => i.id === instId);
-      if (instrument) {
-        let micDi = instrument.defaultDi ? 'DI' : (instrument.defaultMic || 'Venue Tech');
-        let stand = '';
-
-        // Logic to determine mic/stand based on instrument type/variant
-        if (instrument.type === 'Vocal') {
-            stand = 'Tall Boom';
-        } else if (instrument.id.includes('amp')) {
-            stand = 'Short Boom';
-        } else if (instrument.id.includes('stand')) {
-            stand = 'Tall Boom'; // Horns on stand
-        } else if (instrument.id.includes('clip')) {
-            stand = 'Clip-on';
-        }
-
-        // Bass Combined Special Case
-        if (instrument.id === 'bass_combined') {
-            micDi = 'DI + Mic (D112)';
-            stand = 'Short Boom';
-        }
-
+      effectiveInputs.forEach((input) => {
         inputs.push({
           channel: channelCounter++,
-          instrument: instrument.group, // Use Group Name for cleaner list (e.g. "Electric Guitar" instead of "Electric Guitar (Amp)")
-          micDi: micDi,
-          stand: stand,
-          notes: slot.notes || ''
+          instrument: input.label,
+          micDi: input.micDi,
+          stand: input.stand,
+          notes: input.notes || ''
         });
-      }
+      });
     });
   });
 

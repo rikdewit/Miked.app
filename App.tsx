@@ -25,7 +25,8 @@ const App: React.FC = () => {
     removeMemberInstrument,
     removeMember,
     updateStageItems,
-    updateInstrumentNotes
+    updateInstrumentNotes,
+    updateInstrumentInputs
   } = useRiderState();
 
   // --- Navigation & Validation ---
@@ -68,6 +69,7 @@ const App: React.FC = () => {
                 addMemberInstrument={addMemberInstrument}
                 removeMember={removeMember}
                 updateInstrumentNotes={updateInstrumentNotes}
+                updateInstrumentInputs={updateInstrumentInputs}
               />
             )}
 
