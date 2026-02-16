@@ -124,7 +124,6 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
               <th className="py-2 px-3 font-bold w-12 border-r border-b border-slate-300 print:border-black text-black">CH</th>
               <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Instrument</th>
               <th className="py-2 px-3 font-bold border-r border-b border-slate-300 print:border-black text-black">Mic / DI</th>
-              <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black hidden sm:table-cell text-black">Stand</th>
               <th className="py-2 px-3 font-bold border-b border-slate-300 print:border-black text-black">Notes</th>
             </tr>
           </thead>
@@ -134,13 +133,12 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
                 <td className="py-2 px-3 font-mono font-bold text-black border-r border-slate-200 print:border-slate-400">{input.channel}</td>
                 <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 font-medium">{input.instrument}</td>
                 <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
-                <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 hidden sm:table-cell">{input.stand}</td>
                 <td className="py-2 px-3 text-black italic print:text-black">{input.notes}</td>
               </tr>
             ))}
             {inputs.length === 0 && (
                <tr>
-                 <td colSpan={5} className="py-4 text-center text-slate-400 italic">No instruments added yet.</td>
+                 <td colSpan={4} className="py-4 text-center text-slate-400 italic">No instruments added yet.</td>
                </tr>
             )}
           </tbody>
