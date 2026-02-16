@@ -64,8 +64,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
             <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">{data.details.bandName || 'BAND NAME'}</h1>
             <div className="flex gap-8 text-sm">
                 <div className="space-y-1">
-                    <p><span className="font-bold">Contact:</span> {data.details.contactName}</p>
-                    <p><span className="font-bold">Email:</span> {data.details.email}</p>
+                    {data.details.contactName && <p><span className="font-bold">Contact:</span> {data.details.contactName}</p>}
+                    {data.details.email && <p><span className="font-bold">Email:</span> {data.details.email}</p>}
                     {data.details.phone && <p><span className="font-bold">Phone:</span> {data.details.phone}</p>}
                     {data.details.website && <p><span className="font-bold">Website:</span> {data.details.website}</p>}
                 </div>

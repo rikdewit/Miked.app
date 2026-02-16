@@ -33,7 +33,7 @@ const App: React.FC = () => {
         return data.members.length > 0 &&
                data.members.every(m => m.name.trim() !== '' && m.instruments.length > 0);
     }
-    if (step === 3) return data.details.bandName.trim() !== '' && data.details.contactName.trim() !== '';
+    if (step === 3) return data.details.bandName.trim() !== '';
     return true;
   };
 
