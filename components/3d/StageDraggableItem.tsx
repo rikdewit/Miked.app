@@ -144,9 +144,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const contextMenuPosY = viewMode === 'isometric' ? labelBaseY - 1.5 : labelBaseY;
   const contextMenuPosZ = viewMode === 'top' ? (0 + offZ + 0.6) : (0 + offZ);
 
-  // Hitbox dimensions - make it deeper in Z for top view so it covers label area
-  const hitboxDepth = viewMode === 'top' ? Math.max(depth, 2) : Math.max(depth, 0.6);
-  const hitboxZOffset = viewMode === 'top' ? (height + labelYPadding / 2 + offZ) : (0 + offZ);
+  // Hitbox dimensions - match actual model dimensions for better selection
+  // In both views, we need width x depth coverage with small padding
+  const hitboxPadding = 0.2;
+  const hitboxWidth = Math.max(width, 0.6) + hitboxPadding;
+  const hitboxDepth = Math.max(depth, 0.6) + hitboxPadding;
 
   const renderModel = () => {
     // --- PERSON ---
@@ -398,9 +400,9 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         } : undefined}
       >
         {/* Invisible Hit Box for easier selection */}
-        {/* In top view, make it deeper to cover label area */}
-        <mesh position={[0 + offX, height / 2 + offY, hitboxZOffset]}>
-             <boxGeometry args={[Math.max(width, 0.6), height, hitboxDepth]} />
+        {/* Aligned with model dimensions for better click detection */}
+        <mesh position={[0 + offX, height / 2 + offY, 0 + offZ]}>
+             <boxGeometry args={[hitboxWidth, height, hitboxDepth]} />
              <meshBasicMaterial transparent opacity={0} />
         </mesh>
 
