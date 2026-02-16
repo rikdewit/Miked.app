@@ -7,6 +7,7 @@ interface StepDetailsProps {
 }
 
 export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
+
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -41,17 +42,17 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">Contact Person *</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={data.details.contactName}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, contactName: e.target.value}}))}
               className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
-            <input 
-              type="email" 
+            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+            <input
+              type="email"
               value={data.details.email}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, email: e.target.value}}))}
               className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
@@ -61,9 +62,32 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Telefoon</label>
+            <input
+              type="tel"
+              value={data.details.phone || ''}
+              onChange={(e) => setData(prev => ({...prev, details: {...prev.details, phone: e.target.value}}))}
+              placeholder="e.g. +31 6 12345678"
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Website / Socials</label>
+            <input
+              type="text"
+              value={data.details.website || ''}
+              onChange={(e) => setData(prev => ({...prev, details: {...prev.details, website: e.target.value}}))}
+              placeholder="e.g. https://example.com or Instagram @bandname"
+              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">Show Duration</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={data.details.showDuration || ''}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, showDuration: e.target.value}}))}
               placeholder="e.g. 60 min"
@@ -72,8 +96,8 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
           </div>
           <div>
             <label className="block text-sm font-medium text-slate-300 mb-2">Soundcheck Time</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               value={data.details.soundcheckDuration || ''}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, soundcheckDuration: e.target.value}}))}
               placeholder="e.g. 45 min"
