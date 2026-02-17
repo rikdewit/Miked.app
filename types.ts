@@ -62,6 +62,7 @@ export interface RiderDetails {
   email: string;
   phone?: string;
   website?: string;
+  socials?: string;
   logoUrl?: string; // Base64 string
   generalNotes?: string;
   technicalNotes?: string;

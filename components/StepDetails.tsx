@@ -73,15 +73,26 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Website / Socials</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Website</label>
             <input
               type="text"
               value={data.details.website || ''}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, website: e.target.value}}))}
-              placeholder="e.g. https://example.com or Instagram @bandname"
+              placeholder="e.g. https://example.com"
               className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-300 mb-2">Socials</label>
+          <input
+            type="text"
+            value={data.details.socials || ''}
+            onChange={(e) => setData(prev => ({...prev, details: {...prev.details, socials: e.target.value}}))}
+            placeholder="e.g. Instagram @bandname, TikTok @bandname"
+            className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+          />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
