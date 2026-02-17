@@ -1,9 +1,9 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
-import { Bold, Italic, List, ListOrdered, Heading2, Link2, Trash2, Image as ImageIcon, Trash } from 'lucide-react';
+import { Bold, Italic, List, ListOrdered, Heading2, Trash2, Image as ImageIcon, Trash } from 'lucide-react';
 
 interface RichTextEditorProps {
   value: string;
@@ -11,20 +11,15 @@ interface RichTextEditorProps {
   placeholder?: string;
 }
 
-export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange, placeholder }) => {
+export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         heading: {
           levels: [2, 3],
-        },
-        link: {
-          openOnClick: false,
-          HTMLAttributes: {
-            class: 'text-indigo-400 underline hover:text-indigo-300 cursor-pointer',
-          },
         },
       }),
       Image.extend({
@@ -90,16 +85,26 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
 
     // Only update if content differs (handles navigation between steps)
     if (editorContent !== newContent && newContent) {
-      editor.commands.setContent(newContent, false);
+      editor.commands.setContent(newContent);
     }
   }, [value]);
 
-  const toggleLink = () => {
-    const url = window.prompt('Enter URL');
-    if (url) {
-      editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
-    }
-  };
+  // Track focus state
+  useEffect(() => {
+    if (!editor) return;
+
+    const onFocus = () => setIsFocused(true);
+    const onBlur = () => setIsFocused(false);
+
+    editor.on('focus', onFocus);
+    editor.on('blur', onBlur);
+
+    return () => {
+      editor.off('focus', onFocus);
+      editor.off('blur', onBlur);
+    };
+  }, [editor]);
+
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -216,17 +221,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
           <Heading2 size={16} />
         </button>
         <button
-          onClick={toggleLink}
-          className={`p-2 rounded transition-colors ${
-            editor.isActive('link')
-              ? 'bg-indigo-600 text-white'
-              : 'bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700'
-          }`}
-          title="Add link"
-        >
-          <Link2 size={16} />
-        </button>
-        <button
           onClick={() => fileInputRef.current?.click()}
           className="p-2 rounded transition-colors bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
           title="Upload image"
@@ -244,19 +238,15 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange,
           <Trash2 size={16} />
         </button>
       </div>
-      <EditorContent
-        editor={editor}
-        className="bg-slate-900 border border-slate-600 rounded-b-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none min-h-32 [&_.ProseMirror]:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_a]:text-indigo-400 [&_a]:underline [&_a]:hover:text-indigo-300 [&_img]:rounded [&_img]:my-3 [&_img]:cursor-pointer"
-        style={{
-          borderTop: 'none',
-          borderTopLeftRadius: 0,
-          borderTopRightRadius: 0,
-        }}
-      />
+      <div className={`bg-slate-900 border border-slate-600 rounded-b-lg transition-all ${isFocused ? 'ring-2 ring-indigo-500' : ''}`} onClick={() => editor.chain().focus().run()}>
+        <EditorContent
+          editor={editor}
+          className="px-4 py-3 text-white outline-none min-h-32 [&_.ProseMirror]:outline-none [&_.ProseMirror]:focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_a]:text-indigo-400 [&_a]:underline [&_a]:hover:text-indigo-300 [&_img]:rounded [&_img]:my-3 [&_img]:cursor-pointer"
+        />
+      </div>
       {editor && (
         <BubbleMenu
           editor={editor}
-          tippyOptions={{ duration: 100 }}
           shouldShow={({ editor }) => {
             return editor.isActive('image');
           }}
