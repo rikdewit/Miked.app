@@ -7,124 +7,90 @@ import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
 import { percentToX, percentToZ, xToPercent, zToPercent } from '../utils/stageHelpers';
 import { StageDraggableItem } from './3d/StageDraggableItem';
 import { MODEL_OFFSETS } from './3d/StageModels';
+import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAMERA_ISO_PREVIEW } from '../constants';
 
-// Component that captures canvas screenshot for preview mode with fixed camera
-const ScreenshotCapture = ({ isPreview, isTopView, baseCamZoom, containerRef, onScreenshot }: { isPreview: boolean; isTopView: boolean; baseCamZoom: number; containerRef: React.RefObject<HTMLDivElement>; onScreenshot: (dataUrl: string) => void }) => {
-  const { gl, camera } = useThree();
-
+// Component that captures canvas screenshot for preview mode
+// Camera position/zoom is already set by ResponsiveCameraAdjuster — just capture what's rendered
+const ScreenshotCapture = ({ isPreview, containerRef, onScreenshot }: { isPreview: boolean; containerRef: React.RefObject<HTMLDivElement>; onScreenshot: (dataUrl: string) => void }) => {
   useEffect(() => {
-    if (!isPreview || !camera) return;
+    if (!isPreview) return;
 
-    // Set fixed camera settings for consistent screenshot
-    if (isTopView) {
-      camera.up.set(0, 0, -1);
-    } else {
-      camera.up.set(0, 1, 0);
-    }
-
-    // Use fixed camera position
-    camera.position.set(isTopView ? 0 : -20, isTopView ? 50 : 30, isTopView ? 0 : 20);
-    camera.lookAt(0, 0, 0);
-
-    camera.updateMatrix();
-    camera.updateMatrixWorld();
-
-    // Use fixed zoom value
-    (camera as THREE.OrthographicCamera).zoom = baseCamZoom;
-    camera.updateProjectionMatrix();
-
-    // Wait for render with fixed camera, then capture container including Html labels
+    // Wait for ResponsiveCameraAdjuster to apply zoom-to-fit and for Three.js to render
     const timer = setTimeout(() => {
       if (containerRef.current) {
-        // Use html2canvas to capture the entire container including Html labels
         import('html2canvas').then((html2canvas) => {
           html2canvas.default(containerRef.current!, {
             backgroundColor: '#f1f5f9',
             scale: 2,
             logging: false,
           }).then((canvas) => {
-            const dataUrl = canvas.toDataURL('image/png');
-            onScreenshot(dataUrl);
+            onScreenshot(canvas.toDataURL('image/png'));
           });
         });
       }
-    }, 100);
+    }, 200);
 
     return () => clearTimeout(timer);
-  }, [gl, camera, isPreview, isTopView, baseCamZoom, containerRef, onScreenshot]);
+  }, [isPreview, containerRef, onScreenshot]);
 
   return null;
 };
 
 // Component to handle responsive camera zoom and orientation
-const ResponsiveCameraAdjuster = ({ isTopView, isPreview, baseCamZoom }: { isTopView: boolean; isPreview: boolean; baseCamZoom: number }) => {
+const ResponsiveCameraAdjuster = ({ isTopView, isPreview }: { isTopView: boolean; isPreview: boolean }) => {
   const { camera, size } = useThree();
 
   useEffect(() => {
     if (!camera) return;
 
+    const orthoCamera = camera as THREE.OrthographicCamera;
+
+    // Pick the right settings from constants
+    const cfg = isTopView
+      ? (isPreview ? CAMERA_TOP_PREVIEW : CAMERA_TOP_INTERACTIVE)
+      : (isPreview ? CAMERA_ISO_PREVIEW : CAMERA_ISO_INTERACTIVE);
+
     // Set camera up vector FIRST (before lookAt)
-    if (isTopView) {
-      camera.up.set(0, 0, -1);
-    } else {
-      camera.up.set(0, 1, 0);
-    }
+    camera.up.set(...(isTopView ? [0, 0, -1] : [0, 1, 0]) as [number, number, number]);
 
-    // Set position and look at
-    // Preview uses different position than interactive mode
-    if (isPreview) {
-      camera.position.set(isTopView ? 0 : -20, isTopView ? -50 : 30, isTopView ? 0 : 20);
-      camera.lookAt(0, 0, 0);
-    } else {
-      camera.position.set(isTopView ? 0 : -20, isTopView ? 30 : 30, isTopView ? -1 : 20);
-      camera.lookAt(0, isTopView ? -10 : 1, isTopView ? 1 : 0);
-    }
+    camera.position.set(...cfg.position);
+    camera.lookAt(...cfg.lookAt);
 
-    // Update matrices before changing zoom
     camera.updateMatrix();
     camera.updateMatrixWorld();
 
-    // Calculate zoom with consistent padding for both modes
-    const canvasAspect = size.width / size.height;
-    const frustumSize = 580; // (far - near)
+    // Zoom-to-fit: project stage bounding box corners at zoom=1, then scale to fill viewport.
+    // This works for any camera angle or canvas size without hardcoded magic numbers.
+    orthoCamera.zoom = 1;
+    camera.updateProjectionMatrix();
 
-    if (isTopView) {
-      // Calculate zoom so stage fits with consistent padding
-      // Both preview and interactive use same padding for consistent framing
-      const SIDE_PADDING = 0.02; // minimal side padding
-      const TOP_PADDING = 0.2; // 20% top padding
-      const stagePaddedWidth = STAGE_WIDTH * (1 + SIDE_PADDING);
-      const stagePaddedHeight = STAGE_DEPTH * (1 + TOP_PADDING);
+    const h = cfg.modelHeight;
+    const corners = [
+      new THREE.Vector3(-STAGE_WIDTH / 2, 0, -STAGE_DEPTH / 2),
+      new THREE.Vector3( STAGE_WIDTH / 2, 0, -STAGE_DEPTH / 2),
+      new THREE.Vector3(-STAGE_WIDTH / 2, 0,  STAGE_DEPTH / 2),
+      new THREE.Vector3( STAGE_WIDTH / 2, 0,  STAGE_DEPTH / 2),
+      new THREE.Vector3(-STAGE_WIDTH / 2, h, -STAGE_DEPTH / 2),
+      new THREE.Vector3( STAGE_WIDTH / 2, h, -STAGE_DEPTH / 2),
+      new THREE.Vector3(-STAGE_WIDTH / 2, h,  STAGE_DEPTH / 2),
+      new THREE.Vector3( STAGE_WIDTH / 2, h,  STAGE_DEPTH / 2),
+    ];
 
-      // Calculate zoom needed to fit stage in both dimensions
-      const zoomForHeight = frustumSize / stagePaddedHeight;
-      const zoomForWidth = (frustumSize * canvasAspect) / stagePaddedWidth;
-
-      // Use the smaller zoom to ensure the stage fits in both dimensions
-      const adjustedZoom = Math.min(zoomForHeight, zoomForWidth);
-
-      (camera as THREE.OrthographicCamera).zoom = adjustedZoom;
-    } else {
-      // For isometric view, use responsive zoom based on canvas size in preview mode
-      if (isPreview) {
-        // Calculate zoom similar to top view but with different padding for isometric
-        const SIDE_PADDING = 0.1; // 10% on sides
-        const TOP_BOTTOM_PADDING = 0.15; // 15% on top/bottom (less than interactive)
-        const stagePaddedWidth = STAGE_WIDTH * (1 + SIDE_PADDING);
-        const stagePaddedHeight = STAGE_DEPTH * (1 + TOP_BOTTOM_PADDING);
-
-        const zoomForHeight = frustumSize / stagePaddedHeight;
-        const zoomForWidth = (frustumSize * canvasAspect) / stagePaddedWidth;
-
-        const adjustedZoom = Math.min(zoomForHeight, zoomForWidth);
-        (camera as THREE.OrthographicCamera).zoom = adjustedZoom;
-      } else {
-        (camera as THREE.OrthographicCamera).zoom = baseCamZoom;
-      }
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    for (const corner of corners) {
+      const ndc = corner.clone().project(camera);
+      if (ndc.x < minX) minX = ndc.x;
+      if (ndc.x > maxX) maxX = ndc.x;
+      if (ndc.y < minY) minY = ndc.y;
+      if (ndc.y > maxY) maxY = ndc.y;
     }
 
+    // NDC range [-1,1] covers the full viewport. Zoom needed to fit the projected extent:
+    const zoomX = 2 / ((maxX - minX) * (1 + cfg.padding));
+    const zoomY = 2 / ((maxY - minY) * (1 + cfg.padding));
+    orthoCamera.zoom = Math.min(zoomX, zoomY);
     camera.updateProjectionMatrix();
-  }, [size, camera, isTopView, baseCamZoom, isPreview]);
+  }, [size, camera, isTopView, isPreview]);
 
   return null;
 };
@@ -322,12 +288,6 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
   const isTopView = viewMode === 'top';
   const camPosition: [number, number, number] = isTopView ? [0, 70, -1] : [-20, 30, 20];
-  
-  // Use appropriate zoom for preview to fit the stage properly
-  // Top view needs higher zoom to fill viewport, 3D view slightly zoomed out
-  const camZoom = isPreview
-    ? (isTopView ? 155 : 120)
-    : (isTopView ? 200 : 60);
 
   // Responsive font sizes for stage and audience labels
   const stageFontSize = isPreview ? 0.8 : 1.2;
@@ -360,12 +320,12 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             key={viewMode}
             makeDefault
             position={camPosition}
-            zoom={camZoom}
+            zoom={1}
             near={-50}
             far={200}
         />
 
-        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} baseCamZoom={camZoom} />
+        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} />
 
         <ambientLight intensity={.9} />
         <directionalLight
@@ -464,7 +424,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
         {/* Capture screenshot for preview mode with fixed camera */}
         {isPreview && (
-          <ScreenshotCapture isPreview={isPreview} isTopView={isTopView} baseCamZoom={camZoom} containerRef={containerRef} onScreenshot={handleScreenshot} />
+          <ScreenshotCapture isPreview={isPreview} containerRef={containerRef} onScreenshot={handleScreenshot} />
         )}
 
       </Canvas>

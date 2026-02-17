@@ -1,5 +1,43 @@
 import { InstrumentDefinition, InstrumentType } from './types';
 
+// ─── Stage Plot Camera Settings ───────────────────────────────────────────────
+// Adjust these to change how the stage is framed in each view/mode.
+// padding: fraction of extra space around the stage (0.1 = 10%)
+// modelHeight: how many world-units above the stage floor to include in the
+//              zoom-to-fit bounding box (accounts for 3D model height)
+// position: [x, y, z] camera world position
+// lookAt: [x, y, z] point the camera looks at
+
+export const CAMERA_TOP_INTERACTIVE = {
+  position: [0, 30, -1] as [number, number, number],
+  lookAt: [0, -20, 1] as [number, number, number],
+  padding: 0.2,
+  modelHeight: 0,
+};
+
+export const CAMERA_TOP_PREVIEW = {
+  position: [0, 30, -1] as [number, number, number],
+  lookAt: [0, -20, 1] as [number, number, number],
+  padding: .2,
+  modelHeight: 0,
+};
+
+export const CAMERA_ISO_INTERACTIVE = {
+  position: [-20, 30, 20] as [number, number, number],
+  lookAt: [0, 1, 0] as [number, number, number],
+  padding: 0.2,
+  modelHeight: 3,
+};
+
+export const CAMERA_ISO_PREVIEW = {
+  position: [-20, 30, 20] as [number, number, number],
+  lookAt: [0, 1, 0] as [number, number, number],
+  padding: 0,
+  modelHeight: 3,
+};
+// ──────────────────────────────────────────────────────────────────────────────
+
+
 export const INSTRUMENTS: InstrumentDefinition[] = [
   // Vocals
   { id: 'voc_lead', group: 'Vocals', name: 'Lead Vocals', type: InstrumentType.VOCAL, defaultMic: 'SM58/Beta58', requiresMonitor: true, icon: 'Mic' },
