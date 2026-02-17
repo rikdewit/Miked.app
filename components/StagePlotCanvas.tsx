@@ -73,11 +73,11 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, baseCamZoom }: { isTop
     // Set position and look at
     // Preview uses different position than interactive mode
     if (isPreview) {
-      camera.position.set(isTopView ? 0 : -20, isTopView ? 50 : 30, isTopView ? 0 : 20);
+      camera.position.set(isTopView ? 0 : -20, isTopView ? -50 : 30, isTopView ? 0 : 20);
       camera.lookAt(0, 0, 0);
     } else {
-      camera.position.set(isTopView ? 0 : -20, isTopView ? 70 : 30, isTopView ? -1 : 20);
-      camera.lookAt(0, isTopView ? -30 : 0, isTopView ? 1 : 0);
+      camera.position.set(isTopView ? 0 : -20, isTopView ? 30 : 30, isTopView ? -1 : 20);
+      camera.lookAt(0, isTopView ? -10 : 1, isTopView ? 1 : 0);
     }
 
     // Update matrices before changing zoom
@@ -142,6 +142,7 @@ interface StagePlotCanvasProps {
   members?: BandMember[];
   rotatingItemId?: string | null;
   onRotateItem?: (itemId: string, direction: 'left' | 'right') => void;
+  onScreenshot?: (dataUrl: string) => void;
 }
 
 const StagePlatform = () => {
@@ -204,11 +205,17 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   onDragPosChange,
   members,
   rotatingItemId,
-  onRotateItem
+  onRotateItem,
+  onScreenshot: onScreenshotProp
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rotationUiItemId, setRotationUiItemId] = useState<string | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+
+  const handleScreenshot = (dataUrl: string) => {
+    setScreenshotUrl(dataUrl);
+    onScreenshotProp?.(dataUrl);
+  };
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -319,11 +326,11 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   // Use appropriate zoom for preview to fit the stage properly
   // Top view needs higher zoom to fill viewport, 3D view slightly zoomed out
   const camZoom = isPreview
-    ? (isTopView ? 60 : 45)
-    : (isTopView ? 60 : 60);
+    ? (isTopView ? 155 : 120)
+    : (isTopView ? 200 : 60);
 
   // Responsive font sizes for stage and audience labels
-  const stageFontSize = isPreview ? 0.6 : 1.2;
+  const stageFontSize = isPreview ? 0.8 : 1.2;
   const audienceFontSize = 0.5; // Smaller for audience
 
   // For preview with screenshot, show static image instead of threejs canvas
@@ -457,7 +464,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 
         {/* Capture screenshot for preview mode with fixed camera */}
         {isPreview && (
-          <ScreenshotCapture isPreview={isPreview} isTopView={isTopView} baseCamZoom={camZoom} containerRef={containerRef} onScreenshot={setScreenshotUrl} />
+          <ScreenshotCapture isPreview={isPreview} isTopView={isTopView} baseCamZoom={camZoom} containerRef={containerRef} onScreenshot={handleScreenshot} />
         )}
 
       </Canvas>

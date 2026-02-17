@@ -23,14 +23,45 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const stagePlotRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [topViewImage, setTopViewImage] = useState<string | null>(null);
+  const [isoViewImage, setIsoViewImage] = useState<string | null>(null);
 
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPdf(true);
 
+    // Clone the preview into a fixed-width off-screen container for consistent captures
+    let cloneContainer: HTMLDivElement | null = null;
+
     try {
-      // Wait for React to render and images to load
+      const previewEl = previewRef.current;
+      if (!previewEl) return;
+
+      // Create an off-screen clone at fixed A4 width so captures are screen-independent
+      cloneContainer = document.createElement('div');
+      cloneContainer.style.position = 'fixed';
+      cloneContainer.style.left = '-9999px';
+      cloneContainer.style.top = '0';
+      cloneContainer.style.width = '794px'; // 210mm at 96dpi
+      cloneContainer.style.maxWidth = '794px';
+      cloneContainer.style.backgroundColor = '#ffffff';
+      document.body.appendChild(cloneContainer);
+
+      const clone = previewEl.cloneNode(true) as HTMLElement;
+      clone.style.width = '100%';
+      clone.style.maxWidth = '100%';
+      cloneContainer.appendChild(clone);
+
+      // Wait for reflow and images to settle at fixed width
       await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Find sections in the clone by data attributes
+      const clonedHeader = clone.querySelector('[data-pdf="header"]') as HTMLElement | null;
+      const clonedGeneralNotes = clone.querySelector('[data-pdf="general-notes"]') as HTMLElement | null;
+      const clonedInputList = clone.querySelector('[data-pdf="input-list"]') as HTMLElement | null;
+      const clonedTechnicalNotes = clone.querySelector('[data-pdf="technical-notes"]') as HTMLElement | null;
+      const clonedStagePlot = clone.querySelector('[data-pdf="stage-plot"]') as HTMLElement | null;
+      const clonedFooter = clone.querySelector('[data-pdf="footer"]') as HTMLElement | null;
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -56,8 +87,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       };
 
       // PAGE 1: Capture and add header + input list sections
-      if (headerRef.current) {
-        const headerCanvas = await html2canvas(headerRef.current, {
+      if (clonedHeader) {
+        const headerCanvas = await html2canvas(clonedHeader, {
           scale: 2,
           useCORS: true,
           logging: false,
@@ -70,8 +101,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       }
 
       // Add general notes section if it exists
-      if (generalNotesRef.current) {
-        const generalNotesCanvas = await html2canvas(generalNotesRef.current, {
+      if (clonedGeneralNotes) {
+        const generalNotesCanvas = await html2canvas(clonedGeneralNotes, {
           scale: 3,
           useCORS: true,
           logging: false,
@@ -83,7 +114,6 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         const generalNotesHeight = (generalNotesCanvas.height * usableWidth) / generalNotesCanvas.width;
 
-        // Check if general notes fits on current page, if not start new page
         if (currentY + generalNotesHeight > pdfHeight - pageMargin) {
           pdf.addPage();
           currentY = pageMargin;
@@ -94,8 +124,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       }
 
       // Add input list section
-      if (inputListRef.current) {
-        const inputListCanvas = await html2canvas(inputListRef.current, {
+      if (clonedInputList) {
+        const inputListCanvas = await html2canvas(clonedInputList, {
           scale: 2,
           useCORS: true,
           logging: false,
@@ -104,7 +134,6 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         const inputListHeight = (inputListCanvas.height * usableWidth) / inputListCanvas.width;
 
-        // Check if input list fits on current page, if not start new page
         if (currentY + inputListHeight > pdfHeight - pageMargin) {
           pdf.addPage();
           currentY = pageMargin;
@@ -115,8 +144,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       }
 
       // Add technical notes section if it exists
-      if (technicalNotesRef.current) {
-        const technicalNotesCanvas = await html2canvas(technicalNotesRef.current, {
+      if (clonedTechnicalNotes) {
+        const technicalNotesCanvas = await html2canvas(clonedTechnicalNotes, {
           scale: 3,
           useCORS: true,
           logging: false,
@@ -128,7 +157,6 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         const technicalNotesHeight = (technicalNotesCanvas.height * usableWidth) / technicalNotesCanvas.width;
 
-        // Check if technical notes fits on current page, if not start new page
         if (currentY + technicalNotesHeight > pdfHeight - pageMargin) {
           pdf.addPage();
           currentY = pageMargin;
@@ -138,25 +166,47 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         currentY += technicalNotesHeight + 8;
       }
 
-      // PAGE 2+: Add stage plot on new page
+      // PAGE 2+: Add stage plot images directly (captured at fixed size for consistency)
       pdf.addPage();
       currentY = pageMargin;
 
-      if (stagePlotRef.current) {
-        const stagePlotCanvas = await html2canvas(stagePlotRef.current, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff',
-        });
+      // Add "Stage Plot" heading
+      if (clonedStagePlot) {
+        const headingEl = clonedStagePlot.querySelector('h3');
+        if (headingEl) {
+          const headingCanvas = await html2canvas(headingEl as HTMLElement, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+          });
+          const headingHeight = (headingCanvas.height * usableWidth) / headingCanvas.width;
+          safeAddImage(headingCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, headingHeight, 'Stage Plot Heading');
+          currentY += headingHeight + 4;
+        }
+      }
 
-        const stagePlotHeight = (stagePlotCanvas.height * usableWidth) / stagePlotCanvas.width;
-        safeAddImage(stagePlotCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, stagePlotHeight, 'Stage Plot');
+      // Add captured stage plot images at known 8:5 aspect ratio
+      const plotWidth = usableWidth * 0.9;
+      const plotHeight = plotWidth * (5 / 8);
+      const plotX = pageMargin + (usableWidth - plotWidth) / 2;
+
+      if (topViewImage) {
+        safeAddImage(topViewImage, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - Top View');
+        currentY += plotHeight + 6;
+      }
+
+      if (isoViewImage) {
+        if (currentY + plotHeight > pdfHeight - pageMargin) {
+          pdf.addPage();
+          currentY = pageMargin;
+        }
+        safeAddImage(isoViewImage, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - 3D View');
       }
 
       // Add footer to all pages
-      if (footerRef.current) {
-        const footerCanvas = await html2canvas(footerRef.current, {
+      if (clonedFooter) {
+        const footerCanvas = await html2canvas(clonedFooter, {
           scale: 2,
           useCORS: true,
           logging: false,
@@ -164,7 +214,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         });
 
         const footerHeight = (footerCanvas.height * usableWidth) / footerCanvas.width;
-        const footerY = pdfHeight - pageMargin - footerHeight - 5; // Extra 5mm buffer from bottom
+        const footerY = pdfHeight - pageMargin - footerHeight - 5;
         const totalPages = pdf.getNumberOfPages();
 
         for (let i = 1; i <= totalPages; i++) {
@@ -178,6 +228,10 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       console.error(err);
       alert('Error generating PDF. Please try again.');
     } finally {
+      // Remove the off-screen clone
+      if (cloneContainer) {
+        document.body.removeChild(cloneContainer);
+      }
       setIsGeneratingPdf(false);
     }
   };
@@ -207,7 +261,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       <div ref={previewRef} className="a4-page bg-white text-black w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-2xl mx-auto relative flex flex-col gap-8">
         
         {/* Header */}
-        <div ref={headerRef} className="flex justify-between items-start border-b-2 border-black pb-6">
+        <div ref={headerRef} data-pdf="header" className="flex justify-between items-start border-b-2 border-black pb-6">
           <div>
             <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">{data.details.bandName || 'BAND NAME'}</h1>
             <div className="flex gap-8 text-sm">
@@ -238,7 +292,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         {/* Notes */}
         {data.details.generalNotes && (
-          <div ref={generalNotesRef} className="text-sm break-inside-avoid">
+          <div ref={generalNotesRef} data-pdf="general-notes" className="text-sm break-inside-avoid">
              <div
                className="max-w-none [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
                dangerouslySetInnerHTML={{ __html: data.details.generalNotes }}
@@ -247,7 +301,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         )}
 
         {/* Input List */}
-        <div ref={inputListRef} className="break-inside-avoid">
+        <div ref={inputListRef} data-pdf="input-list" className="break-inside-avoid">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Mic size={20} /> Input List
           </h3>
@@ -256,7 +310,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         {/* Technical Notes */}
         {data.details.technicalNotes && (
-          <div ref={technicalNotesRef} className="text-sm break-inside-avoid">
+          <div ref={technicalNotesRef} data-pdf="technical-notes" className="text-sm break-inside-avoid">
              <div
                className="max-w-none [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
                dangerouslySetInnerHTML={{ __html: data.details.technicalNotes }}
@@ -265,18 +319,22 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         )}
 
         {/* Stageplot */}
-        <div ref={stagePlotRef} className="pt-8">
+        <div ref={stagePlotRef} data-pdf="stage-plot" className="pt-8">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Music2 size={20} /> Stage Plot
           </h3>
-          
+
           <div className="grid grid-cols-1 gap-6 mt-4">
               {/* Top View */}
               <div className="relative w-full max-w-[90%] aspect-[8/5] mx-auto">
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Layers size={24} className="text-black" />
                 </div>
-                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} isPreview={true} members={data.members} />
+                {topViewImage ? (
+                  <img src={topViewImage} alt="Stage plot - top view" className="w-full h-full object-contain border-2 border-slate-300 bg-slate-50" />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-slate-300">Loading stage plot...</div>
+                )}
               </div>
 
               {/* 3D View */}
@@ -284,13 +342,17 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
                 <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
                    <Box size={24} className="text-black" />
                 </div>
-                <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} isPreview={true} members={data.members} />
+                {isoViewImage ? (
+                  <img src={isoViewImage} alt="Stage plot - 3D view" className="w-full h-full object-contain border-2 border-slate-300 bg-slate-50" />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-slate-300">Loading stage plot...</div>
+                )}
               </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div ref={footerRef} className="mt-auto pt-8 pb-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 uppercase">
+        <div ref={footerRef} data-pdf="footer" className="mt-auto pt-8 pb-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 uppercase">
            <span>{data.details.bandName} - Tech Rider</span>
            <span>Created with miked.app</span>
         </div>
@@ -300,6 +362,18 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       <div className="no-print mt-8 text-center text-slate-500 text-sm">
         <p>Tip: You can customize the stage positions in step 2 before downloading.</p>
       </div>
+
+      {/* Off-screen fixed-size containers for consistent stage plot captures */}
+      {!topViewImage && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, width: 1600, height: 1000 }} aria-hidden="true">
+          <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} isPreview={true} members={data.members} onScreenshot={setTopViewImage} />
+        </div>
+      )}
+      {!isoViewImage && (
+        <div style={{ position: 'fixed', left: '-9999px', top: 0, width: 1600, height: 1000 }} aria-hidden="true">
+          <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} isPreview={true} members={data.members} onScreenshot={setIsoViewImage} />
+        </div>
+      )}
     </div>
   );
 });
