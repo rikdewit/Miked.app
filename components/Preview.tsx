@@ -30,6 +30,15 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const handleDownloadPDF = async () => {
     setIsGeneratingPdf(true);
 
+    // Add CSS fix before capturing
+    const style = document.createElement('style');
+    style.textContent = `
+      img { display: inline-block !important; }
+      div { line-height: 1 !important; }
+      * { line-height: 1 !important; }
+    `;
+    document.head.appendChild(style);
+
     // Clone the preview into a fixed-width off-screen container for consistent captures
     let cloneContainer: HTMLDivElement | null = null;
 
@@ -232,6 +241,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       if (cloneContainer) {
         document.body.removeChild(cloneContainer);
       }
+      // Remove CSS fix
+      document.head.removeChild(style);
       setIsGeneratingPdf(false);
     }
   };

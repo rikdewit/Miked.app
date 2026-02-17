@@ -10,6 +10,12 @@
       body {
         font-family: 'Inter', sans-serif;
       }
+      /* Fix Tailwind preflight text shifting issue with html2canvas */
+      @layer base {
+        img {
+          display: inline-block;
+        }
+      }
       /* Custom print styles to ensure A4 layout works perfectly */
       @media print {
         @page {

@@ -18,13 +18,27 @@ const ScreenshotCapture = ({ isPreview, containerRef, onScreenshot }: { isPrevie
     // Wait for ResponsiveCameraAdjuster to apply zoom-to-fit and for Three.js to render
     const timer = setTimeout(() => {
       if (containerRef.current) {
+        // Add CSS fix before capturing
+        const style = document.createElement('style');
+        style.textContent = `
+          img { display: inline-block !important; }
+          div { line-height: 1 !important; }
+          * { line-height: 1 !important; }
+        `;
+        document.head.appendChild(style);
+
         import('html2canvas').then((html2canvas) => {
           html2canvas.default(containerRef.current!, {
             backgroundColor: '#f1f5f9',
             scale: 2,
             logging: false,
+            useCORS: true,
+            imageTimeout: 5000,
+            allowTaint: true,
           }).then((canvas) => {
             onScreenshot(canvas.toDataURL('image/png'));
+            // Clean up the style
+            document.head.removeChild(style);
           });
         });
       }
