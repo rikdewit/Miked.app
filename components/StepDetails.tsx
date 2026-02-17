@@ -62,7 +62,7 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Telefoon</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
             <input
               type="tel"
               value={data.details.phone || ''}
