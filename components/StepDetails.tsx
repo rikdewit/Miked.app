@@ -138,30 +138,30 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData, showErr
 
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">Stage Dimensions</label>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             <input
               type="number"
               min={0}
               value={data.details.stageWidth ?? ''}
               onChange={(e) => setData(prev => ({ ...prev, details: { ...prev.details, stageWidth: e.target.value ? Number(e.target.value) : undefined } }))}
               placeholder="Width"
-              className="w-28 bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="flex-1 min-w-0 bg-slate-900 border border-slate-600 rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
             />
-            <span className="text-slate-400 font-bold">×</span>
+            <span className="text-slate-400 font-bold flex-shrink-0">×</span>
             <input
               type="number"
               min={0}
               value={data.details.stageDepth ?? ''}
               onChange={(e) => setData(prev => ({ ...prev, details: { ...prev.details, stageDepth: e.target.value ? Number(e.target.value) : undefined } }))}
               placeholder="Depth"
-              className="w-28 bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              className="flex-1 min-w-0 bg-slate-900 border border-slate-600 rounded-lg px-3 md:px-4 py-2.5 md:py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none text-sm md:text-base"
             />
-            <div className="flex rounded-lg overflow-hidden border border-slate-600">
+            <div className="flex rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
               {(['m', 'ft'] as const).map((unit) => (
                 <button
                   key={unit}
                   onClick={() => setData(prev => ({ ...prev, details: { ...prev.details, stageDimensionUnit: unit } }))}
-                  className={`px-4 py-3 text-sm font-semibold transition-colors ${data.details.stageDimensionUnit === unit ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'}`}
+                  className={`px-3 md:px-4 py-2.5 md:py-3 font-semibold transition-colors text-sm md:text-base ${data.details.stageDimensionUnit === unit ? 'bg-indigo-600 text-white' : 'bg-slate-900 text-slate-400 hover:text-white'}`}
                 >
                   {unit}
                 </button>
