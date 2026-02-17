@@ -38,8 +38,13 @@ export const CAMERA_ISO_PREVIEW = {
 
 // ─── Font Size Adjustments ────────────────────────────────────────────────────
 // Scale factors for text rendering in preview vs interactive modes
-export const FONT_SIZE_SCALE_INTERACTIVE = .8;
-export const FONT_SIZE_SCALE_PREVIEW = 3;
+// Model labels (on stage items like "Lead Vocals", "Guitar", etc.)
+export const MODEL_LABEL_FONT_SCALE_INTERACTIVE = 1.3;
+export const MODEL_LABEL_FONT_SCALE_PREVIEW = 3;
+
+// Audience text (the "AUDIENCE" label in front of stage)
+export const AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE = 1;
+export const AUDIENCE_TEXT_FONT_SCALE_PREVIEW = 1;
 // ──────────────────────────────────────────────────────────────────────────────
 
 

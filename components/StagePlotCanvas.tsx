@@ -7,7 +7,7 @@ import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
 import { percentToX, percentToZ, xToPercent, zToPercent } from '../utils/stageHelpers';
 import { StageDraggableItem } from './3d/StageDraggableItem';
 import { MODEL_OFFSETS } from './3d/StageModels';
-import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAMERA_ISO_PREVIEW, FONT_SIZE_SCALE_INTERACTIVE, FONT_SIZE_SCALE_PREVIEW } from '../constants';
+import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAMERA_ISO_PREVIEW, AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE, AUDIENCE_TEXT_FONT_SCALE_PREVIEW } from '../constants';
 
 // Component that captures canvas screenshot for preview mode
 // Camera position/zoom is already set by ResponsiveCameraAdjuster — just capture what's rendered
@@ -303,11 +303,9 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   const isTopView = viewMode === 'top';
   const camPosition: [number, number, number] = isTopView ? [0, 70, -1] : [-20, 30, 20];
 
-  // Responsive font sizes for stage and audience labels
-  const baseStageFontSize = 1.0;
-  const stageFontSize = baseStageFontSize * (isPreview ? FONT_SIZE_SCALE_PREVIEW : FONT_SIZE_SCALE_INTERACTIVE);
+  // Responsive font sizes for audience label
   const baseAudienceFontSize = 0.5; // Smaller for audience
-  const audienceFontSize = baseAudienceFontSize * (isPreview ? FONT_SIZE_SCALE_PREVIEW : FONT_SIZE_SCALE_INTERACTIVE);
+  const audienceFontSize = baseAudienceFontSize * (isPreview ? AUDIENCE_TEXT_FONT_SCALE_PREVIEW : AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE);
 
   // For preview with screenshot, show static image instead of threejs canvas
   if (isPreview && screenshotUrl) {

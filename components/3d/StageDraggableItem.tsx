@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { StageItem, BandMember, PersonPose } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ, getPersonPose } from '../../utils/stageHelpers';
-import { FONT_SIZE_SCALE_INTERACTIVE, FONT_SIZE_SCALE_PREVIEW } from '../../constants';
+import { MODEL_LABEL_FONT_SCALE_INTERACTIVE, MODEL_LABEL_FONT_SCALE_PREVIEW } from '../../constants';
 import * as Models from './StageModels';
 import { MODEL_OFFSETS } from './StageModels';
 
@@ -119,7 +119,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   // Calculate scaled font size for preview vs interactive
   const baseFontSize = 10;
-  const fontScale = isPreview ? FONT_SIZE_SCALE_PREVIEW : FONT_SIZE_SCALE_INTERACTIVE;
+  const fontScale = isPreview ? MODEL_LABEL_FONT_SCALE_PREVIEW : MODEL_LABEL_FONT_SCALE_INTERACTIVE;
   const scaledFontSize = baseFontSize * fontScale;
 
   // --- Offset Logic for Visual Alignment ---
