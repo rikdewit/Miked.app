@@ -1,4 +1,4 @@
-import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import React, { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import { Mic, Music2, Layers, Box, Clock, Printer } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -25,6 +25,33 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [topViewImage, setTopViewImage] = useState<string | null>(null);
   const [isoViewImage, setIsoViewImage] = useState<string | null>(null);
+  const [scale, setScale] = useState(1);
+  const [naturalHeight, setNaturalHeight] = useState(0);
+
+  // Update preview scale when window resizes
+  useEffect(() => {
+    const updateScale = () => {
+      const padding = 32; // accounts for responsive px-2 sm:px-4 md:px-8 padding
+      const maxWidth = window.innerWidth - padding;
+      const previewWidth = 794;
+      setScale(Math.min(1, maxWidth / previewWidth));
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, []);
+
+  // Measure the preview's natural (unscaled) height so we can collapse dead space below it
+  useEffect(() => {
+    const el = previewRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      setNaturalHeight(entries[0].contentRect.height);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
 
 
   const handleDownloadPDF = async () => {
@@ -34,8 +61,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
     const style = document.createElement('style');
     style.textContent = `
       img { display: inline-block !important; }
-      div { line-height: 1 !important; }
-      * { line-height: 1 !important; }
+      p, h1, h2, h3, h4, h5, h6, li, div { word-wrap: break-word !important; overflow-wrap: break-word !important; }
+      p, li { line-height: 1.5 !important; }
     `;
     document.head.appendChild(style);
 
@@ -252,8 +279,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   }));
 
   return (
-    <div className="w-full flex flex-col items-center">
-      <div className="no-print w-full max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
+    <div className="w-full flex flex-col items-center bg-slate-900">
+      <div className="no-print w-full mx-2 sm:mx-4 md:mx-8 max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
          <div>
            <h2 className="text-xl font-bold text-white">Your Rider is ready!</h2>
            <p className="text-slate-400 text-sm">Review it below and download as PDF.</p>
@@ -268,8 +295,10 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
          </button>
       </div>
 
-      {/* A4 PAPER PREVIEW */}
-      <div ref={previewRef} className="a4-page bg-white text-black w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-2xl mx-auto relative flex flex-col gap-8">
+      {/* Scale container — no transform here, just centering */}
+      <div className="flex justify-center w-full bg-slate-900">
+      {/* A4 PAPER PREVIEW — scaled here so layout space collapses naturally via negative margin */}
+      <div ref={previewRef} className="a4-page bg-white text-black shadow-2xl relative flex flex-col gap-8" style={{ width: '794px', padding: '56px', boxSizing: 'border-box', transform: `scale(${scale})`, transformOrigin: 'top center', marginBottom: `${-naturalHeight * (1 - scale)}px` }}>
         
         {/* Header */}
         <div ref={headerRef} data-pdf="header" className="flex justify-between items-start border-b-2 border-black pb-6">
@@ -305,7 +334,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         {data.details.generalNotes && (
           <div ref={generalNotesRef} data-pdf="general-notes" className="text-sm break-inside-avoid">
              <div
-               className="max-w-none [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+               className="max-w-full break-words [&_*]:break-words [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_p]:break-words [&_p]:word-wrap"
                dangerouslySetInnerHTML={{ __html: data.details.generalNotes }}
              />
           </div>
@@ -323,7 +352,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         {data.details.technicalNotes && (
           <div ref={technicalNotesRef} data-pdf="technical-notes" className="text-sm break-inside-avoid">
              <div
-               className="max-w-none [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+               className="max-w-full break-words [&_*]:break-words [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2 [&_p]:break-words [&_p]:word-wrap"
                dangerouslySetInnerHTML={{ __html: data.details.technicalNotes }}
              />
           </div>
@@ -369,9 +398,6 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         </div>
 
       </div>
-      
-      <div className="no-print mt-8 text-center text-slate-500 text-sm">
-        <p>Tip: You can customize the stage positions in step 2 before downloading.</p>
       </div>
 
       {/* Off-screen fixed-size containers for consistent stage plot captures */}

@@ -241,7 +241,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
       <div className={`bg-slate-900 border border-slate-600 rounded-b-lg transition-all ${isFocused ? 'ring-2 ring-indigo-500' : ''}`} onClick={() => editor.chain().focus().run()}>
         <EditorContent
           editor={editor}
-          className="px-4 py-3 text-white outline-none min-h-32 [&_.ProseMirror]:outline-none [&_.ProseMirror]:focus:outline-none [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_a]:text-indigo-400 [&_a]:underline [&_a]:hover:text-indigo-300 [&_img]:rounded [&_img]:my-3 [&_img]:cursor-pointer"
+          className="px-4 py-3 text-white outline-none min-h-32 [&_.ProseMirror]:outline-none [&_.ProseMirror]:focus:outline-none [&_*]:break-words [&_p]:break-words [&_p]:word-wrap [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_a]:text-indigo-400 [&_a]:underline [&_a]:hover:text-indigo-300 [&_img]:rounded [&_img]:my-3 [&_img]:cursor-pointer"
         />
       </div>
       {editor && (

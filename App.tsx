@@ -73,7 +73,7 @@ const App: React.FC = () => {
       <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {/* Padding and centering for non-stage steps */}
         {step !== 2 && (
-          <div className="flex-1 overflow-y-auto p-4 md:p-8 flex flex-col items-center">
+          <div className={`flex-1 overflow-y-auto flex flex-col items-center ${step === 4 ? 'px-2 sm:px-4 md:px-8 py-4 md:py-8' : 'p-4 md:p-8'}`}>
             {step === 0 && <Landing onStart={() => setStep(1)} />}
 
             {step === 1 && (
