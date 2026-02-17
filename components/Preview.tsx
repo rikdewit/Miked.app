@@ -1,5 +1,7 @@
 import React, { useRef, useState, forwardRef, useImperativeHandle } from 'react';
 import { Mic, Music2, Layers, Box, Clock, Printer } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { RiderData } from '../types';
 import { InputList } from './InputList';
 import { StagePlotCanvas } from './StagePlotCanvas';
@@ -14,21 +16,86 @@ interface PreviewProps {
 
 export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) => {
   const previewRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+  const inputListRef = useRef<HTMLDivElement>(null);
+  const stagePlotRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPdf(true);
-    
+
     try {
       // Wait for React to render any pending updates
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      // Use system print dialog for reliable PDF generation
-      // This avoids html2canvas text rendering issues
-      window.print();
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const pageMargin = 15;
+      const usableWidth = pdfWidth - (pageMargin * 2);
+
+      let currentY = pageMargin;
+
+      // PAGE 1: Capture and add header + input list sections
+      if (headerRef.current) {
+        const headerCanvas = await html2canvas(headerRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const headerHeight = (headerCanvas.height * usableWidth) / headerCanvas.width;
+        pdf.addImage(headerCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, headerHeight);
+        currentY += headerHeight + 8;
+      }
+
+      // Add input list section
+      if (inputListRef.current) {
+        const inputListCanvas = await html2canvas(inputListRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const inputListHeight = (inputListCanvas.height * usableWidth) / inputListCanvas.width;
+
+        // Check if input list fits on current page, if not start new page
+        if (currentY + inputListHeight > pdfHeight - pageMargin) {
+          pdf.addPage();
+          currentY = pageMargin;
+        }
+
+        pdf.addImage(inputListCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, inputListHeight);
+        currentY += inputListHeight;
+      }
+
+      // PAGE 2+: Add stage plot on new page
+      pdf.addPage();
+      currentY = pageMargin;
+
+      if (stagePlotRef.current) {
+        const stagePlotCanvas = await html2canvas(stagePlotRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const stagePlotHeight = (stagePlotCanvas.height * usableWidth) / stagePlotCanvas.width;
+        pdf.addImage(stagePlotCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, stagePlotHeight);
+      }
+
+      pdf.save(`${data.details.bandName || 'tech-rider'}.pdf`);
     } catch (err) {
       console.error(err);
-      alert('Error opening print dialog. Please try again.');
+      alert('Error generating PDF. Please try again.');
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -43,7 +110,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       <div className="no-print w-full max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
          <div>
            <h2 className="text-xl font-bold text-white">Your Rider is ready!</h2>
-           <p className="text-slate-400 text-sm">Review it below. Click "Print to PDF" or use your browser's print function (Ctrl+P / Cmd+P).</p>
+           <p className="text-slate-400 text-sm">Review it below and download as PDF.</p>
          </div>
          <button
            onClick={handleDownloadPDF}
@@ -59,7 +126,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       <div ref={previewRef} className="a4-page bg-white text-black w-full max-w-[210mm] min-h-[297mm] p-[15mm] shadow-2xl mx-auto relative flex flex-col gap-8">
         
         {/* Header */}
-        <div className="flex justify-between items-start border-b-2 border-black pb-6">
+        <div ref={headerRef} className="flex justify-between items-start border-b-2 border-black pb-6">
           <div>
             <h1 className="text-4xl font-black uppercase tracking-tighter mb-2">{data.details.bandName || 'BAND NAME'}</h1>
             <div className="flex gap-8 text-sm">
@@ -96,7 +163,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         )}
 
         {/* Input List */}
-        <div className="break-inside-avoid">
+        <div ref={inputListRef} className="break-inside-avoid">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Mic size={20} /> Input List
           </h3>
@@ -104,7 +171,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         </div>
 
         {/* Stageplot */}
-        <div className="flex-1 flex flex-col min-h-0 break-inside-avoid pt-8">
+        <div ref={stagePlotRef} className="pt-8">
           <h3 className="text-xl font-bold uppercase border-b border-black mb-4 flex items-center gap-2">
             <Music2 size={20} /> Stage Plot
           </h3>
