@@ -50,6 +50,7 @@ export const INITIAL_RIDER_DATA = {
     contactName: '',
     email: '',
     generalNotes: '',
+    technicalNotes: '',
     showDuration: '',
     soundcheckDuration: '',
     stageDimensionUnit: 'm' as const,

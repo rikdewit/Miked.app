@@ -24,12 +24,13 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const footerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
+
   const handleDownloadPDF = async () => {
     setIsGeneratingPdf(true);
 
     try {
-      // Wait for React to render any pending updates
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for React to render and images to load
+      await new Promise(resolve => setTimeout(resolve, 1500));
 
       const pdf = new jsPDF({
         orientation: 'portrait',
@@ -44,6 +45,16 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
       let currentY = pageMargin;
 
+      // Helper function to safely add images to PDF
+      const safeAddImage = (imageData: string, x: number, y: number, width: number, height: number, label: string) => {
+        if (!imageData || !width || !height || isNaN(width) || isNaN(height)) {
+          console.warn(`[PDF] Skipping ${label} - invalid dimensions:`, { width, height, dataLength: imageData?.length });
+          return;
+        }
+        console.log(`[PDF] Adding ${label} - dimensions: ${width}x${height}`);
+        pdf.addImage(imageData, 'JPEG', x, y, width, height);
+      };
+
       // PAGE 1: Capture and add header + input list sections
       if (headerRef.current) {
         const headerCanvas = await html2canvas(headerRef.current, {
@@ -54,17 +65,20 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         });
 
         const headerHeight = (headerCanvas.height * usableWidth) / headerCanvas.width;
-        pdf.addImage(headerCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, headerHeight);
+        safeAddImage(headerCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, headerHeight, 'Header');
         currentY += headerHeight + 8;
       }
 
       // Add general notes section if it exists
       if (generalNotesRef.current) {
         const generalNotesCanvas = await html2canvas(generalNotesRef.current, {
-          scale: 2,
+          scale: 3,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
+          allowTaint: true,
+          imageTimeout: 5000,
+          removeContainer: false,
         });
 
         const generalNotesHeight = (generalNotesCanvas.height * usableWidth) / generalNotesCanvas.width;
@@ -75,7 +89,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
           currentY = pageMargin;
         }
 
-        pdf.addImage(generalNotesCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, generalNotesHeight);
+        safeAddImage(generalNotesCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, generalNotesHeight, 'General Notes');
         currentY += generalNotesHeight + 8;
       }
 
@@ -96,17 +110,20 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
           currentY = pageMargin;
         }
 
-        pdf.addImage(inputListCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, inputListHeight);
+        safeAddImage(inputListCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, inputListHeight, 'Input List');
         currentY += inputListHeight;
       }
 
       // Add technical notes section if it exists
       if (technicalNotesRef.current) {
         const technicalNotesCanvas = await html2canvas(technicalNotesRef.current, {
-          scale: 2,
+          scale: 3,
           useCORS: true,
           logging: false,
           backgroundColor: '#ffffff',
+          allowTaint: true,
+          imageTimeout: 5000,
+          removeContainer: false,
         });
 
         const technicalNotesHeight = (technicalNotesCanvas.height * usableWidth) / technicalNotesCanvas.width;
@@ -117,7 +134,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
           currentY = pageMargin;
         }
 
-        pdf.addImage(technicalNotesCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, technicalNotesHeight);
+        safeAddImage(technicalNotesCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, technicalNotesHeight, 'Technical Notes');
         currentY += technicalNotesHeight + 8;
       }
 
@@ -134,7 +151,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         });
 
         const stagePlotHeight = (stagePlotCanvas.height * usableWidth) / stagePlotCanvas.width;
-        pdf.addImage(stagePlotCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, stagePlotHeight);
+        safeAddImage(stagePlotCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, stagePlotHeight, 'Stage Plot');
       }
 
       // Add footer to all pages
@@ -152,7 +169,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         for (let i = 1; i <= totalPages; i++) {
           pdf.setPage(i);
-          pdf.addImage(footerCanvas.toDataURL('image/png'), 'PNG', pageMargin, footerY, usableWidth, footerHeight);
+          safeAddImage(footerCanvas.toDataURL('image/jpeg', 0.99), pageMargin, footerY, usableWidth, footerHeight, `Footer (Page ${i})`);
         }
       }
 
@@ -220,8 +237,11 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         {/* Notes */}
         {data.details.generalNotes && (
-          <div ref={generalNotesRef} className="bg-slate-50 p-4 border-l-4 border-black text-sm break-inside-avoid">
-             <p className="whitespace-pre-wrap">{data.details.generalNotes}</p>
+          <div ref={generalNotesRef} className="text-sm break-inside-avoid">
+             <div
+               className="max-w-none [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+               dangerouslySetInnerHTML={{ __html: data.details.generalNotes }}
+             />
           </div>
         )}
 
@@ -235,8 +255,11 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         {/* Technical Notes */}
         {data.details.technicalNotes && (
-          <div ref={technicalNotesRef} className="bg-slate-50 p-4 border-l-4 border-black text-sm break-inside-avoid">
-             <p className="whitespace-pre-wrap">{data.details.technicalNotes}</p>
+          <div ref={technicalNotesRef} className="text-sm break-inside-avoid">
+             <div
+               className="max-w-none [&_h2]:font-bold [&_h2]:text-base [&_h2]:mt-3 [&_h2]:mb-2 [&_h3]:font-bold [&_h3]:text-sm [&_h3]:mt-2 [&_h3]:mb-1 [&_strong]:font-bold [&_em]:italic [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_img]:max-w-full [&_img]:h-auto [&_img]:my-2"
+               dangerouslySetInnerHTML={{ __html: data.details.technicalNotes }}
+             />
           </div>
         )}
 

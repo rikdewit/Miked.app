@@ -1,10 +1,28 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { RiderData, BandMember, StageItem, InstrumentType, InputConfig } from '../types';
 import { INITIAL_RIDER_DATA, INSTRUMENTS } from '../constants';
 
+const STORAGE_KEY = 'miked_rider_data';
+
 export const useRiderState = () => {
-  const [data, setData] = useState<RiderData>(INITIAL_RIDER_DATA);
+  const [data, setData] = useState<RiderData>(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      return saved ? JSON.parse(saved) : INITIAL_RIDER_DATA;
+    } catch {
+      return INITIAL_RIDER_DATA;
+    }
+  });
+
+  // Save to localStorage whenever data changes
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch (err) {
+      console.error('Failed to save to localStorage:', err);
+    }
+  }, [data]);
 
   const addMember = useCallback(() => {
     const newMember: BandMember = {

@@ -1,5 +1,6 @@
 import React from 'react';
 import { RiderData } from '../types';
+import { RichTextEditor } from './RichTextEditor';
 
 interface StepDetailsProps {
   data: RiderData;
@@ -142,23 +143,19 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
 
         <div>
            <label className="block text-sm font-medium text-slate-300 mb-2">General Notes</label>
-           <textarea
-             rows={4}
+           <RichTextEditor
              value={data.details.generalNotes}
-             onChange={(e) => setData(prev => ({...prev, details: {...prev.details, generalNotes: e.target.value}}))}
+             onChange={(content) => setData(prev => ({...prev, details: {...prev.details, generalNotes: content}}))}
              placeholder="e.g. We bring our own van, need 3x2m space for banners..."
-             className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
            />
         </div>
 
         <div>
            <label className="block text-sm font-medium text-slate-300 mb-2">Technical Notes</label>
-           <textarea
-             rows={4}
+           <RichTextEditor
              value={data.details.technicalNotes}
-             onChange={(e) => setData(prev => ({...prev, details: {...prev.details, technicalNotes: e.target.value}}))}
+             onChange={(content) => setData(prev => ({...prev, details: {...prev.details, technicalNotes: content}}))}
              placeholder="e.g. All vocals need effects, click track required, drummer uses in-ear monitoring..."
-             className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
            />
         </div>
 
