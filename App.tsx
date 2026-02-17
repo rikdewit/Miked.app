@@ -12,6 +12,7 @@ const App: React.FC = () => {
   const [step, setStep] = useState(0); // 0: Landing, 1: Instruments, 2: Stage, 3: Details, 4: Preview
   const previewRef = useRef<PreviewHandle>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [showDetailsErrors, setShowDetailsErrors] = useState(false);
 
   const {
     data,
@@ -28,12 +29,21 @@ const App: React.FC = () => {
   } = useRiderState();
 
   // --- Navigation & Validation ---
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
+
   const canProceed = () => {
     if (step === 1) {
         return data.members.length > 0 &&
                data.members.every(m => m.name.trim() !== '' && m.instruments.length > 0);
     }
-    if (step === 3) return data.details.bandName.trim() !== '';
+    if (step === 3) {
+        return data.details.bandName.trim() !== '' &&
+               data.details.contactName.trim() !== '' &&
+               isValidEmail(data.details.email);
+    }
     return true;
   };
 
@@ -45,9 +55,20 @@ const App: React.FC = () => {
     }
   };
 
+  const handleAttemptProceed = () => {
+    if (step === 3) {
+      setShowDetailsErrors(true);
+    }
+  };
+
+  const handleSetStep = (newStep: number | ((prevStep: number) => number)) => {
+    setShowDetailsErrors(false);
+    setStep(newStep);
+  };
+
   return (
     <div className="h-dvh overflow-hidden bg-slate-900 text-slate-100 flex flex-col">
-      <Header step={step} setStep={setStep} />
+      <Header step={step} setStep={handleSetStep} />
 
       <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
         {/* Padding and centering for non-stage steps */}
@@ -73,6 +94,7 @@ const App: React.FC = () => {
               <StepDetails
                 data={data}
                 setData={setData}
+                showErrors={showDetailsErrors}
               />
             )}
 
@@ -94,12 +116,13 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <FooterNav 
-        step={step} 
-        setStep={setStep} 
-        canProceed={canProceed()} 
+      <FooterNav
+        step={step}
+        setStep={handleSetStep}
+        canProceed={canProceed()}
         onDownload={handleDownload}
         isDownloading={isDownloading}
+        onAttemptProceed={handleAttemptProceed}
       />
     </div>
   );

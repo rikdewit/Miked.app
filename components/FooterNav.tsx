@@ -7,9 +7,10 @@ interface FooterNavProps {
   canProceed: boolean;
   onDownload?: () => void;
   isDownloading?: boolean;
+  onAttemptProceed?: () => void;
 }
 
-export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed, onDownload, isDownloading }) => {
+export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed, onDownload, isDownloading, onAttemptProceed }) => {
   if (step === 0) return null;
 
   return (
@@ -23,12 +24,16 @@ export const FooterNav: React.FC<FooterNavProps> = ({ step, setStep, canProceed,
         </button>
         
         {step < 4 ? (
-          <button 
-            onClick={() => setStep(s => s + 1)}
-            disabled={!canProceed}
+          <button
+            onClick={() => {
+              onAttemptProceed?.();
+              if (canProceed) {
+                setStep(s => s + 1);
+              }
+            }}
             className={`px-6 py-2 rounded-full font-bold flex items-center gap-2 transition-all ${
-              canProceed 
-                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-indigo-500/25' 
+              canProceed
+                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg hover:shadow-indigo-500/25 cursor-pointer'
                 : 'bg-slate-800 text-slate-500 cursor-not-allowed'
             }`}
           >

@@ -5,9 +5,14 @@ import { RichTextEditor } from './RichTextEditor';
 interface StepDetailsProps {
   data: RiderData;
   setData: React.Dispatch<React.SetStateAction<RiderData>>;
+  showErrors?: boolean;
 }
 
-export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
+export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData, showErrors = false }) => {
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(email);
+  };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,33 +36,46 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData }) => {
         
         <div>
           <label className="block text-sm font-medium text-slate-300 mb-2">Act / Band Name *</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             value={data.details.bandName}
             onChange={(e) => setData(prev => ({...prev, details: {...prev.details, bandName: e.target.value}}))}
-            className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+            className={`w-full bg-slate-900 border rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none ${showErrors && !data.details.bandName.trim() ? 'border-red-500' : 'border-slate-600'}`}
             placeholder="The Super Band"
           />
+          {showErrors && !data.details.bandName.trim() && (
+            <p className="text-red-400 text-sm mt-1">Band Name is required</p>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Contact Person</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Contact Person *</label>
             <input
               type="text"
               value={data.details.contactName}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, contactName: e.target.value}}))}
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              required
+              className={`w-full bg-slate-900 border rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none ${showErrors && !data.details.contactName.trim() ? 'border-red-500' : 'border-slate-600'}`}
             />
+            {showErrors && !data.details.contactName.trim() && (
+              <p className="text-red-400 text-sm mt-1">Contact Person is required</p>
+            )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Email *</label>
             <input
               type="email"
               value={data.details.email}
               onChange={(e) => setData(prev => ({...prev, details: {...prev.details, email: e.target.value}}))}
-              className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+              pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
+              required
+              className={`w-full bg-slate-900 border rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none ${showErrors && !isValidEmail(data.details.email) ? 'border-red-500' : 'border-slate-600'}`}
+              title="Please enter a valid email address"
             />
+            {showErrors && !isValidEmail(data.details.email) && (
+              <p className="text-red-400 text-sm mt-1">Please enter a valid email address</p>
+            )}
           </div>
         </div>
 
