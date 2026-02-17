@@ -17,7 +17,9 @@ interface PreviewProps {
 export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) => {
   const previewRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
+  const generalNotesRef = useRef<HTMLDivElement>(null);
   const inputListRef = useRef<HTMLDivElement>(null);
+  const technicalNotesRef = useRef<HTMLDivElement>(null);
   const stagePlotRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -55,6 +57,27 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         currentY += headerHeight + 8;
       }
 
+      // Add general notes section if it exists
+      if (generalNotesRef.current) {
+        const generalNotesCanvas = await html2canvas(generalNotesRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const generalNotesHeight = (generalNotesCanvas.height * usableWidth) / generalNotesCanvas.width;
+
+        // Check if general notes fits on current page, if not start new page
+        if (currentY + generalNotesHeight > pdfHeight - pageMargin) {
+          pdf.addPage();
+          currentY = pageMargin;
+        }
+
+        pdf.addImage(generalNotesCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, generalNotesHeight);
+        currentY += generalNotesHeight + 8;
+      }
+
       // Add input list section
       if (inputListRef.current) {
         const inputListCanvas = await html2canvas(inputListRef.current, {
@@ -74,6 +97,27 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         pdf.addImage(inputListCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, inputListHeight);
         currentY += inputListHeight;
+      }
+
+      // Add technical notes section if it exists
+      if (technicalNotesRef.current) {
+        const technicalNotesCanvas = await html2canvas(technicalNotesRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const technicalNotesHeight = (technicalNotesCanvas.height * usableWidth) / technicalNotesCanvas.width;
+
+        // Check if technical notes fits on current page, if not start new page
+        if (currentY + technicalNotesHeight > pdfHeight - pageMargin) {
+          pdf.addPage();
+          currentY = pageMargin;
+        }
+
+        pdf.addImage(technicalNotesCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, technicalNotesHeight);
+        currentY += technicalNotesHeight + 8;
       }
 
       // PAGE 2+: Add stage plot on new page
@@ -156,8 +200,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
         {/* Notes */}
         {data.details.generalNotes && (
-          <div className="bg-slate-50 p-4 border-l-4 border-black text-sm break-inside-avoid">
-             <h3 className="font-bold uppercase text-xs mb-2 text-slate-500">Notes</h3>
+          <div ref={generalNotesRef} className="bg-slate-50 p-4 border-l-4 border-black text-sm break-inside-avoid">
              <p className="whitespace-pre-wrap">{data.details.generalNotes}</p>
           </div>
         )}
@@ -169,6 +212,13 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
           </h3>
           <InputList members={data.members} />
         </div>
+
+        {/* Technical Notes */}
+        {data.details.technicalNotes && (
+          <div ref={technicalNotesRef} className="bg-slate-50 p-4 border-l-4 border-black text-sm break-inside-avoid">
+             <p className="whitespace-pre-wrap">{data.details.technicalNotes}</p>
+          </div>
+        )}
 
         {/* Stageplot */}
         <div ref={stagePlotRef} className="pt-8">

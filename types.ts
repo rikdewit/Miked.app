@@ -64,6 +64,7 @@ export interface RiderDetails {
   website?: string;
   logoUrl?: string; // Base64 string
   generalNotes?: string;
+  technicalNotes?: string;
   showDuration?: string;
   soundcheckDuration?: string;
   stageWidth?: number;
