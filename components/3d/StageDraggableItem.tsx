@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { StageItem, BandMember, PersonPose } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
 import { percentToX, percentToZ, getPersonPose } from '../../utils/stageHelpers';
+import { FONT_SIZE_SCALE_INTERACTIVE, FONT_SIZE_SCALE_PREVIEW } from '../../constants';
 import * as Models from './StageModels';
 import { MODEL_OFFSETS } from './StageModels';
 
@@ -116,6 +117,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const showLabel = true;
   const labelLower = (item.label || '').toLowerCase();
 
+  // Calculate scaled font size for preview vs interactive
+  const baseFontSize = 10;
+  const fontScale = isPreview ? FONT_SIZE_SCALE_PREVIEW : FONT_SIZE_SCALE_INTERACTIVE;
+  const scaledFontSize = baseFontSize * fontScale;
+
   // --- Offset Logic for Visual Alignment ---
   let offset = MODEL_OFFSETS.DEFAULT;
   if (shape !== 'person') {
@@ -217,8 +223,9 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
             style={{ pointerEvents: isPreview ? 'none' : 'none' }}
         >
           <div
-            className={`text-[10px] font-black whitespace-nowrap select-none tracking-tight px-1 rounded border text-center inline-block ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}
+            className={`font-black whitespace-nowrap select-none tracking-tight px-1 rounded border text-center inline-block ${isGhost ? 'text-slate-700 bg-white/30 border-white/10' : 'text-slate-900 bg-white/50 border-white/20'}`}
             style={{
+              fontSize: `${scaledFontSize}px`,
               lineHeight: '1.2',
               padding: '2px 4px',
               minHeight: '16px',

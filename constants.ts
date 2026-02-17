@@ -35,6 +35,11 @@ export const CAMERA_ISO_PREVIEW = {
   padding: 0,
   modelHeight: 3,
 };
+
+// ─── Font Size Adjustments ────────────────────────────────────────────────────
+// Scale factors for text rendering in preview vs interactive modes
+export const FONT_SIZE_SCALE_INTERACTIVE = .8;
+export const FONT_SIZE_SCALE_PREVIEW = 3;
 // ──────────────────────────────────────────────────────────────────────────────
 
 
