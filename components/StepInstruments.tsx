@@ -62,7 +62,7 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
     <div className="max-w-5xl mx-auto w-full">
       <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
         <span className="bg-indigo-600 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg">1</span>
-        Instruments & Members
+        Band Members & Instruments
       </h2>
       
 

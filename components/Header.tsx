@@ -17,11 +17,11 @@ export const Header: React.FC<HeaderProps> = ({ step, setStep }) => {
         <div className={`flex-1 flex items-center justify-end gap-6 text-sm ${step === 0 ? 'text-slate-600' : 'text-slate-400'}`}>
           {/* Full text version - shown only on larger screens */}
           <span className="hidden md:inline">
-            <span className={step >= 1 ? 'text-indigo-400 font-bold' : ''}>1. Instruments</span>
+            <span className={step >= 1 ? 'text-indigo-400 font-bold' : ''}>1. Band</span>
             <span className="mx-3">→</span>
             <span className={step >= 2 ? 'text-indigo-400 font-bold' : ''}>2. Stage</span>
             <span className="mx-3">→</span>
-            <span className={step >= 3 ? 'text-indigo-400 font-bold' : ''}>3. Info</span>
+            <span className={step >= 3 ? 'text-indigo-400 font-bold' : ''}>3. Details</span>
             <span className="mx-3">→</span>
             <span className={step >= 4 ? 'text-indigo-400 font-bold' : ''}>4. Done</span>
           </span>
