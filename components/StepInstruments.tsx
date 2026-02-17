@@ -71,15 +71,17 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
           {data.members.map((member, index) => (
             <div key={member.id} className="relative bg-slate-700/50 rounded-lg p-1 animate-fadeIn border border-slate-600/50">
               <span className="absolute top-2 left-2 z-10 text-xs font-mono font-bold text-white bg-slate-600 px-2 py-0.5 rounded">#{index + 1}</span>
-              
-              <div className="grid grid-cols-1 md:grid-cols-[220px_1fr] gap-4">
-                  {/* LEFT COLUMN: 3D PREVIEW */}
-                  <div className="h-[250px] md:h-auto min-h-[250px] w-full p-2">
-                     <MemberPreview3D member={member} />
-                  </div>
 
-                  {/* RIGHT COLUMN: FORM INPUTS */}
-                  <div className="p-4 pt-0 md:pt-4 md:pl-0 space-y-4">
+              {/* 3D PREVIEW: stacked on mobile, absolutely fills the left strip on desktop */}
+              <div className="h-[250px] md:hidden w-full p-2">
+                <MemberPreview3D member={member} />
+              </div>
+              <div className="hidden md:block md:absolute md:left-1 md:top-1 md:bottom-1 md:w-[216px] p-2">
+                <MemberPreview3D member={member} />
+              </div>
+
+              {/* FORM INPUTS: determines the block height on desktop */}
+                  <div className="p-4 pt-0 md:pt-4 md:pl-[228px] space-y-4">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
                             <label className="text-xs text-slate-400 block mb-1">Member Name</label>
@@ -247,15 +249,13 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                         </div>
                     </div>
                   </div>
-                  
-                  <button 
+                  <button
                     onClick={() => removeMember(member.id)}
                     className="absolute top-2 right-2 text-slate-500 hover:text-red-400 hover:bg-slate-800 rounded p-2 transition-colors z-10"
                     title="Remove member"
                   >
                     <Trash2 size={18} />
                   </button>
-              </div>
             </div>
           ))}
 
