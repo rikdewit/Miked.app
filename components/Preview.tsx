@@ -21,6 +21,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const inputListRef = useRef<HTMLDivElement>(null);
   const technicalNotesRef = useRef<HTMLDivElement>(null);
   const stagePlotRef = useRef<HTMLDivElement>(null);
+  const footerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const handleDownloadPDF = async () => {
@@ -136,6 +137,25 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         pdf.addImage(stagePlotCanvas.toDataURL('image/png'), 'PNG', pageMargin, currentY, usableWidth, stagePlotHeight);
       }
 
+      // Add footer to all pages
+      if (footerRef.current) {
+        const footerCanvas = await html2canvas(footerRef.current, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff',
+        });
+
+        const footerHeight = (footerCanvas.height * usableWidth) / footerCanvas.width;
+        const footerY = pdfHeight - pageMargin - footerHeight - 5; // Extra 5mm buffer from bottom
+        const totalPages = pdf.getNumberOfPages();
+
+        for (let i = 1; i <= totalPages; i++) {
+          pdf.setPage(i);
+          pdf.addImage(footerCanvas.toDataURL('image/png'), 'PNG', pageMargin, footerY, usableWidth, footerHeight);
+        }
+      }
+
       pdf.save(`${data.details.bandName || 'tech-rider'}.pdf`);
     } catch (err) {
       console.error(err);
@@ -246,7 +266,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         </div>
 
         {/* Footer */}
-        <div className="mt-auto pt-8 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 uppercase">
+        <div ref={footerRef} className="mt-auto pt-8 pb-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 uppercase">
            <span>{data.details.bandName} - Tech Rider</span>
            <span>Created with miked.app</span>
         </div>
