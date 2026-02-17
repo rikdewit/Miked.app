@@ -1,5 +1,5 @@
 import React, { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
-import { Mic, Music2, Layers, Box, Clock, Printer } from 'lucide-react';
+import { Mic, Music2, Layers, Box, Clock, Download, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { RiderData } from '../types';
@@ -85,6 +85,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
       const clone = previewEl.cloneNode(true) as HTMLElement;
       clone.style.width = '100%';
+      clone.style.transform = 'none';
+      clone.style.marginBottom = '0';
       clone.style.maxWidth = '100%';
       cloneContainer.appendChild(clone);
 
@@ -280,7 +282,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
   return (
     <div className="w-full flex flex-col items-center bg-slate-900">
-      <div className="no-print w-full mx-2 sm:mx-4 md:mx-8 max-w-4xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
+      <div className="no-print w-full mx-2 sm:mx-4 md:mx-8 max-w-2xl mb-6 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-800 p-4 rounded-lg">
          <div>
            <h2 className="text-xl font-bold text-white">Your Rider is ready!</h2>
            <p className="text-slate-400 text-sm">Review it below and download as PDF.</p>
@@ -288,10 +290,10 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
          <button
            onClick={handleDownloadPDF}
            disabled={isGeneratingPdf}
-           className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+           className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-wait text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-indigo-500/25 transition-all whitespace-nowrap"
          >
-           <Printer size={20} />
-           Print to PDF
+           {isGeneratingPdf ? <Loader2 className="animate-spin" size={18} /> : <Download size={18} />}
+           {isGeneratingPdf ? 'Generating...' : 'Download PDF'}
          </button>
       </div>
 
