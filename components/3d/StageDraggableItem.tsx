@@ -110,91 +110,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const [contextMenuOffset, setContextMenuOffset] = useState<{ y: number; z: number }>({ y: 0, z: 0 });
   const fixedContextMenuPosRef = useRef<{ y: number; z: number } | null>(null);
-  const [prevShowRotationUI, setPrevShowRotationUI] = useState(false);
-
-  // Adjust context menu position to keep it visible and not overlap with object
-  useEffect(() => {
-    if (!showRotationUI || !contextMenuRef.current) return;
-
-    let rafId: number;
-    const checkPosition = () => {
-      if (!contextMenuRef.current) return;
-
-      const menuRect = contextMenuRef.current.getBoundingClientRect();
-      const objectBounds = getObjectScreenBounds();
-      const offset = { y: 0, z: 0 };
-      const padding = 15;
-      const menuMargin = 30; // Space between menu and object
-
-      // Check for intersection with object
-      const menuIntersectsObject =
-        menuRect.right + menuMargin > objectBounds.minX &&
-        menuRect.left - menuMargin < objectBounds.maxX &&
-        menuRect.bottom + menuMargin > objectBounds.minY &&
-        menuRect.top - menuMargin < objectBounds.maxY;
-
-      if (menuIntersectsObject) {
-        // Menu overlaps with object - find best alternative position
-        const menuHeight = menuRect.height;
-        const menuWidth = menuRect.width;
-        const objHeight = objectBounds.maxY - objectBounds.minY;
-        const objWidth = objectBounds.maxX - objectBounds.minX;
-
-        // Try positioning below object first
-        const spaceBelow = window.innerHeight - (objectBounds.maxY + menuMargin);
-        // Try positioning above object
-        const spaceAbove = objectBounds.minY - menuMargin;
-        // Try positioning to the right
-        const spaceRight = window.innerWidth - (objectBounds.maxX + menuMargin);
-        // Try positioning to the left
-        const spaceLeft = objectBounds.minX - menuMargin;
-
-        // Choose the best fit
-        if (spaceBelow > menuHeight) {
-          // Position below object
-          offset.y = -(objHeight / 2 + menuHeight / 2 + 1.5);
-        } else if (spaceAbove > menuHeight) {
-          // Position above object
-          offset.y = objHeight / 2 + menuHeight / 2 + 1.5;
-        } else if (spaceRight > menuWidth) {
-          // Position to the right
-          offset.z = objWidth / 2 + menuWidth / 4 + 1.2;
-        } else if (spaceLeft > menuWidth) {
-          // Position to the left
-          offset.z = -(objWidth / 2 + menuWidth / 4 + 1.2);
-        } else {
-          // Fallback: move up
-          offset.y = 3.5;
-        }
-      } else {
-        // No overlap - check canvas boundaries
-        if (menuRect.bottom > window.innerHeight - padding) {
-          offset.y = 3.5;
-        } else if (menuRect.top < padding) {
-          offset.y = -3.0;
-        }
-
-        if (menuRect.left < padding) {
-          offset.z = 1.5;
-        } else if (menuRect.right > window.innerWidth - padding) {
-          offset.z = -1.5;
-        }
-      }
-
-      setContextMenuOffset(offset);
-      rafId = requestAnimationFrame(checkPosition);
-    };
-
-    // Delay to ensure element is rendered
-    const startDelay = setTimeout(() => {
-      rafId = requestAnimationFrame(checkPosition);
-    }, 100);
-
-    return () => {
-      clearTimeout(startDelay);
-      cancelAnimationFrame(rafId);
-    };
-  }, [showRotationUI, getObjectScreenBounds]);
+  const prevShowRotationUIRef = useRef(false);
+  const [menuReady, setMenuReady] = useState(false);
 
   const showLabel = true;
   const labelLower = (item.label || '').toLowerCase();
@@ -225,23 +142,96 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       labelYPadding = 0.05;
   }
 
-  // Calculate initial context menu position (only when menu opens)
-  const customLabelHeight = item.type === 'custom' ? (item.labelHeight ?? height + labelYPadding) : 0;
-  const labelBaseY = item.type === 'custom' && customLabelHeight > 0 ? customLabelHeight : height + labelYPadding + offY;
-  const calculatedContextMenuPosY = viewMode === 'isometric' ? labelBaseY - 1.5 : labelBaseY;
-  const calculatedContextMenuPosZ = viewMode === 'top' ? (0 + offZ + 0.6) : (0 + offZ);
+  // Isometric: Y = -1.0 puts the menu below the stage floor, which projects below ALL objects on screen.
+  // Top view: Z = depth/2 + 1.2 places the menu below the object's footprint on screen.
+  const calculatedContextMenuPosY = viewMode === 'isometric' ? -1.0 : 0;
+  const calculatedContextMenuPosZ = viewMode === 'top' ? (offZ + depth / 2 + 1.2) : offZ;
 
-  // When menu opens, save the position
+  // When menu opens: render it invisible at the initial position, measure actual bounds, correct,
+  // then reveal. This prevents any visible jump regardless of menu height.
   useEffect(() => {
-    if (showRotationUI && !prevShowRotationUI) {
-      fixedContextMenuPosRef.current = { y: calculatedContextMenuPosY, z: calculatedContextMenuPosZ };
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    if (showRotationUI && !prevShowRotationUIRef.current) {
+      setMenuReady(false);
       setContextMenuOffset({ y: 0, z: 0 });
+
+      // Set initial world-space position (menu is invisible at this point)
+      if (viewMode === 'top') {
+        fixedContextMenuPosRef.current = { y: 0, z: offZ + depth / 2 + 1.2 };
+      } else {
+        fixedContextMenuPosRef.current = { y: -1.0, z: offZ };
+      }
+
+      // After DOM renders (one frame is enough), measure actual position and correct if needed
+      timer = setTimeout(() => {
+        const newOffset = { y: 0, z: 0 };
+
+        if (contextMenuRef.current) {
+          const menuRect = contextMenuRef.current.getBoundingClientRect();
+          const objectBounds = getObjectScreenBounds();
+          const margin = 24;
+          const padding = 12;
+
+          const overlapsObject =
+            menuRect.left   < objectBounds.maxX + margin &&
+            menuRect.right  > objectBounds.minX - margin &&
+            menuRect.top    < objectBounds.maxY + margin &&
+            menuRect.bottom > objectBounds.minY - margin;
+
+          const outBottom = menuRect.bottom > window.innerHeight - padding;
+          const outTop    = menuRect.top    < padding;
+          const outLeft   = menuRect.left   < padding;
+          const outRight  = menuRect.right  > window.innerWidth  - padding;
+
+          if (overlapsObject || outBottom || outTop || outLeft || outRight) {
+            const wp0 = new THREE.Vector3(x, 0, z).project(camera);
+            const wpY = new THREE.Vector3(x, 1, z).project(camera);
+            const screenPerWorldY = Math.abs((wpY.y - wp0.y) * (window.innerHeight / 2)) || 80;
+
+            const menuMidY   = (menuRect.top + menuRect.bottom) / 2;
+            const spaceAbove = objectBounds.minY - padding;
+            const spaceBelow = window.innerHeight - objectBounds.maxY - padding;
+
+            if (overlapsObject || outBottom) {
+              if (spaceAbove >= menuRect.height + margin) {
+                const targetMidY = objectBounds.minY - margin - menuRect.height / 2;
+                newOffset.y = -(targetMidY - menuMidY) / screenPerWorldY;
+              } else if (spaceBelow >= menuRect.height + margin) {
+                const targetMidY = objectBounds.maxY + margin + menuRect.height / 2;
+                newOffset.y = -(targetMidY - menuMidY) / screenPerWorldY;
+              } else {
+                const spaceRight = window.innerWidth - objectBounds.maxX - padding;
+                newOffset.z = spaceRight >= menuRect.width + margin ? -2.5 : 2.5;
+              }
+            } else if (outTop) {
+              const targetMidY = padding + menuRect.height / 2;
+              newOffset.y = -(targetMidY - menuMidY) / screenPerWorldY;
+            }
+
+            if (outLeft)       newOffset.z =  2.0;
+            else if (outRight) newOffset.z = -2.0;
+          }
+        }
+
+        setContextMenuOffset(newOffset);
+        setMenuReady(true);
+      // getObjectScreenBounds, x, z, camera etc. are captured by closure at open time
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      }, 50);
     }
-    if (!showRotationUI && prevShowRotationUI) {
+
+    if (!showRotationUI && prevShowRotationUIRef.current) {
       fixedContextMenuPosRef.current = null;
+      setMenuReady(false);
     }
-    setPrevShowRotationUI(showRotationUI);
-  }, [showRotationUI, prevShowRotationUI, calculatedContextMenuPosY, calculatedContextMenuPosZ]);
+
+    prevShowRotationUIRef.current = showRotationUI;
+
+    return () => { if (timer) clearTimeout(timer); };
+  // offZ, depth, viewMode, x, z, camera captured by closure at open time
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showRotationUI]);
 
   // Use fixed position while menu is open, otherwise calculate current position
   const contextMenuPosY = fixedContextMenuPosRef.current?.y ?? calculatedContextMenuPosY;
@@ -356,6 +346,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
           <div
             ref={contextMenuRef}
             className="flex gap-1 bg-slate-900 border border-slate-600 rounded-lg p-1.5 shadow-lg"
+            style={{ opacity: menuReady ? 1 : 0, pointerEvents: menuReady ? undefined : 'none' }}
             onClick={(e) => e.stopPropagation()}
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}

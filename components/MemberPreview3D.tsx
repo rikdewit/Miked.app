@@ -43,15 +43,11 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, 
 
         if (type === 'keys') {
             return (
-                // @ts-expect-error - React Three Fiber intrinsic elements
                 <group>
                     <Models.StandModel color="#64748b" />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <group position={[0, 0.8, 0]}>
                         <Models.SynthModel />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </group>
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </group>
             );
         }
@@ -60,79 +56,47 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, 
 
         if (type === 'modeller') {
             return (
-                // @ts-expect-error - React Three Fiber intrinsic elements
                 <group position={[0, 0.05, 0]}>
                     {/* Main body - looks like an effects unit */}
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh castShadow receiveShadow position={[0, 0, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.55, 0.08, 0.3]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#111827" roughness={0.5} metalness={0.4} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
                     {/* Top panel highlight */}
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh position={[0, 0.041, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.5, 0.002, 0.25]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#374151" roughness={0.3} metalness={0.6} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
                     {/* Control buttons/indicators */}
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh position={[-0.15, 0.045, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.08, 0.015, 0.04]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.8} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh position={[0, 0.045, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.08, 0.015, 0.04]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.8} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh position={[0.15, 0.045, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.08, 0.015, 0.04]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#10b981" roughness={0.2} metalness={0.8} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </group>
             );
         }
 
         if (type === 'di') {
             return (
-                // @ts-expect-error - React Three Fiber intrinsic elements
                 <group position={[0, 0.02, 0]}>
                     {/* DI box body */}
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh castShadow receiveShadow position={[0, 0, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.25, 0.08, 0.15]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#ea580c" roughness={0.5} metalness={0.3} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
                     {/* Panel detail */}
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <mesh position={[0, 0.041, 0]}>
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <boxGeometry args={[0.22, 0.002, 0.12]} />
-                        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                         <meshStandardMaterial color="#f97316" roughness={0.3} metalness={0.5} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     </mesh>
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </group>
             );
         }
@@ -146,34 +110,24 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, 
 
         if (type === 'wedge') {
             return (
-                // @ts-expect-error - React Three Fiber intrinsic elements
                 <mesh position={[0, height/2, 0]} rotation={[Math.PI/6, 0, 0]} castShadow receiveShadow>
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <boxGeometry args={[width, height, depth]} />
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <meshStandardMaterial color={color} roughness={0.4} />
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </mesh>
             );
         }
 
         return (
-            // @ts-expect-error - React Three Fiber intrinsic elements
             <mesh castShadow receiveShadow position={[0, height/2, 0]}>
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 <boxGeometry args={[width, height, depth]} />
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 <meshStandardMaterial color={color} roughness={0.4} />
-            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             </mesh>
         );
     };
 
     return (
-        // @ts-expect-error - React Three Fiber intrinsic elements
         <group position={position}>
             {renderMesh()}
-        {/* @ts-expect-error - React Three Fiber intrinsic elements */}
         </group>
     );
 };
@@ -308,15 +262,11 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
       style={{ touchAction: isSidebarPreview ? 'auto' : 'none' }}
     >
         <Canvas shadows camera={{ position: [2.5, 2.5, 3.5], fov: 35 }} style={{ touchAction: isSidebarPreview ? 'auto' : 'none', pointerEvents: isSidebarPreview ? 'none' : 'auto' }}>
-            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             <ambientLight intensity={0.6} />
-            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
-            {/* @ts-expect-error - React Three Fiber intrinsic elements */}
             <pointLight position={[-5, 2, -5]} intensity={0.5} color="#3b82f6" />
 
             <Suspense fallback={null}>
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 <group position={[0, -0.8, 0]}>
                     {sceneItems.map((item, idx) => (
                         <PreviewItem
@@ -328,10 +278,8 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
                             pose={item.pose}
                         />
                     ))}
-                    {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                     <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
                     <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />
-                {/* @ts-expect-error - React Three Fiber intrinsic elements */}
                 </group>
             </Suspense>
 

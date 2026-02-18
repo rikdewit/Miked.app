@@ -515,7 +515,6 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     members={data.members}
                     rotatingItemId={rotatingItemId}
                     onRotateItem={handleRotateItem}
-                    isDragging={!!draggingMemberId}
                 />
 
                 {data.stagePlot.length === 0 && !draggingMemberId && (
