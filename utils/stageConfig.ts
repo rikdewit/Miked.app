@@ -21,6 +21,15 @@ export const COLORS = {
 
 // --- Item Configuration Helper ---
 export const getItemConfig = (item: StageItem) => {
+  if (item.type === 'custom') {
+    const w = item.customWidth ?? 0;
+    const d = item.customDepth ?? 0;
+    if (w === 0 && d === 0) {
+      return { width: 0.3, depth: 0.3, height: 0.01, color: 'transparent', shape: 'box' };
+    }
+    return { width: w, depth: d, height: item.customHeight ?? 0.3, color: '#6366f1', shape: 'box' };
+  }
+
   const isPerson = item.type === 'person';
   const isMonitor = item.type === 'monitor';
   const isPower = item.type === 'power';

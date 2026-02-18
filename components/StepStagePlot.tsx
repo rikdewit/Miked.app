@@ -472,6 +472,18 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     + Power
                 </button>
                 <button
+                    onClick={() => updateStageItems([...data.stagePlot, { id: `custom-${Date.now()}`, type: 'custom', x: 50, y: 50, label: '', customWidth: 1.0, customDepth: 1.0 }])}
+                    className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                >
+                    + Custom
+                </button>
+                <button
+                    onClick={() => updateStageItems([...data.stagePlot, { id: `label-${Date.now()}`, type: 'custom', x: 50, y: 50, label: 'Label', customWidth: 0, customDepth: 0, labelHeight: 1.7 }])}
+                    className="flex-1 sm:flex-none px-2 sm:px-3 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs border border-slate-600 whitespace-nowrap"
+                >
+                    + Label
+                </button>
+                <button
                     type="button"
                     onClick={requestClearStage}
                     disabled={data.stagePlot.length === 0}

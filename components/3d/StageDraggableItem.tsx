@@ -1,7 +1,8 @@
 
 import React, { Suspense, useRef, useState, useEffect } from 'react';
-import { ThreeEvent } from '@react-three/fiber';
+import { ThreeEvent, useThree } from '@react-three/fiber';
 import { Html } from '@react-three/drei';
+import * as THREE from 'three';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { StageItem, BandMember, PersonPose } from '../../types';
 import { getItemConfig } from '../../utils/stageConfig';
@@ -26,6 +27,10 @@ interface DraggableItemProps {
   onDelete?: (itemId: string) => void;
   onQuantityChange?: (itemId: string, quantity: number) => void;
   onMonitorNumberChange?: (itemId: string, monitorNumber: number) => void;
+  onLabelChange?: (itemId: string, label: string) => void;
+  onHeightChange?: (itemId: string, height: number) => void;
+  onLabelHeightChange?: (itemId: string, height: number) => void;
+  onResizeStart?: (itemId: string) => void;
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
@@ -47,6 +52,10 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onDelete,
   onQuantityChange,
   onMonitorNumberChange,
+  onLabelChange,
+  onHeightChange,
+  onLabelHeightChange,
+  onResizeStart,
   isEditable = false,
   viewMode = 'isometric',
   isPreview = false
@@ -65,11 +74,45 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const downPosRef = useRef<{ x: number; y: number } | null>(null);
   const threshold = 1; // pixels - if movement > this, it's a drag
 
+  // Get THREE.js camera for bounding box calculations
+  const { camera } = useThree();
+
+  // Calculate object's screen-space bounding box
+  const getObjectScreenBounds = () => {
+    const corners = [
+      new THREE.Vector3(x - width / 2, 0, z - depth / 2),
+      new THREE.Vector3(x + width / 2, 0, z - depth / 2),
+      new THREE.Vector3(x - width / 2, height, z - depth / 2),
+      new THREE.Vector3(x + width / 2, height, z - depth / 2),
+      new THREE.Vector3(x - width / 2, 0, z + depth / 2),
+      new THREE.Vector3(x + width / 2, 0, z + depth / 2),
+      new THREE.Vector3(x - width / 2, height, z + depth / 2),
+      new THREE.Vector3(x + width / 2, height, z + depth / 2),
+    ];
+
+    const screenCorners = corners.map(corner => {
+      corner.project(camera);
+      return {
+        x: (corner.x + 1) / 2 * window.innerWidth,
+        y: (1 - corner.y) / 2 * window.innerHeight,
+      };
+    });
+
+    return {
+      minX: Math.min(...screenCorners.map(c => c.x)),
+      maxX: Math.max(...screenCorners.map(c => c.x)),
+      minY: Math.min(...screenCorners.map(c => c.y)),
+      maxY: Math.max(...screenCorners.map(c => c.y)),
+    };
+  };
+
   // Context menu positioning
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const [contextMenuOffset, setContextMenuOffset] = useState<{ y: number; z: number }>({ y: 0, z: 0 });
+  const fixedContextMenuPosRef = useRef<{ y: number; z: number } | null>(null);
+  const [prevShowRotationUI, setPrevShowRotationUI] = useState(false);
 
-  // Adjust context menu position if it goes off-screen
+  // Adjust context menu position to keep it visible and not overlap with object
   useEffect(() => {
     if (!showRotationUI || !contextMenuRef.current) return;
 
@@ -77,26 +120,65 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     const checkPosition = () => {
       if (!contextMenuRef.current) return;
 
-      const rect = contextMenuRef.current.getBoundingClientRect();
+      const menuRect = contextMenuRef.current.getBoundingClientRect();
+      const objectBounds = getObjectScreenBounds();
       const offset = { y: 0, z: 0 };
-      const padding = 10;
+      const padding = 15;
+      const menuMargin = 30; // Space between menu and object
 
-      // If menu goes above viewport, shift it down significantly
-      if (rect.top < padding) {
-        offset.y = -2.4;
-      }
-      // If menu goes below viewport, shift it up
-      else if (rect.bottom > window.innerHeight - padding) {
-        offset.y = 2.4;
-      }
+      // Check for intersection with object
+      const menuIntersectsObject =
+        menuRect.right + menuMargin > objectBounds.minX &&
+        menuRect.left - menuMargin < objectBounds.maxX &&
+        menuRect.bottom + menuMargin > objectBounds.minY &&
+        menuRect.top - menuMargin < objectBounds.maxY;
 
-      // Horizontal: shift right if off left edge
-      if (rect.left < padding) {
-        offset.z = 1.0;
-      }
-      // Shift left if off right edge
-      else if (rect.right > window.innerWidth - padding) {
-        offset.z = -1.0;
+      if (menuIntersectsObject) {
+        // Menu overlaps with object - find best alternative position
+        const menuHeight = menuRect.height;
+        const menuWidth = menuRect.width;
+        const objHeight = objectBounds.maxY - objectBounds.minY;
+        const objWidth = objectBounds.maxX - objectBounds.minX;
+
+        // Try positioning below object first
+        const spaceBelow = window.innerHeight - (objectBounds.maxY + menuMargin);
+        // Try positioning above object
+        const spaceAbove = objectBounds.minY - menuMargin;
+        // Try positioning to the right
+        const spaceRight = window.innerWidth - (objectBounds.maxX + menuMargin);
+        // Try positioning to the left
+        const spaceLeft = objectBounds.minX - menuMargin;
+
+        // Choose the best fit
+        if (spaceBelow > menuHeight) {
+          // Position below object
+          offset.y = -(objHeight / 2 + menuHeight / 2 + 1.5);
+        } else if (spaceAbove > menuHeight) {
+          // Position above object
+          offset.y = objHeight / 2 + menuHeight / 2 + 1.5;
+        } else if (spaceRight > menuWidth) {
+          // Position to the right
+          offset.z = objWidth / 2 + menuWidth / 4 + 1.2;
+        } else if (spaceLeft > menuWidth) {
+          // Position to the left
+          offset.z = -(objWidth / 2 + menuWidth / 4 + 1.2);
+        } else {
+          // Fallback: move up
+          offset.y = 3.5;
+        }
+      } else {
+        // No overlap - check canvas boundaries
+        if (menuRect.bottom > window.innerHeight - padding) {
+          offset.y = 3.5;
+        } else if (menuRect.top < padding) {
+          offset.y = -3.0;
+        }
+
+        if (menuRect.left < padding) {
+          offset.z = 1.5;
+        } else if (menuRect.right > window.innerWidth - padding) {
+          offset.z = -1.5;
+        }
       }
 
       setContextMenuOffset(offset);
@@ -112,7 +194,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       clearTimeout(startDelay);
       cancelAnimationFrame(rafId);
     };
-  }, [showRotationUI]);
+  }, [showRotationUI, getObjectScreenBounds]);
 
   const showLabel = true;
   const labelLower = (item.label || '').toLowerCase();
@@ -143,12 +225,27 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       labelYPadding = 0.05;
   }
 
-  // Context menu position is relative to label position - place below/away from item
-  const labelBaseY = height + labelYPadding + offY;
-  // In top view, Z is vertical on screen (up=-Z), in isometric Y is vertical
-  // Default: place away from item with generous offset
-  const contextMenuPosY = viewMode === 'isometric' ? labelBaseY - 1.5 : labelBaseY;
-  const contextMenuPosZ = viewMode === 'top' ? (0 + offZ + 0.6) : (0 + offZ);
+  // Calculate initial context menu position (only when menu opens)
+  const customLabelHeight = item.type === 'custom' ? (item.labelHeight ?? height + labelYPadding) : 0;
+  const labelBaseY = item.type === 'custom' && customLabelHeight > 0 ? customLabelHeight : height + labelYPadding + offY;
+  const calculatedContextMenuPosY = viewMode === 'isometric' ? labelBaseY - 1.5 : labelBaseY;
+  const calculatedContextMenuPosZ = viewMode === 'top' ? (0 + offZ + 0.6) : (0 + offZ);
+
+  // When menu opens, save the position
+  useEffect(() => {
+    if (showRotationUI && !prevShowRotationUI) {
+      fixedContextMenuPosRef.current = { y: calculatedContextMenuPosY, z: calculatedContextMenuPosZ };
+      setContextMenuOffset({ y: 0, z: 0 });
+    }
+    if (!showRotationUI && prevShowRotationUI) {
+      fixedContextMenuPosRef.current = null;
+    }
+    setPrevShowRotationUI(showRotationUI);
+  }, [showRotationUI, prevShowRotationUI, calculatedContextMenuPosY, calculatedContextMenuPosZ]);
+
+  // Use fixed position while menu is open, otherwise calculate current position
+  const contextMenuPosY = fixedContextMenuPosRef.current?.y ?? calculatedContextMenuPosY;
+  const contextMenuPosZ = fixedContextMenuPosRef.current?.z ?? calculatedContextMenuPosZ;
 
   // Hitbox dimensions - match actual model dimensions for better selection
   // In both views, we need width x depth coverage with small padding
@@ -195,6 +292,16 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
          return <Models.TrumpetModel color={modelColor} />;
     }
     
+    // --- CUSTOM LABEL-ONLY (invisible hitbox) ---
+    if (item.type === 'custom' && !(item.customWidth ?? 0) && !(item.customDepth ?? 0)) {
+      return (
+        <mesh position={[0, 0.005, 0]}>
+          <boxGeometry args={[0.3, 0.01, 0.3]} />
+          <meshBasicMaterial transparent opacity={0} />
+        </mesh>
+      );
+    }
+
     // --- FALLBACK BOX/SHAPES ---
     if (shape === 'wedge') {
         return (
@@ -217,7 +324,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
     <group position={[x, 0, z]}>
       {showLabel && (
         <Html
-            position={[0 + offX, height + labelYPadding + offY, 0 + offZ]}
+            position={[0 + offX, item.type === 'custom' && item.labelHeight ? item.labelHeight : height + labelYPadding + offY, 0 + offZ]}
             center
             zIndexRange={isDragging ? [500, 400] : [100, 0]}
             style={{ pointerEvents: isPreview ? 'none' : 'none' }}
@@ -239,7 +346,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
       )}
 
       {/* Rotation UI - not inside rotating group so it stays fixed */}
-      {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power' || item.type === 'monitor') && (
+      {showRotationUI && !isGhost && isEditable && (onRotate || item.type === 'power' || item.type === 'monitor' || item.type === 'custom') && (
         <Html
             position={[0 + offX, contextMenuPosY + contextMenuOffset.y, contextMenuPosZ + contextMenuOffset.z]}
             center
@@ -330,6 +437,79 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
                   </button>
                 </div>
               </div>
+            ) : item.type === 'custom' ? (
+              <div className="flex flex-col gap-1">
+                <input
+                  type="text"
+                  value={item.label}
+                  onChange={(e) => onLabelChange?.(item.id, e.target.value)}
+                  className="px-2 py-1 bg-slate-800 border border-slate-600 rounded text-white text-xs focus:outline-none focus:border-indigo-500 w-full min-w-[120px]"
+                  placeholder="Name..."
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === 'Enter') onCloseRotationUI?.(); }}
+                />
+                {(item.customWidth ?? 0) === 0 && (item.customDepth ?? 0) === 0 && (
+                  <div className="flex items-center gap-1">
+                    <span className="text-slate-400 text-[10px] w-7">Label</span>
+                    <button
+                      onClick={() => onLabelHeightChange?.(item.id, (item.labelHeight ?? 1.7) - 0.2)}
+                      className="p-1 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors text-[10px]"
+                    >−</button>
+                    <div className="px-1 py-1 text-white text-[10px] font-bold flex items-center bg-slate-800 rounded min-w-[32px] justify-center">
+                      {((item.labelHeight ?? 1.7)).toFixed(1)}m
+                    </div>
+                    <button
+                      onClick={() => onLabelHeightChange?.(item.id, (item.labelHeight ?? 1.7) + 0.2)}
+                      className="p-1 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors text-[10px]"
+                    >+</button>
+                  </div>
+                )}
+                {(item.customWidth ?? 0) > 0 && (
+                  <>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-400 text-[10px] w-8">W</span>
+                      <button onClick={() => onResizeStart?.(item.id)} className="flex-1 px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition-colors flex items-center justify-center gap-1" title="Move cursor to resize width/depth. Switch to Top View for best results. Click canvas to finish.">⇲ Drag</button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <span className="text-slate-400 text-[10px] w-8">H</span>
+                      <button
+                        onClick={() => onHeightChange?.(item.id, (item.customHeight ?? 0.3) - 0.2)}
+                        className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                      >−</button>
+                      <div className="px-1 py-1 text-white text-[10px] font-bold flex items-center bg-slate-800 rounded min-w-[32px] justify-center">
+                        {((item.customHeight ?? 0.3) * 10).toFixed(0) === '0' ? '0.1' : ((item.customHeight ?? 0.3)).toFixed(1)}m
+                      </div>
+                      <button
+                        onClick={() => onHeightChange?.(item.id, (item.customHeight ?? 0.3) + 0.2)}
+                        className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors"
+                      >+</button>
+                    </div>
+                  </>
+                )}
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => onRotate?.(item.id, 'left')}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors flex-1"
+                    title="Rotate left 22.5°"
+                  >
+                    <ChevronLeft size={14} />
+                  </button>
+                  <button
+                    onClick={() => onCloseRotationUI?.()}
+                    className="px-2 py-1 bg-slate-700 hover:bg-slate-600 text-white rounded text-xs font-medium transition-colors flex-1"
+                    title="Done"
+                  >
+                    Done
+                  </button>
+                  <button
+                    onClick={() => onRotate?.(item.id, 'right')}
+                    className="p-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded transition-colors flex-1"
+                    title="Rotate right 22.5°"
+                  >
+                    <ChevronRight size={14} />
+                  </button>
+                </div>
+              </div>
             ) : (
               <>
                 <button
@@ -407,11 +587,17 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
         } : undefined}
       >
         {/* Invisible Hit Box for easier selection */}
-        {/* Aligned with model dimensions for better click detection */}
-        <mesh position={[0 + offX, height / 2 + offY, 0 + offZ]}>
-             <boxGeometry args={[hitboxWidth, height, hitboxDepth]} />
-             <meshBasicMaterial transparent opacity={0} />
-        </mesh>
+        {/* For custom labels, position hitbox at label height; otherwise use item height */}
+        {(() => {
+          const isLabelOnly = item.type === 'custom' && (item.customWidth ?? 0) === 0 && (item.customDepth ?? 0) === 0;
+          const hitboxY = isLabelOnly && item.labelHeight ? item.labelHeight : height / 2 + offY;
+          return (
+            <mesh position={[0 + offX, hitboxY, 0 + offZ]}>
+              <boxGeometry args={[hitboxWidth, isLabelOnly ? 0.4 : height, hitboxDepth]} />
+              <meshBasicMaterial transparent opacity={0} />
+            </mesh>
+          );
+        })()}
 
         <Suspense fallback={
             <mesh position={[0, height/2, 0]}>

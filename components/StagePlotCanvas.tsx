@@ -190,6 +190,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
 }) => {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rotationUiItemId, setRotationUiItemId] = useState<string | null>(null);
+  const [resizingItemId, setResizingItemId] = useState<string | null>(null);
+  const resizingItemIdRef = useRef<string | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
 
   const handleScreenshot = (dataUrl: string) => {
@@ -197,6 +199,35 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     onScreenshotProp?.(dataUrl);
   };
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
+
+  // Keep ref in sync so the DOM listener can read the current resizingItemId without stale closure
+  useEffect(() => {
+    resizingItemIdRef.current = resizingItemId;
+  }, [resizingItemId]);
+
+  // Stop resize on any native pointerdown in the canvas container (fires even when THREE.js
+  // stopPropagation prevents the floor-plane mesh from receiving the event)
+  useEffect(() => {
+    if (!resizingItemId) return;
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handlePointerDown = () => {
+      const prev = resizingItemIdRef.current;
+      setResizingItemId(null);
+      if (prev) setRotationUiItemId(prev);
+    };
+
+    // Delay by one frame so the "Resize" button's own pointerdown doesn't immediately cancel
+    const raf = requestAnimationFrame(() => {
+      container.addEventListener('pointerdown', handlePointerDown);
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      container.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [resizingItemId]);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleDeleteItem = (id: string) => {
@@ -216,8 +247,27 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     ));
   };
 
+  const handleLabelChange = (id: string, label: string) => {
+    setItems(items.map(i => i.id === id ? { ...i, label } : i));
+  };
+
+  const handleResizeStart = (id: string) => {
+    setResizingItemId(id);
+    setRotationUiItemId(null);
+  };
+
+  const handleHeightChange = (id: string, height: number) => {
+    setItems(items.map(i => i.id === id ? { ...i, customHeight: Math.max(0.1, height) } : i));
+  };
+
+  const handleLabelHeightChange = (id: string, height: number) => {
+    setItems(items.map(i => i.id === id ? { ...i, labelHeight: Math.max(0.1, height) } : i));
+  };
+
   const handlePointerDown = (e: ThreeEvent<PointerEvent>, id: string) => {
     if (!editable) return;
+    // While in resize mode, don't start a drag — the DOM listener handles stopping resize
+    if (resizingItemId) return;
     e.stopPropagation();
     
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -243,7 +293,25 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   };
 
   const handlePlaneMove = (e: ThreeEvent<PointerEvent>) => {
-    if (!activeId || !editable) return;
+    if (!editable) return;
+
+    if (resizingItemId) {
+      const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+      const pointOnPlane = new THREE.Vector3();
+      e.ray.intersectPlane(plane, pointOnPlane);
+      const item = items.find(i => i.id === resizingItemId);
+      if (item) {
+        const itemWorldX = percentToX(item.x);
+        const itemWorldZ = percentToZ(item.y);
+        const newWidth = Math.max(0.3, Math.abs(pointOnPlane.x - itemWorldX) * 2);
+        const newDepth = Math.max(0.3, Math.abs(pointOnPlane.z - itemWorldZ) * 2);
+        setItems(items.map(i => i.id === resizingItemId
+          ? { ...i, customWidth: newWidth, customDepth: newDepth } : i));
+      }
+      return;
+    }
+
+    if (!activeId) return;
     e.stopPropagation();
     
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
@@ -327,7 +395,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     <div
       ref={containerRef}
       className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
-      style={{ touchAction: 'none' }}
+      style={{ touchAction: 'none', cursor: resizingItemId ? 'crosshair' : undefined }}
     >
       <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} className="w-full h-full">
         <OrthographicCamera
@@ -381,7 +449,15 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
           <mesh 
             rotation={[-Math.PI / 2, 0, 0]} 
             position={[0, 0, 0]} 
-            onPointerDown={() => setRotationUiItemId(null)}
+            onPointerDown={() => {
+              if (resizingItemId !== null) {
+                const prev = resizingItemId;
+                setResizingItemId(null);
+                setRotationUiItemId(prev);
+                return;
+              }
+              setRotationUiItemId(null);
+            }}
             onPointerMove={handlePlaneMove}
             onPointerUp={handlePointerUp}
           >
@@ -410,6 +486,10 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
                 onDelete={handleDeleteItem}
                 onQuantityChange={handleQuantityChange}
                 onMonitorNumberChange={handleMonitorNumberChange}
+                onLabelChange={handleLabelChange}
+                onHeightChange={handleHeightChange}
+                onLabelHeightChange={handleLabelHeightChange}
+                onResizeStart={handleResizeStart}
                 isEditable={editable}
                 viewMode={viewMode}
                 isPreview={isPreview}

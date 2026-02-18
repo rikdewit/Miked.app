@@ -45,7 +45,11 @@ export interface BandMember {
 export interface StageItem {
   id: string;
   memberId?: string; // If linked to a band member
-  type: 'member' | 'monitor' | 'power' | 'drumriser' | 'person' | 'stand';
+  type: 'member' | 'monitor' | 'power' | 'drumriser' | 'person' | 'stand' | 'custom';
+  customWidth?: number;  // meters, for custom blocks (undefined or 0 = label-only)
+  customDepth?: number;  // meters, for custom blocks (undefined or 0 = label-only)
+  customHeight?: number; // meters, for custom blocks (Y-axis height)
+  labelHeight?: number;  // meters, height of label above ground in 3D space
   x: number; // Percentage 0-100
   y: number; // Percentage 0-100
   label: string;
