@@ -163,15 +163,17 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
 
                                           {isExpanded && (
                                             <div className="mt-3 bg-slate-900/30 p-3 rounded border border-slate-700/30">
-                                              <div className="flex gap-2 items-center text-xs font-bold text-slate-400 mb-2 pb-2 border-b border-slate-700">
-                                                <div className="flex-1">Channel</div>
-                                                <div className="flex-1">Mic / DI</div>
-                                                <div className="flex-1">Notes</div>
-                                                <div className="w-8"></div>
+                                              <div className="grid grid-cols-[1.5rem_1fr_1fr_2rem] sm:grid-cols-[1fr_1fr_1fr_2rem] gap-x-2 items-center text-xs font-bold text-slate-400 mb-2 pb-2 border-b border-slate-700">
+                                                <div className="sm:hidden">#</div>
+                                                <div>Channel</div>
+                                                <div>Mic / DI</div>
+                                                <div className="sm:col-start-4"></div>
+                                                <div className="col-start-2 col-span-2 sm:col-start-3 sm:row-start-1 sm:col-span-1">Notes</div>
                                               </div>
                                               <div className="space-y-2">
                                               {effectiveInputs.map((input, inputIdx) => (
-                                                <div key={inputIdx} className="flex gap-2 items-center text-xs">
+                                                <div key={inputIdx} className="grid grid-cols-[1.5rem_1fr_1fr_2rem] sm:grid-cols-[1fr_1fr_1fr_2rem] gap-x-2 gap-y-1.5 items-center text-xs">
+                                                  <div className="sm:hidden text-[10px] text-slate-500 text-right leading-none">#{inputIdx + 1}</div>
                                                   <input
                                                     type="text"
                                                     value={input.label}
@@ -181,7 +183,7 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                                       updateInstrumentInputs(member.id, iIndex, updated);
                                                     }}
                                                     placeholder="e.g. Kick"
-                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                    className="min-w-0 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
                                                   />
                                                   <input
                                                     type="text"
@@ -193,13 +195,23 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                                       updateInstrumentInputs(member.id, iIndex, updated);
                                                     }}
                                                     placeholder="e.g. SM57, DI"
-                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                    className="min-w-0 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
                                                   />
                                                   <datalist id={`mic-suggestions-${member.id}-${iIndex}`}>
                                                     {MIC_SUGGESTIONS.map(opt => (
                                                       <option key={opt} value={opt} />
                                                     ))}
                                                   </datalist>
+                                                  <button
+                                                    onClick={() => {
+                                                      const updated = effectiveInputs.filter((_, idx) => idx !== inputIdx);
+                                                      updateInstrumentInputs(member.id, iIndex, updated);
+                                                    }}
+                                                    disabled={effectiveInputs.length === 1}
+                                                    className={`sm:col-start-4 sm:row-start-1 p-1 rounded transition-colors flex items-center justify-center ${effectiveInputs.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
+                                                  >
+                                                    <X size={14} />
+                                                  </button>
                                                   <input
                                                     type="text"
                                                     value={input.notes || ''}
@@ -209,18 +221,8 @@ export const StepInstruments: React.FC<StepInstrumentsProps> = ({
                                                       updateInstrumentInputs(member.id, iIndex, updated);
                                                     }}
                                                     placeholder="e.g. Own mic"
-                                                    className="flex-1 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
+                                                    className="col-start-2 col-span-2 sm:col-start-3 sm:row-start-1 sm:col-span-1 min-w-0 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-white text-xs focus:outline-none focus:border-indigo-500"
                                                   />
-                                                  <button
-                                                    onClick={() => {
-                                                      const updated = effectiveInputs.filter((_, idx) => idx !== inputIdx);
-                                                      updateInstrumentInputs(member.id, iIndex, updated);
-                                                    }}
-                                                    disabled={effectiveInputs.length === 1}
-                                                    className={`w-8 p-1 rounded transition-colors flex items-center justify-center ${effectiveInputs.length === 1 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-red-400 hover:bg-slate-900'}`}
-                                                  >
-                                                    <X size={14} />
-                                                  </button>
                                                 </div>
                                               ))}
                                               <button
