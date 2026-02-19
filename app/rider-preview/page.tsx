@@ -33,9 +33,9 @@ export default function RiderPreviewPage() {
 
   const handleModalConfirm = async (email: string) => {
     try {
-      // Save the generated PDF
+      // Save the generated PDF (with email context for analytics)
       if (previewRef.current) {
-        previewRef.current.savePdf()
+        previewRef.current.savePdf(email)
       }
 
       // Save rider to Supabase and send email
@@ -62,19 +62,30 @@ export default function RiderPreviewPage() {
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
-      <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-8 py-4 md:py-8">
-        <Preview data={data} ref={previewRef} onDownloadClick={handleDownload} onGeneratingChange={setIsGeneratingPdf} />
-      </div>
-      <FooterNav onDownload={handleDownload} isDownloading={isGeneratingPdf} />
+      {data.details.bandName ? (
+        <>
+          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-8 py-4 md:py-8">
+            <Preview data={data} ref={previewRef} onDownloadClick={handleDownload} onGeneratingChange={setIsGeneratingPdf} />
+          </div>
+          <FooterNav onDownload={handleDownload} isDownloading={isGeneratingPdf} />
 
-      <DownloadModal
-        isOpen={isModalOpen}
-        prefillEmail={data.details.email}
-        onClose={() => setIsModalOpen(false)}
-        onConfirm={handleModalConfirm}
-        isGeneratingPdf={isGeneratingPdf}
-        lastSentEmail={lastSentEmail}
-      />
+          <DownloadModal
+            isOpen={isModalOpen}
+            prefillEmail={data.details.email}
+            onClose={() => setIsModalOpen(false)}
+            onConfirm={handleModalConfirm}
+            isGeneratingPdf={isGeneratingPdf}
+            lastSentEmail={lastSentEmail}
+          />
+        </>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading your rider...</p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

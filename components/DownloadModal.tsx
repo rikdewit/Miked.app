@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { X, Loader2, Check, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import { usePostHog } from 'posthog-js/react'
 
 interface DownloadModalProps {
   isOpen: boolean
@@ -26,6 +27,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
   isGeneratingPdf = false,
   lastSentEmail = null,
 }) => {
+  const posthog = usePostHog()
   const [emailChoice, setEmailChoice] = useState<'prefilled' | 'custom'>('prefilled')
   const [customEmail, setCustomEmail] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -51,6 +53,10 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
 
     try {
       setIsLoading(true)
+      posthog?.capture('send_rider_link', {
+        email: selectedEmail,
+        email_choice: emailChoice,
+      })
       await onConfirm(selectedEmail)
       setSuccessEmail(selectedEmail)
       setIsSuccess(true)
@@ -226,7 +232,12 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
               </button>
               <Link
                 href="/riders"
-                onClick={handleClose}
+                onClick={() => {
+                  posthog?.capture('view_riders_clicked', {
+                    email: successEmail,
+                  })
+                  handleClose()
+                }}
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition flex items-center justify-center gap-2"
               >
                 View Your Riders
