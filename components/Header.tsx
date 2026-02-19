@@ -14,7 +14,7 @@ export const Header: React.FC<HeaderProps> = ({ step, setStep }) => {
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         <div className="font-bold text-xl flex items-center gap-2 cursor-pointer" onClick={() => setStep(0)}>
           <Mic className="text-indigo-500" />
-          <span>miked<span className="text-indigo-500">.app</span></span>
+          <span>miked<span className="text-indigo-500">.live</span></span>
         </div>
         <div className={`flex-1 flex items-center justify-end gap-6 text-sm ${step === 0 ? 'text-slate-600' : 'text-slate-400'}`}>
           {/* Full text version - shown only on larger screens */}

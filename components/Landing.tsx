@@ -14,7 +14,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         <Mic size={64} className="text-white" />
       </div>
       <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-        miked.app
+        Miked<span className="text-indigo-500">.live</span>
       </h1>
       <p className="text-xl text-slate-300 max-w-2xl mb-8">
         Create a professional technical rider and stage plot for your band in 5 minutes. 
