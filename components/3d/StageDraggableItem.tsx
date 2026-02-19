@@ -590,12 +590,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
           );
         })()}
 
-        <Suspense fallback={
-            <mesh position={[0, height/2, 0]}>
-                <boxGeometry args={[width, height, depth]} />
-                <meshStandardMaterial color={color} opacity={0.5} transparent />
-            </mesh>
-        }>
+        <Suspense fallback={null}>
             {renderModel()}
         </Suspense>
       </group>

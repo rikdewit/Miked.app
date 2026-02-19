@@ -261,10 +261,49 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
       className="w-full h-full bg-slate-900 rounded-lg overflow-hidden relative border border-slate-700 shadow-inner"
       style={{ touchAction: isSidebarPreview ? 'auto' : 'none' }}
     >
-        <Canvas shadows camera={{ position: [2.5, 2.5, 3.5], fov: 35 }} style={{ touchAction: isSidebarPreview ? 'auto' : 'none', pointerEvents: isSidebarPreview ? 'none' : 'auto' }}>
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
-            <pointLight position={[-5, 2, -5]} intensity={0.5} color="#3b82f6" />
+        <Canvas
+          shadows={!isSidebarPreview}
+          camera={{ position: [2.5, 2.5, 3.5], fov: 35 }}
+          gl={{
+            antialias: isSidebarPreview ? false : true,
+            failIfMajorPerformanceCaveat: true,
+            powerPreference: 'high-performance',
+            alpha: true,
+            stencil: false,
+            depth: true,
+            logarithmicDepthBuffer: isSidebarPreview
+          }}
+          style={{ touchAction: isSidebarPreview ? 'auto' : 'none', pointerEvents: isSidebarPreview ? 'none' : 'auto' }}
+          onCreated={(state) => {
+            const gl = state.gl;
+
+            // Reduce pixel ratio for sidebar previews to save GPU memory
+            if (isSidebarPreview) {
+              state.setDpr(Math.min(window.devicePixelRatio, 1));
+            }
+
+            if (isSidebarPreview) {
+              console.debug('[MemberPreview3D] Sidebar canvas created for:', member.name);
+            } else {
+              console.debug('[MemberPreview3D] Main canvas created for:', member.name);
+            }
+
+            // Log context loss events
+            gl.domElement.addEventListener('webglcontextlost', (e) => {
+              console.warn('[MemberPreview3D] WebGL Context Lost (recovering):', member.name);
+              e.preventDefault();
+            });
+
+            gl.domElement.addEventListener('webglcontextrestored', () => {
+              console.debug('[MemberPreview3D] WebGL Context Restored for:', member.name);
+            });
+          }}
+        >
+            <ambientLight intensity={isSidebarPreview ? 0.4 : 0.6} />
+            {!isSidebarPreview && (
+              <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
+            )}
+            <pointLight position={[-5, 2, -5]} intensity={isSidebarPreview ? 0.2 : 0.5} color="#3b82f6" />
 
             <Suspense fallback={null}>
                 <group position={[0, -0.8, 0]}>
@@ -279,7 +318,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
                         />
                     ))}
                     <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
-                    <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />
+                    {!isSidebarPreview && <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />}
                 </group>
             </Suspense>
 

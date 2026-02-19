@@ -1,11 +1,13 @@
 'use client'
 
 import React, { useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Plus, Trash2, X, Music2, ChevronDown } from 'lucide-react';
 import { RiderData, InputConfig } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { getDefaultInputsForSlot } from '../utils/inputUtils';
-import { MemberPreview3D } from './MemberPreview3D';
+
+const MemberPreview3D = dynamic(() => import('./MemberPreview3D').then(m => ({ default: m.MemberPreview3D })), { ssr: false });
 
 interface StepInstrumentsProps {
   data: RiderData;

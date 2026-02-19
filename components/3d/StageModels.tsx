@@ -15,11 +15,11 @@ const URLS = {
   AMPLIFIER: BASE_URL + 'Amplifier.glb',
   DRUMS: BASE_URL + 'Drums_A.glb',
   PERSON: BASE_URL + 'Male_Strong.glb',
-  
+
   // Baked Animation Models
   MALE_ACOUSTIC: BASE_URL + 'Male_Ac_Guitar_Playing.glb',
   MALE_BASS: BASE_URL + 'Male_Bass_Playing.glb',
-  MALE_DRUMS: BASE_URL + 'Male_Drumming.glb', 
+  MALE_DRUMS: BASE_URL + 'Male_Drumming.glb',
   MALE_GUITAR: BASE_URL + 'Male_Guitar_Playing.glb',
   MALE_KEYS: BASE_URL + 'Male_Keys_Playing.glb',
   MALE_TRUMPET: BASE_URL + 'Male_Trumpet_Playing.glb',
@@ -34,8 +34,8 @@ const URLS = {
   SYNTH: BASE_URL + 'Synth.glb',
 };
 
-// Preload models
-Object.values(URLS).forEach(url => useGLTF.preload(url));
+// Don't preload at module level - let models load on-demand through component lifecycle
+// This prevents race conditions on first page load
 
 // --- CENTRALIZED OFFSETS ---
 export const MODEL_OFFSETS = {
@@ -48,29 +48,48 @@ export const MODEL_OFFSETS = {
 
 export const useStageModel = (url: string, color?: string) => {
   const { scene } = useGLTF(url);
-  
+
   const model = useMemo(() => {
-      const cloned = cloneGLTF(scene);
-      cloned.traverse((node: any) => {
-          if (node.isMesh) {
-             const mesh = node as THREE.Mesh;
-             mesh.castShadow = true;
-             mesh.receiveShadow = true;
-             
-             if (color && mesh.material) {
-                 const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-                 const newMaterials = materials.map(m => {
-                     const nm = m.clone() as THREE.MeshStandardMaterial;
-                     nm.color.set(color);
-                     nm.metalness = 0.1;
-                     nm.roughness = 0.6;
-                     return nm;
-                 });
-                 mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
-             }
-          }
-      });
-      return cloned;
+      if (!scene) {
+        console.debug('[useStageModel] Scene not loaded yet for:', url);
+        return new THREE.Group();
+      }
+
+      try {
+        const cloned = cloneGLTF(scene);
+        if (!cloned) {
+          console.warn('[useStageModel] Failed to clone scene for:', url);
+          return new THREE.Group();
+        }
+
+        let meshCount = 0;
+        cloned.traverse((node: any) => {
+            if (node.isMesh) {
+               const mesh = node as THREE.Mesh;
+               mesh.castShadow = true;
+               mesh.receiveShadow = true;
+               meshCount++;
+
+               if (color && mesh.material) {
+                   const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+                   const newMaterials = materials.map(m => {
+                       const nm = m.clone() as THREE.MeshStandardMaterial;
+                       nm.color.set(color);
+                       nm.metalness = 0.1;
+                       nm.roughness = 0.6;
+                       return nm;
+                   });
+                   mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
+               }
+            }
+        });
+
+        console.debug('[useStageModel] Model loaded:', { url, meshCount, color });
+        return cloned;
+      } catch (err) {
+        console.error('[useStageModel] Error cloning model:', url, err);
+        return new THREE.Group();
+      }
   }, [scene, color]);
 
   return model;
@@ -144,29 +163,47 @@ export const PersonModel = ({ color, pose = 'stand' }: { color?: string, pose?: 
   const { scene } = useGLTF(url);
 
   const personModel = useMemo(() => {
-    const cloned = cloneGLTF(scene);
+    if (!scene) {
+      console.debug('[PersonModel] Scene not loaded yet for pose:', pose, 'url:', url);
+      return new THREE.Group();
+    }
 
-    cloned.traverse((node: any) => {
-      if (node.isMesh) {
-        const mesh = node as THREE.Mesh;
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        if (color && mesh.material) {
-          const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
-          const newMaterials = materials.map(m => {
-            const nm = m.clone() as THREE.MeshStandardMaterial;
-            nm.color.set(color);
-            nm.metalness = 0.1;
-            nm.roughness = 0.6;
-            return nm;
-          });
-          mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
-        }
+    try {
+      const cloned = cloneGLTF(scene);
+      if (!cloned) {
+        console.warn('[PersonModel] Failed to clone person model for pose:', pose);
+        return new THREE.Group();
       }
-    });
 
-    return cloned;
-  }, [scene, color]);
+      let meshCount = 0;
+      cloned.traverse((node: any) => {
+        if (node.isMesh) {
+          const mesh = node as THREE.Mesh;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          meshCount++;
+
+          if (color && mesh.material) {
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            const newMaterials = materials.map(m => {
+              const nm = m.clone() as THREE.MeshStandardMaterial;
+              nm.color.set(color);
+              nm.metalness = 0.1;
+              nm.roughness = 0.6;
+              return nm;
+            });
+            mesh.material = Array.isArray(mesh.material) ? newMaterials : newMaterials[0];
+          }
+        }
+      });
+
+      console.debug('[PersonModel] Person model loaded:', { pose, url, meshCount, color });
+      return cloned;
+    } catch (err) {
+      console.error('[PersonModel] Error cloning person model:', pose, err);
+      return new THREE.Group();
+    }
+  }, [scene, color, pose, url]);
 
   return (
     <group>
