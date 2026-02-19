@@ -1,3 +1,0 @@
-module.exports=[67505,a=>{a.v({className:"inter_a9273372-module__R1Y8Sq__className"})},33290,a=>{"use strict";var b=a.i(7997),c=a.i(67505);let d={className:c.default.className,style:{fontFamily:"'Inter', 'Inter Fallback'",fontStyle:"normal"}};function e({children:a}){return(0,b.jsx)("html",{lang:"en",className:d.className,children:(0,b.jsx)("body",{className:"bg-slate-900 text-slate-100",children:a})})}null!=c.default.variable&&(d.variable=c.default.variable),a.s(["default",()=>e,"metadata",0,{title:"miked.live",description:"Create a professional technical rider and stage plot in 5 minutes. No account needed."}],33290)}];
-
-//# sourceMappingURL=%5Broot-of-the-server%5D__5bb87a1d._.js.map
