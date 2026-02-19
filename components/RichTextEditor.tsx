@@ -18,6 +18,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit.configure({
         heading: {
@@ -74,10 +75,6 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     },
   });
 
-  if (!editor) {
-    return null;
-  }
-
   // Update editor content when navigating between steps
   useEffect(() => {
     if (!editor) return;
@@ -89,7 +86,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
     if (editorContent !== newContent && newContent) {
       editor.commands.setContent(newContent);
     }
-  }, [value]);
+  }, [value, editor]);
 
   // Track focus state
   useEffect(() => {
@@ -106,6 +103,10 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
       editor.off('blur', onBlur);
     };
   }, [editor]);
+
+  if (!editor) {
+    return null;
+  }
 
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
