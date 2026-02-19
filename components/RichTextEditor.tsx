@@ -2,10 +2,11 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
-import { BubbleMenu } from '@tiptap/react/menus';
+// import { BubbleMenu } from '@tiptap/react/menus';
 import StarterKit from '@tiptap/starter-kit';
-import Image from '@tiptap/extension-image';
-import { Bold, Italic, List, ListOrdered, Heading2, Trash2, Image as ImageIcon, Trash } from 'lucide-react';
+// import Image from '@tiptap/extension-image';
+import { Bold, Italic, List, ListOrdered, Heading2, Trash2 } from 'lucide-react';
+// import { Image as ImageIcon, Trash } from 'lucide-react';
 
 interface RichTextEditorProps {
   value: string;
@@ -14,7 +15,7 @@ interface RichTextEditorProps {
 }
 
 export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  // const fileInputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
   const editor = useEditor({
@@ -25,49 +26,50 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           levels: [2, 3],
         },
       }),
-      Image.extend({
-        addAttributes() {
-          return {
-            ...this.parent?.(),
-            style: {
-              default: null,
-              parseHTML: element => {
-                const style = element.getAttribute('style');
-                return style || null;
-              },
-              renderHTML: attributes => {
-                if (!attributes.style) {
-                  return {};
-                }
-                return {
-                  style: attributes.style,
-                };
-              },
-            },
-          };
-        },
-        parseHTML() {
-          return [
-            {
-              tag: 'img[src]',
-              getAttrs: (node) => {
-                if (typeof node === 'string') return false;
-                return {
-                  src: node.getAttribute('src'),
-                  alt: node.getAttribute('alt') || '',
-                  title: node.getAttribute('title') || '',
-                  style: node.getAttribute('style'),
-                };
-              },
-            },
-          ];
-        },
-      }).configure({
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded',
-        },
-        inline: false,
-      }),
+      // DISABLED: Image functionality to reduce database size
+      // Image.extend({
+      //   addAttributes() {
+      //     return {
+      //       ...this.parent?.(),
+      //       style: {
+      //         default: null,
+      //         parseHTML: element => {
+      //           const style = element.getAttribute('style');
+      //           return style || null;
+      //         },
+      //         renderHTML: attributes => {
+      //           if (!attributes.style) {
+      //             return {};
+      //           }
+      //           return {
+      //             style: attributes.style,
+      //           };
+      //         },
+      //       },
+      //     };
+      //   },
+      //   parseHTML() {
+      //     return [
+      //       {
+      //         tag: 'img[src]',
+      //         getAttrs: (node) => {
+      //           if (typeof node === 'string') return false;
+      //           return {
+      //             src: node.getAttribute('src'),
+      //             alt: node.getAttribute('alt') || '',
+      //             title: node.getAttribute('title') || '',
+      //             style: node.getAttribute('style'),
+      //           };
+      //         },
+      //       },
+      //     ];
+      //   },
+      // }).configure({
+      //   HTMLAttributes: {
+      //     class: 'max-w-full h-auto rounded',
+      //   },
+      //   inline: false,
+      // }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => {
@@ -109,56 +111,58 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
   }
 
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check file size (limit to 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image size must be less than 5MB');
-        return;
-      }
+  // DISABLED: Image functionality to reduce database size
+  // const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = e.target.files?.[0];
+  //   if (file) {
+  //     // Check file size (limit to 5MB)
+  //     if (file.size > 5 * 1024 * 1024) {
+  //       alert('Image size must be less than 5MB');
+  //       return;
+  //     }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64 = reader.result as string;
-        // Use base64 directly as image src
-        editor.chain().focus().setImage({ src: base64 }).run();
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+  //     const reader = new FileReader();
+  //     reader.onload = () => {
+  //       const base64 = reader.result as string;
+  //       // Use base64 directly as image src
+  //       editor.chain().focus().setImage({ src: base64 }).run();
+  //     };
+  //     reader.readAsDataURL(file);
+  //   }
+  // };
 
-  const addImageFromUrl = () => {
-    const url = window.prompt('Enter image URL');
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
-    }
-  };
+  // const addImageFromUrl = () => {
+  //   const url = window.prompt('Enter image URL');
+  //   if (url) {
+  //     editor.chain().focus().setImage({ src: url }).run();
+  //   }
+  // };
 
-  const resizeImage = (width: string) => {
-    const widthPercent = width === '500px' ? '100%' : width === '375px' ? '75%' : width === '250px' ? '50%' : '33%';
-    editor
-      .chain()
-      .focus()
-      .updateAttributes('image', {
-        style: `width: ${widthPercent}; height: auto;`
-      })
-      .run();
-  };
+  // const resizeImage = (width: string) => {
+  //   const widthPercent = width === '500px' ? '100%' : width === '375px' ? '75%' : width === '250px' ? '50%' : '33%';
+  //   editor
+  //     .chain()
+  //     .focus()
+  //     .updateAttributes('image', {
+  //       style: `width: ${widthPercent}; height: auto;`
+  //     })
+  //     .run();
+  // };
 
-  const deleteImage = () => {
-    editor.chain().focus().deleteSelection().run();
-  };
+  // const deleteImage = () => {
+  //   editor.chain().focus().deleteSelection().run();
+  // };
 
   return (
     <div className="space-y-2">
-      <input
+      {/* DISABLED: Image functionality to reduce database size */}
+      {/* <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         onChange={handleImageUpload}
         className="hidden"
-      />
+      /> */}
       <div className="flex flex-wrap gap-2 bg-slate-900 border border-slate-600 rounded-t-lg p-3">
         <button
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -223,7 +227,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
         >
           <Heading2 size={16} />
         </button>
-        <button
+        {/* DISABLED: Image functionality to reduce database size */}
+        {/* <button
           onClick={() => fileInputRef.current?.click()}
           className="p-2 rounded transition-colors bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700"
           title="Upload image"
@@ -231,7 +236,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           <ImageIcon size={16} />
         </button>
 
-        <div className="w-px bg-slate-600" />
+        <div className="w-px bg-slate-600" /> */}
 
         <button
           onClick={() => editor.chain().focus().clearNodes().run()}
@@ -247,7 +252,8 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
           className="px-4 py-3 text-white outline-none min-h-32 [&_.ProseMirror]:outline-none [&_.ProseMirror]:focus:outline-none [&_*]:break-words [&_p]:break-words [&_p]:word-wrap [&_h2]:text-xl [&_h2]:font-bold [&_h2]:mt-4 [&_h2]:mb-2 [&_h3]:text-lg [&_h3]:font-bold [&_h3]:mt-3 [&_h3]:mb-2 [&_ul]:list-disc [&_ul]:ml-5 [&_ol]:list-decimal [&_ol]:ml-5 [&_li]:my-1 [&_a]:text-indigo-400 [&_a]:underline [&_a]:hover:text-indigo-300 [&_img]:rounded [&_img]:my-3 [&_img]:cursor-pointer"
         />
       </div>
-      {editor && (
+      {/* DISABLED: Image functionality to reduce database size */}
+      {/* {editor && (
         <BubbleMenu
           editor={editor}
           shouldShow={({ editor }) => {
@@ -293,7 +299,7 @@ export const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange 
             </button>
           </div>
         </BubbleMenu>
-      )}
+      )} */}
     </div>
   );
 };
