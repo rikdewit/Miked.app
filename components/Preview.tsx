@@ -15,14 +15,18 @@ const StagePlotCanvas = dynamic(
 );
 
 export interface PreviewHandle {
-  downloadPdf: () => Promise<void>;
+  generatePdf: () => Promise<void>;
+  savePdf: () => void;
+  isGeneratingPdf: boolean;
 }
 
 interface PreviewProps {
   data: RiderData;
+  onDownloadClick?: () => void;
+  onGeneratingChange?: (isGenerating: boolean) => void;
 }
 
-export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) => {
+export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownloadClick, onGeneratingChange }, ref) => {
   const posthog = usePostHog();
   const previewRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -36,6 +40,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   const [isoViewImage, setIsoViewImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [naturalHeight, setNaturalHeight] = useState(0);
+  const generatedPdfRef = useRef<jsPDF | null>(null);
 
   // Update preview scale when window resizes
   useEffect(() => {
@@ -63,8 +68,9 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
   }, []);
 
 
-  const handleDownloadPDF = async () => {
+  const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
+    onGeneratingChange?.(true);
     posthog?.capture('download_initiated');
 
     // Add CSS fix before capturing
@@ -271,11 +277,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
         }
       }
 
-      pdf.save(`${data.details.bandName || 'tech-rider'}.pdf`);
-      posthog?.capture('rider_downloaded', {
-        member_count: data.members.length,
-        has_logo: !!data.details.logoUrl,
-      });
+      // Store PDF for later saving, don't download yet
+      generatedPdfRef.current = pdf;
     } catch (err) {
       console.error(err);
       alert('Error generating PDF. Please try again.');
@@ -287,11 +290,24 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       // Remove CSS fix
       document.head.removeChild(style);
       setIsGeneratingPdf(false);
+      onGeneratingChange?.(false);
+    }
+  };
+
+  const handleSavePDF = () => {
+    if (generatedPdfRef.current) {
+      generatedPdfRef.current.save(`${data.details.bandName || 'tech-rider'}.pdf`);
+      posthog?.capture('rider_downloaded', {
+        member_count: data.members.length,
+        has_logo: !!data.details.logoUrl,
+      });
     }
   };
 
   useImperativeHandle(ref, () => ({
-    downloadPdf: handleDownloadPDF
+    generatePdf: handleGeneratePDF,
+    savePdf: handleSavePDF,
+    isGeneratingPdf
   }));
 
   return (
@@ -302,7 +318,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
            <p className="text-slate-400 text-sm">Review it below and download as PDF.</p>
          </div>
          <button
-           onClick={handleDownloadPDF}
+           onClick={onDownloadClick || handleGeneratePDF}
            disabled={isGeneratingPdf}
            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-800 disabled:cursor-wait text-white px-6 py-2 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-indigo-500/25 transition-all whitespace-nowrap"
          >
