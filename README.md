@@ -1,5 +1,5 @@
 <div align="center">
-<img width="1200" height="475" alt="Miked.live Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img alt="Miked.live Screenshot" src="docs/screenshots/banner.png" />
 </div>
 
 # Miked.live
