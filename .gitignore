@@ -11,11 +11,11 @@ node_modules
 dist
 dist-ssr
 .next
-*.local
-.next
 .nextjs
 .vercel
 out
+next-env.d.ts
+*.local
 
 # Editor directories and files
 .vscode/*
