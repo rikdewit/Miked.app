@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { usePostHog } from 'posthog-js/react';
 import { Mic, Music2, Layers, Box, Clock, Download, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
@@ -22,6 +23,7 @@ interface PreviewProps {
 }
 
 export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) => {
+  const posthog = usePostHog();
   const previewRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLDivElement>(null);
   const generalNotesRef = useRef<HTMLDivElement>(null);
@@ -63,6 +65,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
 
   const handleDownloadPDF = async () => {
     setIsGeneratingPdf(true);
+    posthog?.capture('download_initiated');
 
     // Add CSS fix before capturing
     const style = document.createElement('style');
@@ -269,6 +272,10 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data }, ref) =
       }
 
       pdf.save(`${data.details.bandName || 'tech-rider'}.pdf`);
+      posthog?.capture('rider_downloaded', {
+        member_count: data.members.length,
+        has_logo: !!data.details.logoUrl,
+      });
     } catch (err) {
       console.error(err);
       alert('Error generating PDF. Please try again.');

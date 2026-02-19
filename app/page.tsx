@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
+import { usePostHog } from 'posthog-js/react';
 import { useRiderState } from '@/hooks/useRiderState';
 import { Header } from '@/components/Header';
 import { FooterNav } from '@/components/FooterNav';
@@ -32,6 +33,18 @@ const App: React.FC = () => {
     updateStageItems,
     updateInstrumentInputs
   } = useRiderState();
+
+  const posthog = usePostHog();
+
+  const stepNames = ['landing', 'instruments', 'stage_plot', 'details', 'preview'];
+
+  // Track step view
+  useEffect(() => {
+    posthog?.capture('step_viewed', {
+      step,
+      step_name: stepNames[step],
+    });
+  }, [step, posthog]);
 
   // --- Navigation & Validation ---
   const isValidEmail = (email: string): boolean => {
@@ -79,7 +92,10 @@ const App: React.FC = () => {
         {/* Padding and centering for non-stage steps */}
         {step !== 2 && (
           <div className={`flex-1 overflow-y-auto flex flex-col items-center ${step === 4 ? 'px-2 sm:px-4 md:px-8 py-4 md:py-8' : 'p-4 md:p-8'}`}>
-            {step === 0 && <Landing onStart={() => setStep(1)} />}
+            {step === 0 && <Landing onStart={() => {
+              posthog?.capture('start_now_clicked');
+              setStep(1);
+            }} />}
 
             {step === 1 && (
               <StepInstruments
