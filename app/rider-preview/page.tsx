@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { useRider } from '@/providers/RiderProvider'
 import { Preview, PreviewHandle } from '@/components/Preview'
 import { FooterNav } from '@/components/FooterNav'
@@ -9,59 +9,71 @@ import { DownloadModal } from '@/components/DownloadModal'
 export default function RiderPreviewPage() {
   const { data } = useRider()
   const previewRef = useRef<PreviewHandle>(null)
-  const [isDownloading, setIsDownloading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [hasPdfGenerated, setHasPdfGenerated] = useState(false)
+  const [lastSentEmail, setLastSentEmail] = useState<string | null>(null)
+
+  // Reset PDF generation when rider data changes
+  useEffect(() => {
+    setHasPdfGenerated(false)
+  }, [data])
 
   const handleDownload = () => {
-    // Open modal instead of downloading directly
+    // Only generate PDF if we don't already have one
+    if (!hasPdfGenerated && previewRef.current) {
+      previewRef.current.generatePdf().catch((err) => {
+        console.error('PDF generation error:', err)
+      })
+      setHasPdfGenerated(true)
+    }
+    // Open modal
     setIsModalOpen(true)
   }
 
   const handleModalConfirm = async (email: string) => {
     try {
-      setIsDownloading(true)
+      // Save the generated PDF
+      if (previewRef.current) {
+        previewRef.current.savePdf()
+      }
 
-      // Save rider to Supabase and send email (fire and forget)
-      const savePromise = fetch('/api/riders/save', {
+      // Save rider to Supabase and send email
+      await fetch('/api/riders/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
           riderData: data,
         }),
+      }).then((res) => {
+        if (res.ok) {
+          setLastSentEmail(email)
+        }
       }).catch((err) => {
         console.error('Failed to save rider:', err)
-        // Don't block the download if save fails
       })
 
-      // Download PDF immediately
-      if (previewRef.current) {
-        await previewRef.current.downloadPdf()
-      }
-
-      // Wait for save to complete (but don't block download)
-      await savePromise
-
-      setIsModalOpen(false)
-      setIsDownloading(false)
+      // Don't close the modal here - let DownloadModal show success screen
     } catch (error) {
-      console.error('Error during download:', error)
-      setIsDownloading(false)
+      console.error('Error during confirm:', error)
     }
   }
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
       <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-8 py-4 md:py-8">
-        <Preview data={data} ref={previewRef} />
+        <Preview data={data} ref={previewRef} onDownloadClick={handleDownload} onGeneratingChange={setIsGeneratingPdf} />
       </div>
-      <FooterNav onDownload={handleDownload} isDownloading={isDownloading} />
+      <FooterNav onDownload={handleDownload} isDownloading={isGeneratingPdf} />
 
       <DownloadModal
         isOpen={isModalOpen}
         prefillEmail={data.details.email}
         onClose={() => setIsModalOpen(false)}
         onConfirm={handleModalConfirm}
+        isGeneratingPdf={isGeneratingPdf}
+        lastSentEmail={lastSentEmail}
       />
     </div>
   )
