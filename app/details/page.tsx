@@ -24,16 +24,18 @@ export default function DetailsPage() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 md:p-8">
-      <StepDetails
-        data={data}
-        setData={setData}
-        showErrors={showErrors}
-      />
+    <>
+      <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 md:p-8">
+        <StepDetails
+          data={data}
+          setData={setData}
+          showErrors={showErrors}
+        />
+      </div>
       <FooterNav
         canProceed={canProceed}
         onAttemptProceed={handleAttemptProceed}
       />
-    </div>
+    </>
   )
 }

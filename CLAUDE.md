@@ -19,6 +19,17 @@
 
 **Claude Code:** When adding new features, work on the **develop** branch. Always test locally before pushing.
 
+### Commit & Push Policy
+
+**Claude must NOT commit or push code without explicit permission.** This ensures you maintain control over what gets deployed.
+
+- **Default:** Make code changes on develop, but stop before `git commit`
+- **Only commit/push if the user explicitly says:**
+  - "commit this" / "make a commit"
+  - "push to production" / "deploy"
+  - "push to staging"
+- **When in doubt:** Ask the user before committing
+
 ## Analytics
 
 PostHog analytics is configured to track only **production (miked.live)** data:

@@ -24,19 +24,21 @@ export default function BandPage() {
     data.members.every(m => m.name.trim() !== '' && m.instruments.length > 0)
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 md:p-8">
-      <StepInstruments
-        data={data}
-        addMember={addMember}
-        applyRockTemplate={applyRockTemplate}
-        updateMemberName={updateMemberName}
-        updateMemberInstrument={updateMemberInstrument}
-        removeMemberInstrument={removeMemberInstrument}
-        addMemberInstrument={addMemberInstrument}
-        removeMember={removeMember}
-        updateInstrumentInputs={updateInstrumentInputs}
-      />
+    <>
+      <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 md:p-8">
+        <StepInstruments
+          data={data}
+          addMember={addMember}
+          applyRockTemplate={applyRockTemplate}
+          updateMemberName={updateMemberName}
+          updateMemberInstrument={updateMemberInstrument}
+          removeMemberInstrument={removeMemberInstrument}
+          addMemberInstrument={addMemberInstrument}
+          removeMember={removeMember}
+          updateInstrumentInputs={updateInstrumentInputs}
+        />
+      </div>
       <FooterNav canProceed={canProceed} />
-    </div>
+    </>
   )
 }
