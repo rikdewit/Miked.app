@@ -65,8 +65,9 @@ export async function POST(request: NextRequest) {
     console.log(`[RESEND] Magic link: ${magicLink}`)
     console.log(`[RESEND] API Key exists: ${!!process.env.RESEND_API_KEY}`)
 
+    const senderEmail = process.env.SENDER_EMAIL || 'support@miked.live'
     const emailResponse = await resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: senderEmail,
       to: email,
       subject: 'Your rider is saved — access it anytime 🎸',
       html: `
