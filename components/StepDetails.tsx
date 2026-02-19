@@ -19,6 +19,11 @@ export const StepDetails: React.FC<StepDetailsProps> = ({ data, setData, showErr
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      // Check file size (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Logo must be smaller than 5MB');
+        return;
+      }
       const reader = new FileReader();
       reader.onloadend = () => {
         setData(prev => ({ ...prev, details: { ...prev.details, logoUrl: reader.result as string } }));

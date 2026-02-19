@@ -1,5 +1,5 @@
 <div align="center">
-<img width="1200" height="475" alt="Miked.live Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+<img alt="Miked.live Screenshot" src="docs/screenshots/banner.png" />
 </div>
 
 # Miked.live
@@ -48,10 +48,23 @@ Create a professional technical rider and stage plot for your band in 5 minutes.
 
 3. Set environment variables in `.env.local`:
    ```bash
-   NEXT_PUBLIC_POSTHOG_KEY=your_posthog_key_here
+   # Analytics (PostHog - production only)
+   NEXT_PUBLIC_POSTHOG_KEY=your_posthog_api_key
    NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+
+   # Database & Authentication (Supabase)
+   NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_publishable_key
+
+   # Email Service (Resend)
+   RESEND_API_KEY=your_resend_api_key
+
+   # Magic Link URLs
+   NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+   # Email Sender Address
+   SENDER_EMAIL=dev-support@miked.live
    ```
-   (PostHog credentials are only needed for production tracking)
 
 4. Run locally:
    ```bash
@@ -76,6 +89,76 @@ Create a professional technical rider and stage plot for your band in 5 minutes.
 4. When ready, merge develop → main → deploys to production
 
 See [CLAUDE.md](./CLAUDE.md) for detailed development instructions.
+
+## Environment Variables Reference
+
+### Local Development (`.env.local`)
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `NEXT_PUBLIC_POSTHOG_KEY` | Your PostHog API key | Analytics tracking (optional, production only) |
+| `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | PostHog endpoint |
+| `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Database & authentication |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase public key | Client-side API access (NOT service role key) |
+| `RESEND_API_KEY` | Your Resend API key | Email service for magic links |
+| `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Magic link base URL (localhost) |
+| `SENDER_EMAIL` | `dev-support@miked.live` | Sender email address |
+
+### Production (Vercel Environment Variables)
+
+**For `develop` branch (staging: dev.miked.live):**
+```
+NEXT_PUBLIC_APP_URL=https://dev.miked.live
+SENDER_EMAIL=dev-support@miked.live
+```
+
+**For `main` branch (production: miked.live):**
+```
+NEXT_PUBLIC_APP_URL=https://miked.live
+SENDER_EMAIL=support@miked.live
+```
+
+**Shared across all environments:**
+```
+NEXT_PUBLIC_POSTHOG_KEY=your_key
+NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
+NEXT_PUBLIC_SUPABASE_URL=your_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_key
+RESEND_API_KEY=your_key
+```
+
+### Getting Credentials
+
+- **PostHog:** https://posthog.com (optional, analytics only)
+- **Supabase:** https://supabase.com → Project Settings → API → Copy the "Public Key" (anon key)
+- **Resend:** https://resend.com → API Keys → Create new key
+
+### Supabase Database Setup
+
+After creating a Supabase project, run these SQL commands in the SQL Editor:
+
+```sql
+-- Create riders table
+CREATE TABLE riders (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  rider_data JSONB NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create magic_links table
+CREATE TABLE magic_links (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  rider_id UUID REFERENCES riders(id) ON DELETE CASCADE,
+  token TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Create index for fast token lookup
+CREATE INDEX idx_magic_links_token ON magic_links(token);
+```
 
 ## Analytics
 
