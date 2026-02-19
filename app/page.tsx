@@ -40,10 +40,7 @@ const App: React.FC = () => {
 
   // Track step view
   useEffect(() => {
-    posthog?.capture('step_viewed', {
-      step,
-      step_name: stepNames[step],
-    });
+    posthog?.capture(`${stepNames[step]}_viewed`);
   }, [step, posthog]);
 
   // --- Navigation & Validation ---
