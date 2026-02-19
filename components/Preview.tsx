@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { usePostHog } from 'posthog-js/react';
 import { Mic, Music2, Layers, Box, Clock, Download, Loader2 } from 'lucide-react';
@@ -85,6 +85,9 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
     // Clone the preview into a fixed-width off-screen container for consistent captures
     let cloneContainer: HTMLDivElement | null = null;
 
+    // Helper to yield to browser to keep animations smooth
+    const yieldToBrowser = () => new Promise(resolve => setTimeout(resolve, 0));
+
     try {
       const previewEl = previewRef.current;
       if (!previewEl) return;
@@ -108,6 +111,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
 
       // Wait for reflow and images to settle at fixed width
       await new Promise(resolve => setTimeout(resolve, 1500));
+      await yieldToBrowser();
 
       // Find sections in the clone by data attributes
       const clonedHeader = clone.querySelector('[data-pdf="header"]') as HTMLElement | null;
@@ -152,6 +156,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
         const headerHeight = (headerCanvas.height * usableWidth) / headerCanvas.width;
         safeAddImage(headerCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, headerHeight, 'Header');
         currentY += headerHeight + 8;
+        await yieldToBrowser();
       }
 
       // Add general notes section if it exists
@@ -175,6 +180,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
 
         safeAddImage(generalNotesCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, generalNotesHeight, 'General Notes');
         currentY += generalNotesHeight + 8;
+        await yieldToBrowser();
       }
 
       // Add input list section
@@ -195,6 +201,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
 
         safeAddImage(inputListCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, inputListHeight, 'Input List');
         currentY += inputListHeight;
+        await yieldToBrowser();
       }
 
       // Add technical notes section if it exists
@@ -218,6 +225,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
 
         safeAddImage(technicalNotesCanvas.toDataURL('image/jpeg', 0.99), pageMargin, currentY, usableWidth, technicalNotesHeight, 'Technical Notes');
         currentY += technicalNotesHeight + 8;
+        await yieldToBrowser();
       }
 
       // PAGE 2+: Add stage plot images directly (captured at fixed size for consistency)
@@ -248,6 +256,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
       if (topViewImage) {
         safeAddImage(topViewImage, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - Top View');
         currentY += plotHeight + 6;
+        await yieldToBrowser();
       }
 
       if (isoViewImage) {
@@ -256,6 +265,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
           currentY = pageMargin;
         }
         safeAddImage(isoViewImage, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - 3D View');
+        await yieldToBrowser();
       }
 
       // Add footer to all pages
@@ -275,6 +285,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
           pdf.setPage(i);
           safeAddImage(footerCanvas.toDataURL('image/jpeg', 0.99), pageMargin, footerY, usableWidth, footerHeight, `Footer (Page ${i})`);
         }
+        await yieldToBrowser();
       }
 
       // Store PDF for later saving, don't download yet
