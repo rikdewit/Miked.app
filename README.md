@@ -55,6 +55,7 @@ Create a professional technical rider and stage plot for your band in 5 minutes.
    # Database & Authentication (Supabase)
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_publishable_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
    # Email Service (Resend)
    RESEND_API_KEY=your_resend_api_key
@@ -100,6 +101,7 @@ See [CLAUDE.md](./CLAUDE.md) for detailed development instructions.
 | `NEXT_PUBLIC_POSTHOG_HOST` | `https://eu.i.posthog.com` | PostHog endpoint |
 | `NEXT_PUBLIC_SUPABASE_URL` | Your Supabase project URL | Database & authentication |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Your Supabase public key | Client-side API access (NOT service role key) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Your Supabase service role key | Server-side only, uploads logos to Supabase Storage |
 | `RESEND_API_KEY` | Your Resend API key | Email service for magic links |
 | `NEXT_PUBLIC_APP_URL` | `http://localhost:3000` | Magic link base URL (localhost) |
 | `SENDER_EMAIL` | `dev-support@miked.live` | Sender email address |
@@ -124,13 +126,16 @@ NEXT_PUBLIC_POSTHOG_KEY=your_key
 NEXT_PUBLIC_POSTHOG_HOST=https://eu.i.posthog.com
 NEXT_PUBLIC_SUPABASE_URL=your_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_public_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 RESEND_API_KEY=your_key
 ```
 
 ### Getting Credentials
 
 - **PostHog:** https://posthog.com (optional, analytics only)
-- **Supabase:** https://supabase.com → Project Settings → API → Copy the "Public Key" (anon key)
+- **Supabase:** https://supabase.com → Project Settings → API
+  - Copy the **"Public Key"** for `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+  - Copy the **"Service Role Secret"** for `SUPABASE_SERVICE_ROLE_KEY` (server-side only)
 - **Resend:** https://resend.com → API Keys → Create new key
 
 ### Supabase Database Setup
@@ -159,6 +164,15 @@ CREATE TABLE magic_links (
 -- Create index for fast token lookup
 CREATE INDEX idx_magic_links_token ON magic_links(token);
 ```
+
+### Supabase Storage Setup
+
+Create a public storage bucket for logos:
+
+1. Go to **Storage** → **Buckets** in your Supabase dashboard
+2. Create a new bucket named **`logos`**
+3. Set the bucket to **public** (so logos are accessible without authentication)
+4. Optionally set a max file size limit of 5 MB to match the frontend validation
 
 ## Analytics
 
