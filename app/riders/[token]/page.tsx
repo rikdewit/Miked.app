@@ -1,24 +1,25 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, use } from 'react'
 import Link from 'next/link'
 import { usePostHog } from 'posthog-js/react'
 
 interface RiderAccessPageProps {
-  params: {
+  params: Promise<{
     token: string
-  }
+  }>
 }
 
 export default function RiderAccessPage({ params }: RiderAccessPageProps) {
+  const { token } = use(params)
   const posthog = usePostHog()
 
   // Track when user accesses rider via email link
   useEffect(() => {
     posthog?.capture('rider_link_accessed', {
-      token: params.token,
+      token,
     })
-  }, [params.token, posthog])
+  }, [token, posthog])
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
@@ -56,7 +57,7 @@ export default function RiderAccessPage({ params }: RiderAccessPageProps) {
           <div className="bg-gray-100 rounded p-3 mb-6 text-left">
             <p className="text-xs text-gray-500 mb-1">Magic link token:</p>
             <code className="text-xs text-gray-700 break-all font-mono">
-              {params.token}
+              {token}
             </code>
           </div>
 
