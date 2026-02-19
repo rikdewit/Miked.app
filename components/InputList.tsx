@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { BandMember } from '../types';
 import { INSTRUMENTS } from '../constants';

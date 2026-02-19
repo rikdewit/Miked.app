@@ -1,10 +1,17 @@
+'use client'
+
 import React, { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Mic, Music2, Layers, Box, Clock, Download, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { RiderData } from '../types';
 import { InputList } from './InputList';
-import { StagePlotCanvas } from './StagePlotCanvas';
+
+const StagePlotCanvas = dynamic(
+  () => import('./StagePlotCanvas').then(m => ({ default: m.StagePlotCanvas })),
+  { ssr: false }
+);
 
 export interface PreviewHandle {
   downloadPdf: () => Promise<void>;

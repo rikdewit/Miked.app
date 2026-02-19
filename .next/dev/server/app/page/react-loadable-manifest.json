@@ -1,0 +1,40 @@
+{
+  "[project]/components/StagePlotCanvas.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/components/StagePlotCanvas.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/_4e4f2864._.js",
+      "static/chunks/node_modules_three_build_three_module_f7d46d9b.js",
+      "static/chunks/node_modules_three_examples_jsm_utils_SkeletonUtils_2a96a20e.js",
+      "static/chunks/node_modules_@react-three_fiber_dist_25d7bc3f._.js",
+      "static/chunks/node_modules_three-stdlib_e9a6eadb._.js",
+      "static/chunks/node_modules_troika-three-text_dist_troika-three-text_esm_94005891.js",
+      "static/chunks/node_modules_83b32524._.js",
+      "static/chunks/components_StagePlotCanvas_tsx_11acefa4._.js"
+    ]
+  },
+  "[project]/components/StepInstruments.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/components/StepInstruments.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/_ce49d73b._.js",
+      "static/chunks/node_modules_three_build_three_module_f7d46d9b.js",
+      "static/chunks/node_modules_three_examples_jsm_utils_SkeletonUtils_2a96a20e.js",
+      "static/chunks/node_modules_@react-three_fiber_dist_80ac5f3b._.js",
+      "static/chunks/node_modules_three-stdlib_6bd84dbe._.js",
+      "static/chunks/node_modules_551448b9._.js",
+      "static/chunks/components_StepInstruments_tsx_11acefa4._.js"
+    ]
+  },
+  "[project]/components/StepStagePlot.tsx [app-client] (ecmascript, next/dynamic entry)": {
+    "id": "[project]/components/StepStagePlot.tsx [app-client] (ecmascript, next/dynamic entry)",
+    "files": [
+      "static/chunks/_d748c837._.js",
+      "static/chunks/node_modules_three_build_three_module_f7d46d9b.js",
+      "static/chunks/node_modules_three_examples_jsm_utils_SkeletonUtils_2a96a20e.js",
+      "static/chunks/node_modules_@react-three_fiber_dist_25d7bc3f._.js",
+      "static/chunks/node_modules_three-stdlib_1af31c93._.js",
+      "static/chunks/node_modules_troika-three-text_dist_troika-three-text_esm_94005891.js",
+      "static/chunks/node_modules_56920661._.js",
+      "static/chunks/components_StepStagePlot_tsx_11acefa4._.js"
+    ]
+  }
+}

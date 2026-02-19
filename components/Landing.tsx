@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { Mic, Info, ArrowRight } from 'lucide-react';
 

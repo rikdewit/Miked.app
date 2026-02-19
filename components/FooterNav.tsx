@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { ArrowLeft, ArrowRight, Download, Loader2 } from 'lucide-react';
 

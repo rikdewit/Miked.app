@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useRef, useEffect, useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import { BubbleMenu } from '@tiptap/react/menus';

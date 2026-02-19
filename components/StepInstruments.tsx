@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState } from 'react';
 import { Plus, Trash2, X, Music2, ChevronDown } from 'lucide-react';
 import { RiderData, InputConfig } from '../types';

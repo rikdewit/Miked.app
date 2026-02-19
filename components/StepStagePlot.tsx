@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useMemo, useRef } from 'react';
 import { Box, Layers, Trash2, GripVertical, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { RiderData, StageItem, BandMember } from '../types';
