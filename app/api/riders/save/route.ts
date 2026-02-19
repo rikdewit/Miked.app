@@ -59,13 +59,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 1. Save rider to Supabase
+    // 1. Generate share token
+    const shareToken = crypto.randomUUID()
+
+    // 2. Save rider to Supabase
     const { data: riderRecord, error: insertError } = await supabase
       .from('riders')
       .insert([
         {
           email,
           rider_data: cleanedRiderData,
+          share_token: shareToken,
         },
       ])
       .select()
@@ -79,11 +83,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 2. Generate magic link token
+    // 3. Generate magic link token
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
 
-    // 3. Save magic link
+    // 4. Save magic link
     const { error: linkError } = await supabase.from('magic_links').insert([
       {
         rider_id: riderRecord.id,
@@ -101,9 +105,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 4. Send email via Resend
+    // 5. Send email via Resend
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://miked.live'
-    const magicLink = `${appUrl}/riders/${token}`
+    const magicLink = `${appUrl}/riders/${riderRecord.id}?auth=${token}`
 
     console.log(`[RESEND] Sending email to: ${email}`)
     console.log(`[RESEND] Magic link: ${magicLink}`)
@@ -152,6 +156,7 @@ export async function POST(request: NextRequest) {
       {
         success: true,
         riderId: riderRecord.id,
+        shareToken: riderRecord.share_token,
         message: 'Rider saved and email sent',
       },
       { status: 200 }

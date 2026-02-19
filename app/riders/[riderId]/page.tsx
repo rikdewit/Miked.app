@@ -3,34 +3,55 @@
 import { useEffect, use, useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { usePostHog } from 'posthog-js/react'
 import { Preview, PreviewHandle } from '@/components/Preview'
 import { RiderData } from '@/types'
-import { Download, Loader2 } from 'lucide-react'
+import { Download, Share2, Loader2, Check } from 'lucide-react'
 
-interface SharePageProps {
+interface RiderViewPageProps {
   params: Promise<{
     riderId: string
   }>
+  searchParams: Promise<{
+    auth?: string
+    share?: string
+  }>
 }
 
-export default function SharePage({ params }: SharePageProps) {
+export default function RiderViewPage({ params, searchParams }: RiderViewPageProps) {
   const { riderId } = use(params)
+  const { auth, share } = use(searchParams)
   const router = useRouter()
+  const posthog = usePostHog()
   const previewRef = useRef<PreviewHandle>(null)
   const [riderData, setRiderData] = useState<RiderData | null>(null)
+  const [shareToken, setShareToken] = useState<string | null>(null)
+  const [accessLevel, setAccessLevel] = useState<'owner' | 'guest' | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
+  const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {
+    // Determine which token we're using
+    const token = auth || share
+    if (!token) {
+      router.push('/riders')
+      return
+    }
+
     const fetchRider = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/share/${riderId}`)
+        const queryParam = auth ? `auth=${auth}` : `share=${share}`
+        const response = await fetch(`/api/riders/${riderId}?${queryParam}`)
 
         if (!response.ok) {
+          const data = await response.json()
           if (response.status === 404) {
             setError('not_found')
+          } else if (response.status === 401) {
+            setError('unauthorized')
           } else {
             setError('unknown')
           }
@@ -39,6 +60,13 @@ export default function SharePage({ params }: SharePageProps) {
 
         const data = await response.json()
         setRiderData(data.riderData)
+        setShareToken(data.shareToken ?? null)
+        setAccessLevel(data.accessLevel)
+
+        posthog?.capture('rider_link_accessed', {
+          riderId,
+          accessLevel: data.accessLevel,
+        })
       } catch (err) {
         console.error('Failed to fetch rider:', err)
         setError('unknown')
@@ -48,7 +76,7 @@ export default function SharePage({ params }: SharePageProps) {
     }
 
     fetchRider()
-  }, [riderId])
+  }, [riderId, auth, share, router, posthog])
 
   const handleDownload = async () => {
     if (!previewRef.current) return
@@ -64,6 +92,19 @@ export default function SharePage({ params }: SharePageProps) {
     }
   }
 
+  const handleCopyShareLink = async () => {
+    if (!shareToken) return
+
+    const shareUrl = `${window.location.origin}/riders/${riderId}?share=${shareToken}`
+    try {
+      await navigator.clipboard.writeText(shareUrl)
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy link:', err)
+    }
+  }
+
   // Error state: Rider not found
   if (!isLoading && error === 'not_found') {
     return (
@@ -76,6 +117,30 @@ export default function SharePage({ params }: SharePageProps) {
             </h1>
             <p className="text-gray-600 mb-8">
               This rider doesn't exist or has been removed.
+            </p>
+            <Link href="/">
+              <button className="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+                Create a new rider
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state: Unauthorized
+  if (!isLoading && error === 'unauthorized') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-xl p-8 text-center">
+            <div className="text-4xl mb-4">🔐</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Access denied
+            </h1>
+            <p className="text-gray-600 mb-8">
+              Your access token is invalid or expired.
             </p>
             <Link href="/">
               <button className="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
@@ -133,8 +198,9 @@ export default function SharePage({ params }: SharePageProps) {
             <Preview data={riderData} ref={previewRef} />
           </div>
 
-          {/* Floating action bar */}
-          <div className="bg-slate-900 border-t border-slate-800 p-4 flex justify-center">
+          {/* Action bar */}
+          <div className="bg-slate-900 border-t border-slate-800 p-4 flex justify-center gap-3 flex-wrap">
+            {/* Download button — shown to both owner and guest */}
             <button
               onClick={handleDownload}
               disabled={isDownloading}
@@ -152,6 +218,26 @@ export default function SharePage({ params }: SharePageProps) {
                 </>
               )}
             </button>
+
+            {/* Share button — owner only */}
+            {accessLevel === 'owner' && (
+              <button
+                onClick={handleCopyShareLink}
+                className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-slate-600/25 transition-all"
+              >
+                {isCopied ? (
+                  <>
+                    <Check size={18} />
+                    Copied!
+                  </>
+                ) : (
+                  <>
+                    <Share2 size={18} />
+                    Copy Share Link
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </>
       ) : (
