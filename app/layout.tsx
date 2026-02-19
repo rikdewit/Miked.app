@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { PHProvider } from './providers/PostHogProvider'
+import { RiderProvider } from '@/providers/RiderProvider'
+import { Header } from '@/components/Header'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -24,7 +26,16 @@ export default function RootLayout({
   return (
     <html lang="en" className={inter.className}>
       <body className="bg-slate-900 text-slate-100">
-        <PHProvider>{children}</PHProvider>
+        <RiderProvider>
+          <PHProvider>
+            <div className="h-dvh overflow-hidden flex flex-col">
+              <Header />
+              <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                {children}
+              </main>
+            </div>
+          </PHProvider>
+        </RiderProvider>
       </body>
     </html>
   )
