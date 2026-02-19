@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
+import { supabaseAdmin } from '@/utils/supabaseAdmin'
 import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -15,13 +16,56 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Handle logo upload to Supabase Storage if Base64
+    let cleanedRiderData = { ...riderData }
+    if (riderData.details?.logoUrl?.startsWith('data:')) {
+      try {
+        const dataUri = riderData.details.logoUrl
+        const [header, base64Data] = dataUri.split(',')
+        const mimeMatch = header.match(/data:([^;]+);base64/)
+        const mimeType = mimeMatch?.[1] ?? 'image/png'
+        const ext = mimeType.split('/')[1] ?? 'png'
+        const buffer = Buffer.from(base64Data, 'base64')
+        const filename = `${crypto.randomUUID()}.${ext}`
+
+        const { error: uploadError } = await supabaseAdmin.storage
+          .from('logos')
+          .upload(filename, buffer, { contentType: mimeType, upsert: false })
+
+        if (uploadError) {
+          console.error('Logo upload error:', uploadError)
+          // Strip logo on upload failure rather than failing the whole save
+          cleanedRiderData = {
+            ...cleanedRiderData,
+            details: { ...cleanedRiderData.details, logoUrl: undefined }
+          }
+        } else {
+          const { data: publicUrlData } = supabaseAdmin.storage
+            .from('logos')
+            .getPublicUrl(filename)
+
+          cleanedRiderData = {
+            ...cleanedRiderData,
+            details: { ...cleanedRiderData.details, logoUrl: publicUrlData.publicUrl }
+          }
+        }
+      } catch (logoError) {
+        console.error('Logo processing error:', logoError)
+        // Strip logo on error rather than failing the whole save
+        cleanedRiderData = {
+          ...cleanedRiderData,
+          details: { ...cleanedRiderData.details, logoUrl: undefined }
+        }
+      }
+    }
+
     // 1. Save rider to Supabase
     const { data: riderRecord, error: insertError } = await supabase
       .from('riders')
       .insert([
         {
           email,
-          rider_data: riderData,
+          rider_data: cleanedRiderData,
         },
       ])
       .select()

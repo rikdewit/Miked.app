@@ -67,7 +67,7 @@ export interface RiderDetails {
   phone?: string;
   website?: string;
   socials?: string;
-  logoUrl?: string; // Base64 string
+  logoUrl?: string; // Base64 (in state/localStorage) or public URL (in DB)
   generalNotes?: string;
   technicalNotes?: string;
   showDuration?: string;
