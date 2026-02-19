@@ -1,7 +1,8 @@
 
-import React, { useMemo, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useMemo, Suspense, useRef } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
+import * as THREE from 'three';
 import { BandMember, InstrumentType, PersonPose } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { COLORS } from '../utils/stageConfig';
@@ -32,6 +33,18 @@ interface PreviewItemProps {
   type: string;
   pose?: PersonPose;
 }
+
+const AutoRotatingGroup: React.FC<{ isSidebarPreview?: boolean; children: React.ReactNode }> = ({ isSidebarPreview, children }) => {
+    const groupRef = useRef<THREE.Group>(null);
+
+    useFrame(() => {
+        if (isSidebarPreview && groupRef.current) {
+            groupRef.current.rotation.y += 0.0025; // Matches band member page autoRotateSpeed (0.75 degrees/frame)
+        }
+    });
+
+    return <group ref={groupRef}>{children}</group>;
+};
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, pose }) => {
     const [width, height, depth] = args;
@@ -263,7 +276,7 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
     >
         <Canvas
           shadows={!isSidebarPreview}
-          camera={{ position: [2.5, 2.5, 3.5], fov: 35 }}
+          camera={isSidebarPreview ? { position: [2.5, 2.5, 3.5], fov: 25 } : { position: [2.5, 2.5, 3.5], fov: 35 }}
           gl={{
             antialias: isSidebarPreview ? false : true,
             failIfMajorPerformanceCaveat: true,
@@ -299,30 +312,32 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
             });
           }}
         >
-            <ambientLight intensity={isSidebarPreview ? 0.4 : 0.6} />
+            <ambientLight intensity={isSidebarPreview ? 0.7 : 0.6} />
             {!isSidebarPreview && (
               <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
             )}
-            <pointLight position={[-5, 2, -5]} intensity={isSidebarPreview ? 0.2 : 0.5} color="#3b82f6" />
+            <pointLight position={[-5, 2, -5]} intensity={isSidebarPreview ? 0.5 : 0.5} color="#3b82f6" />
 
             <Suspense fallback={null}>
-                <group position={[0, -0.8, 0]}>
-                    {sceneItems.map((item, idx) => (
-                        <PreviewItem
-                            key={idx}
-                            position={item.pos}
-                            args={item.size}
-                            color={item.color}
-                            type={item.type}
-                            pose={item.pose}
-                        />
-                    ))}
-                    <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
-                    {!isSidebarPreview && <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />}
-                </group>
+                <AutoRotatingGroup isSidebarPreview={isSidebarPreview}>
+                    <group position={[0, -0.8, 0]}>
+                        {sceneItems.map((item, idx) => (
+                            <PreviewItem
+                                key={idx}
+                                position={item.pos}
+                                args={item.size}
+                                color={item.color}
+                                type={item.type}
+                                pose={item.pose}
+                            />
+                        ))}
+                        <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
+                        {!isSidebarPreview && <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />}
+                    </group>
+                </AutoRotatingGroup>
             </Suspense>
 
-            <OrbitControls enabled={!isSidebarPreview} enableZoom={false} autoRotate={!isDragging} autoRotateSpeed={1.5} minPolarAngle={0} maxPolarAngle={Math.PI / 2.2} />
+            <OrbitControls enabled={!isSidebarPreview} enableZoom={false} autoRotate={!isDragging} autoRotateSpeed={0.75} minPolarAngle={0} maxPolarAngle={Math.PI / 2.2} />
         </Canvas>
     </div>
   );
