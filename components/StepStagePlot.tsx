@@ -1,11 +1,15 @@
+'use client'
+
 import React, { useState, useMemo, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { Box, Layers, Trash2, GripVertical, Check, RefreshCw, AlertTriangle } from 'lucide-react';
 import { RiderData, StageItem, BandMember } from '../types';
-import { StagePlotCanvas } from './StagePlotCanvas';
-import { MemberPreview3D } from './MemberPreview3D';
 import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
 import { generateMemberItems } from '../utils/stageHelpers';
 import { MODEL_OFFSETS } from './3d/StageModels';
+
+const StagePlotCanvas = dynamic(() => import('./StagePlotCanvas').then(m => ({ default: m.StagePlotCanvas })), { ssr: false });
+const MemberPreview3D = dynamic(() => import('./MemberPreview3D').then(m => ({ default: m.MemberPreview3D })), { ssr: false });
 
 interface StepStagePlotProps {
   data: RiderData;

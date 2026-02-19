@@ -1,3 +1,5 @@
+'use client'
+
 import React from 'react';
 import { BandMember } from '../types';
 import { INSTRUMENTS } from '../constants';
@@ -65,8 +67,8 @@ export const InputList: React.FC<InputListProps> = ({ members }) => {
             </tr>
           </thead>
           <tbody>
-            {inputs.map((input) => (
-              <tr key={input.input} className="border-b border-slate-200 last:border-0 print:border-slate-400">
+            {inputs.map((input, index) => (
+              <tr key={index} className="border-b border-slate-200 last:border-0 print:border-slate-400">
                 <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400 font-medium">{input.input}</td>
                 <td className="py-2 px-3 text-black border-r border-slate-200 print:border-slate-400">{input.micDi}</td>
                 <td className="py-2 px-3 text-black italic print:text-black">{input.notes}</td>

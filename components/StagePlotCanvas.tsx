@@ -397,7 +397,36 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
       className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
       style={{ touchAction: 'none', cursor: resizingItemId ? 'crosshair' : undefined }}
     >
-      <Canvas shadows gl={{ preserveDrawingBuffer: true, antialias: true }} className="w-full h-full">
+      <Canvas
+        shadows
+        gl={{
+          preserveDrawingBuffer: true,
+          antialias: true,
+          failIfMajorPerformanceCaveat: false,
+          powerPreference: 'high-performance',
+          alpha: true,
+          stencil: false,
+          depth: true
+        }}
+        className="w-full h-full"
+        onCreated={(state) => {
+          const gl = state.gl;
+          console.debug('[StagePlotCanvas] WebGL initialized', {
+            renderer: gl.constructor.name,
+            maxTextureSize: gl.capabilities.maxTextureSize
+          });
+
+          // Log context loss events
+          gl.domElement.addEventListener('webglcontextlost', (e) => {
+            console.warn('[StagePlotCanvas] WebGL Context Lost (recovering)');
+            e.preventDefault();
+          });
+
+          gl.domElement.addEventListener('webglcontextrestored', () => {
+            console.debug('[StagePlotCanvas] WebGL Context Restored');
+          });
+        }}
+      >
         <OrthographicCamera
             key={viewMode}
             makeDefault

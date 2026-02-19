@@ -1,7 +1,8 @@
 
-import React, { useMemo, Suspense } from 'react';
-import { Canvas } from '@react-three/fiber';
+import React, { useMemo, Suspense, useRef, useState } from 'react';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
+import * as THREE from 'three';
 import { BandMember, InstrumentType, PersonPose } from '../types';
 import { INSTRUMENTS } from '../constants';
 import { COLORS } from '../utils/stageConfig';
@@ -32,6 +33,18 @@ interface PreviewItemProps {
   type: string;
   pose?: PersonPose;
 }
+
+const AutoRotatingGroup: React.FC<{ isSidebarPreview?: boolean; children: React.ReactNode }> = ({ isSidebarPreview, children }) => {
+    const groupRef = useRef<THREE.Group>(null);
+
+    useFrame(() => {
+        if (isSidebarPreview && groupRef.current) {
+            groupRef.current.rotation.y += 0.0025; // Matches band member page autoRotateSpeed (0.75 degrees/frame)
+        }
+    });
+
+    return <group ref={groupRef}>{children}</group>;
+};
 
 const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, pose }) => {
     const [width, height, depth] = args;
@@ -133,6 +146,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, 
 };
 
 export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDragging = false, isSidebarPreview = false }) => {
+  const [isLoading, setIsLoading] = useState(true);
 
   const sceneItems = useMemo(() => {
     const items: SceneItem[] = [];
@@ -261,29 +275,81 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
       className="w-full h-full bg-slate-900 rounded-lg overflow-hidden relative border border-slate-700 shadow-inner"
       style={{ touchAction: isSidebarPreview ? 'auto' : 'none' }}
     >
-        <Canvas shadows camera={{ position: [2.5, 2.5, 3.5], fov: 35 }} style={{ touchAction: isSidebarPreview ? 'auto' : 'none', pointerEvents: isSidebarPreview ? 'none' : 'auto' }}>
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
-            <pointLight position={[-5, 2, -5]} intensity={0.5} color="#3b82f6" />
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-10 rounded-lg">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-6 h-6 border-2 border-slate-600 border-t-indigo-500 rounded-full animate-spin"></div>
+              <span className="text-xs text-slate-400">{isSidebarPreview ? 'Loading...' : 'Loading model...'}</span>
+            </div>
+          </div>
+        )}
+        <Canvas
+          shadows={!isSidebarPreview}
+          camera={isSidebarPreview ? { position: [2.5, 2.5, 3.5], fov: 25 } : { position: [2.5, 2.5, 3.5], fov: 35 }}
+          gl={{
+            antialias: isSidebarPreview ? false : true,
+            failIfMajorPerformanceCaveat: true,
+            powerPreference: 'high-performance',
+            alpha: true,
+            stencil: false,
+            depth: true,
+            logarithmicDepthBuffer: isSidebarPreview
+          }}
+          style={{ touchAction: isSidebarPreview ? 'auto' : 'none', pointerEvents: isSidebarPreview ? 'none' : 'auto' }}
+          onCreated={(state) => {
+            const gl = state.gl;
+
+            // Reduce pixel ratio for sidebar previews to save GPU memory
+            if (isSidebarPreview) {
+              state.setDpr(Math.min(window.devicePixelRatio, 1));
+            }
+
+            if (isSidebarPreview) {
+              console.debug('[MemberPreview3D] Sidebar canvas created for:', member.name);
+            } else {
+              console.debug('[MemberPreview3D] Main canvas created for:', member.name);
+            }
+
+            // Mark canvas as loaded
+            setIsLoading(false);
+
+            // Log context loss events
+            gl.domElement.addEventListener('webglcontextlost', (e) => {
+              console.warn('[MemberPreview3D] WebGL Context Lost (recovering):', member.name);
+              e.preventDefault();
+            });
+
+            gl.domElement.addEventListener('webglcontextrestored', () => {
+              console.debug('[MemberPreview3D] WebGL Context Restored for:', member.name);
+            });
+          }}
+        >
+            <ambientLight intensity={isSidebarPreview ? 0.7 : 0.6} />
+            {!isSidebarPreview && (
+              <directionalLight position={[5, 8, 5]} intensity={1.2} castShadow shadow-mapSize={[512, 512]} />
+            )}
+            <pointLight position={[-5, 2, -5]} intensity={isSidebarPreview ? 0.5 : 0.5} color="#3b82f6" />
 
             <Suspense fallback={null}>
-                <group position={[0, -0.8, 0]}>
-                    {sceneItems.map((item, idx) => (
-                        <PreviewItem
-                            key={idx}
-                            position={item.pos}
-                            args={item.size}
-                            color={item.color}
-                            type={item.type}
-                            pose={item.pose}
-                        />
-                    ))}
-                    <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
-                    <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />
-                </group>
+                <AutoRotatingGroup isSidebarPreview={isSidebarPreview}>
+                    <group position={[0, -0.8, 0]}>
+                        {sceneItems.map((item, idx) => (
+                            <PreviewItem
+                                key={idx}
+                                position={item.pos}
+                                args={item.size}
+                                color={item.color}
+                                type={item.type}
+                                pose={item.pose}
+                            />
+                        ))}
+                        <gridHelper args={[5, 5, 0x334155, 0x1e293b]} position={[0, 0.001, 0]} />
+                        {!isSidebarPreview && <ContactShadows position={[0, 0, 0]} opacity={0.6} scale={10} blur={2} far={1.5} />}
+                    </group>
+                </AutoRotatingGroup>
             </Suspense>
 
-            <OrbitControls enabled={!isSidebarPreview} enableZoom={false} autoRotate={!isDragging} autoRotateSpeed={1.5} minPolarAngle={0} maxPolarAngle={Math.PI / 2.2} />
+            <OrbitControls enabled={!isSidebarPreview} enableZoom={false} autoRotate={!isDragging} autoRotateSpeed={0.75} minPolarAngle={0} maxPolarAngle={Math.PI / 2.2} />
         </Canvas>
     </div>
   );

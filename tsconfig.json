@@ -3,7 +3,6 @@
     "target": "ES2022",
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
-    "module": "ESNext",
     "lib": [
       "ES2022",
       "DOM",
@@ -14,6 +13,7 @@
       "node"
     ],
     "moduleResolution": "bundler",
+    "module": "ESNext",
     "isolatedModules": true,
     "moduleDetection": "force",
     "allowJs": true,
@@ -23,8 +23,25 @@
         "./*"
       ]
     },
-    "allowImportingTsExtensions": true,
-    "noEmit": true
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "strict": false,
+    "incremental": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true
   },
-  "include": ["**/*.ts", "**/*.tsx", "global.d.ts"]
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "global.d.ts",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }
