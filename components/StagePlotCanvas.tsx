@@ -10,13 +10,48 @@ import { MODEL_OFFSETS } from './3d/StageModels';
 import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAMERA_ISO_PREVIEW, AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE, AUDIENCE_TEXT_FONT_SCALE_PREVIEW } from '../constants';
 
 // Component that captures canvas screenshot for preview mode
-// Camera position/zoom is already set by ResponsiveCameraAdjuster — just capture what's rendered
+// Waits for actual rendering completion instead of using a fixed timeout
 const ScreenshotCapture = ({ isPreview, containerRef, onScreenshot }: { isPreview: boolean; containerRef: React.RefObject<HTMLDivElement>; onScreenshot: (dataUrl: string) => void }) => {
-  useEffect(() => {
-    if (!isPreview) return;
+  const frameCountRef = useRef(0);
+  const hasCaptureedRef = useRef(false);
 
-    // Wait for ResponsiveCameraAdjuster to apply zoom-to-fit and for Three.js to render
-    const timer = setTimeout(() => {
+  useEffect(() => {
+    if (!isPreview || hasCaptureedRef.current) return;
+
+    const container = containerRef.current;
+    if (!container) return;
+
+    // Find the canvas element inside the container
+    const findCanvas = () => container.querySelector('canvas') as HTMLCanvasElement | null;
+
+    // Wait for canvas to exist and render frames
+    const checkAndCapture = () => {
+      const canvas = findCanvas();
+      if (!canvas) {
+        requestAnimationFrame(checkAndCapture);
+        return;
+      }
+
+      // Increment frame counter
+      frameCountRef.current++;
+
+      // After at least 15 frames (ensures THREE.js has rendered multiple times),
+      // and context is stable, capture the screenshot. Higher frame count reduces
+      // WebGL context loss on off-screen canvases.
+      if (frameCountRef.current >= 15) {
+        // Additional delay to ensure final render is complete and WebGL context is stable
+        setTimeout(() => {
+          captureScreenshot();
+        }, 200);
+      } else {
+        requestAnimationFrame(checkAndCapture);
+      }
+    };
+
+    const captureScreenshot = () => {
+      if (hasCaptureedRef.current) return;
+      hasCaptureedRef.current = true;
+
       if (containerRef.current) {
         // Add CSS fix before capturing
         const style = document.createElement('style');
@@ -39,12 +74,20 @@ const ScreenshotCapture = ({ isPreview, containerRef, onScreenshot }: { isPrevie
             onScreenshot(canvas.toDataURL('image/png'));
             // Clean up the style
             document.head.removeChild(style);
+          }).catch((err) => {
+            console.error('[StagePlotCanvas] Screenshot capture failed:', err);
+            document.head.removeChild(style);
           });
         });
       }
-    }, 200);
+    };
 
-    return () => clearTimeout(timer);
+    // Start checking for canvas and frames
+    const raf = requestAnimationFrame(checkAndCapture);
+
+    return () => {
+      cancelAnimationFrame(raf);
+    };
   }, [isPreview, containerRef, onScreenshot]);
 
   return null;

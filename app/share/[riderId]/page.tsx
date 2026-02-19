@@ -1,61 +1,54 @@
 'use client'
 
 import { useEffect, use, useState, useRef } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { usePostHog } from 'posthog-js/react'
 import { Preview, PreviewHandle } from '@/components/Preview'
 import { RiderData } from '@/types'
-import { Download, Share2, Loader2, Check } from 'lucide-react'
+import { Download, Loader2 } from 'lucide-react'
 
-interface RiderAccessPageProps {
+interface SharePageProps {
   params: Promise<{
-    token: string
+    riderId: string
   }>
 }
 
-export default function RiderAccessPage({ params }: RiderAccessPageProps) {
-  const { token } = use(params)
+export default function SharePage({ params }: SharePageProps) {
+  const { riderId } = use(params)
   const router = useRouter()
-  const posthog = usePostHog()
   const previewRef = useRef<PreviewHandle>(null)
   const [riderData, setRiderData] = useState<RiderData | null>(null)
-  const [riderId, setRiderId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
-  const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {
     const fetchRider = async () => {
       try {
         setIsLoading(true)
-        const response = await fetch(`/api/riders/${token}`)
+        const response = await fetch(`/api/share/${riderId}`)
 
         if (!response.ok) {
-          // Invalid or expired token - redirect to /riders
-          router.push('/riders')
+          if (response.status === 404) {
+            setError('not_found')
+          } else {
+            setError('unknown')
+          }
           return
         }
 
         const data = await response.json()
         setRiderData(data.riderData)
-        setRiderId(data.riderId)
-
-        // Track when user accesses rider via email link
-        posthog?.capture('rider_link_accessed', {
-          token,
-          riderId: data.riderId,
-        })
       } catch (err) {
         console.error('Failed to fetch rider:', err)
-        // On error, redirect to overview page
-        router.push('/riders')
+        setError('unknown')
       } finally {
         setIsLoading(false)
       }
     }
 
     fetchRider()
-  }, [token, router, posthog])
+  }, [riderId])
 
   const handleDownload = async () => {
     if (!previewRef.current) return
@@ -71,17 +64,52 @@ export default function RiderAccessPage({ params }: RiderAccessPageProps) {
     }
   }
 
-  const handleCopyShareLink = async () => {
-    if (!riderId) return
+  // Error state: Rider not found
+  if (!isLoading && error === 'not_found') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-xl p-8 text-center">
+            <div className="text-4xl mb-4">🔍</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Rider not found
+            </h1>
+            <p className="text-gray-600 mb-8">
+              This rider doesn't exist or has been removed.
+            </p>
+            <Link href="/">
+              <button className="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+                Create a new rider
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-    const shareUrl = `${window.location.origin}/share/${riderId}`
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      setIsCopied(true)
-      setTimeout(() => setIsCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy link:', err)
-    }
+  // Error state: Unknown error
+  if (!isLoading && error === 'unknown') {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center p-4">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-xl p-8 text-center">
+            <div className="text-4xl mb-4">⚠️</div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              Something went wrong
+            </h1>
+            <p className="text-gray-600 mb-8">
+              We couldn't load the rider. Please try again later.
+            </p>
+            <Link href="/">
+              <button className="w-full px-4 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition">
+                Create a new rider
+              </button>
+            </Link>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Loading state
@@ -90,7 +118,7 @@ export default function RiderAccessPage({ params }: RiderAccessPageProps) {
       <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-          <p className="text-gray-300">Loading your rider...</p>
+          <p className="text-gray-300">Loading rider...</p>
         </div>
       </div>
     )
@@ -105,8 +133,8 @@ export default function RiderAccessPage({ params }: RiderAccessPageProps) {
             <Preview data={riderData} ref={previewRef} />
           </div>
 
-          {/* Action bar */}
-          <div className="bg-slate-900 border-t border-slate-800 p-4 flex justify-center gap-3 flex-wrap">
+          {/* Floating action bar */}
+          <div className="bg-slate-900 border-t border-slate-800 p-4 flex justify-center">
             <button
               onClick={handleDownload}
               disabled={isDownloading}
@@ -121,23 +149,6 @@ export default function RiderAccessPage({ params }: RiderAccessPageProps) {
                 <>
                   <Download size={18} />
                   Download PDF
-                </>
-              )}
-            </button>
-
-            <button
-              onClick={handleCopyShareLink}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 shadow-lg hover:shadow-slate-600/25 transition-all"
-            >
-              {isCopied ? (
-                <>
-                  <Check size={18} />
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <Share2 size={18} />
-                  Copy Share Link
                 </>
               )}
             </button>

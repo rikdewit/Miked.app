@@ -42,6 +42,17 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   const [naturalHeight, setNaturalHeight] = useState(0);
   const generatedPdfRef = useRef<jsPDF | null>(null);
 
+  // Debug: Log logo URL when it changes
+  useEffect(() => {
+    if (data.details.logoUrl) {
+      console.log('[Preview] Logo URL:', {
+        url: data.details.logoUrl,
+        isDataUri: data.details.logoUrl.startsWith('data:'),
+        length: data.details.logoUrl.length
+      });
+    }
+  }, [data.details.logoUrl]);
+
   // Update preview scale when window resizes
   useEffect(() => {
     const updateScale = () => {
@@ -368,7 +379,19 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
             </div>
           </div>
           {data.details.logoUrl ? (
-             <img src={data.details.logoUrl} alt="Band Logo" className="h-24 max-w-[150px] object-contain" />
+             <img
+               src={data.details.logoUrl}
+               alt="Band Logo"
+               className="h-24 max-w-[150px] object-contain"
+               crossOrigin="anonymous"
+               onError={(e) => {
+                 console.error('[Preview] Logo failed to load:', {
+                   src: data.details.logoUrl,
+                   error: e.currentTarget.currentSrc,
+                   status: (e.target as any).status
+                 });
+               }}
+             />
           ) : (
              <div className="h-24 w-24 bg-slate-100 flex items-center justify-center text-slate-300 font-bold border border-slate-200">LOGO</div>
           )}
@@ -446,12 +469,12 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
 
       {/* Off-screen fixed-size containers for consistent stage plot captures */}
       {!topViewImage && (
-        <div style={{ position: 'fixed', left: '-9999px', top: 0, width: 1600, height: 1000 }} aria-hidden="true">
+        <div style={{ position: 'fixed', width: 1600, height: 1000, top: 0, left: -9999, pointerEvents: 'none', zIndex: -9999 }} aria-hidden="true">
           <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} isPreview={true} members={data.members} onScreenshot={setTopViewImage} />
         </div>
       )}
       {!isoViewImage && (
-        <div style={{ position: 'fixed', left: '-9999px', top: 0, width: 1600, height: 1000 }} aria-hidden="true">
+        <div style={{ position: 'fixed', width: 1600, height: 1000, top: 0, left: -9999, pointerEvents: 'none', zIndex: -9999 }} aria-hidden="true">
           <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} isPreview={true} members={data.members} onScreenshot={setIsoViewImage} />
         </div>
       )}
