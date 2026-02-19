@@ -1,4 +1,8 @@
+'use client'
+
+import { useEffect } from 'react'
 import Link from 'next/link'
+import { usePostHog } from 'posthog-js/react'
 
 interface RiderAccessPageProps {
   params: {
@@ -7,6 +11,14 @@ interface RiderAccessPageProps {
 }
 
 export default function RiderAccessPage({ params }: RiderAccessPageProps) {
+  const posthog = usePostHog()
+
+  // Track when user accesses rider via email link
+  useEffect(() => {
+    posthog?.capture('rider_link_accessed', {
+      token: params.token,
+    })
+  }, [params.token, posthog])
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 to-slate-900 flex items-center justify-center p-4">
       <div className="max-w-md w-full">

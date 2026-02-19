@@ -16,7 +16,7 @@ const StagePlotCanvas = dynamic(
 
 export interface PreviewHandle {
   generatePdf: () => Promise<void>;
-  savePdf: () => void;
+  savePdf: (email?: string) => void;
   isGeneratingPdf: boolean;
 }
 
@@ -71,7 +71,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
     onGeneratingChange?.(true);
-    posthog?.capture('download_initiated');
+    posthog?.capture('generate_pdf');
 
     // Add CSS fix before capturing
     const style = document.createElement('style');
@@ -294,12 +294,13 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
     }
   };
 
-  const handleSavePDF = () => {
+  const handleSavePDF = (email?: string) => {
     if (generatedPdfRef.current) {
       generatedPdfRef.current.save(`${data.details.bandName || 'tech-rider'}.pdf`);
       posthog?.capture('rider_downloaded', {
         member_count: data.members.length,
         has_logo: !!data.details.logoUrl,
+        email: email || undefined,
       });
     }
   };
