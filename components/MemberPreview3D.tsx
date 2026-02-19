@@ -1,5 +1,5 @@
 
-import React, { useMemo, Suspense, useRef } from 'react';
+import React, { useMemo, Suspense, useRef, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, ContactShadows } from '@react-three/drei';
 import * as THREE from 'three';
@@ -146,6 +146,7 @@ const PreviewItem: React.FC<PreviewItemProps> = ({ position, args, color, type, 
 };
 
 export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDragging = false, isSidebarPreview = false }) => {
+  const [isLoading, setIsLoading] = useState(true);
 
   const sceneItems = useMemo(() => {
     const items: SceneItem[] = [];
@@ -274,6 +275,14 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
       className="w-full h-full bg-slate-900 rounded-lg overflow-hidden relative border border-slate-700 shadow-inner"
       style={{ touchAction: isSidebarPreview ? 'auto' : 'none' }}
     >
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-10 rounded-lg">
+            <div className="flex flex-col items-center gap-2">
+              <div className="w-6 h-6 border-2 border-slate-600 border-t-indigo-500 rounded-full animate-spin"></div>
+              <span className="text-xs text-slate-400">{isSidebarPreview ? 'Loading...' : 'Loading model...'}</span>
+            </div>
+          </div>
+        )}
         <Canvas
           shadows={!isSidebarPreview}
           camera={isSidebarPreview ? { position: [2.5, 2.5, 3.5], fov: 25 } : { position: [2.5, 2.5, 3.5], fov: 35 }}
@@ -300,6 +309,9 @@ export const MemberPreview3D: React.FC<MemberPreview3DProps> = ({ member, isDrag
             } else {
               console.debug('[MemberPreview3D] Main canvas created for:', member.name);
             }
+
+            // Mark canvas as loaded
+            setIsLoading(false);
 
             // Log context loss events
             gl.domElement.addEventListener('webglcontextlost', (e) => {
