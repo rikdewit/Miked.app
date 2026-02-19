@@ -116,7 +116,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
                       onChange={(e) => setCustomEmail(e.target.value)}
                       placeholder="your.email@example.com"
                       disabled={isLoading}
-                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="mt-2 w-full px-3 py-2 border border-gray-300 rounded-md text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
                     />
                   )}
                 </div>
