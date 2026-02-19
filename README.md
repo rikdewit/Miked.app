@@ -174,6 +174,29 @@ Create a public storage bucket for logos:
 3. Set the bucket to **public** (so logos are accessible without authentication)
 4. Optionally set a max file size limit of 5 MB to match the frontend validation
 
+## Magic Link & Access Control
+
+### How It Works
+
+1. **Save rider** → Creates a Supabase Auth user + generates a unique magic link token
+2. **Click magic link** → Token validated → httpOnly secure cookie set (`auth_{riderId}`) → Session established
+3. **Return visits** → Cookie persists → Owner access maintained
+4. **Reuse link** → Token consumed (deleted) on first use → Falls back to guest view with share token
+
+### Access Levels
+
+| Access Level | How to Get | Can Do | Session Lasts |
+|---|---|---|---|
+| **Owner** | Click magic link email (first time) | View + Download + Share | 1 year (cookie) |
+| **Guest** | Share button URL or expired magic link | View + Download only | Session only |
+
+### Session Security
+
+- Auth token stored in **httpOnly** secure cookie (can't be stolen by XSS)
+- Single-use magic link token (deleted after first use)
+- Supabase Auth user created automatically for future password/OAuth support
+- Owner controls (Share button) only visible to session holders
+
 ## Analytics
 
 PostHog analytics tracks the user funnel on production only:

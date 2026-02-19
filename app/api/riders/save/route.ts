@@ -83,11 +83,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 3. Generate magic link token
+    // 3. Try to create user in Supabase Auth (will fail silently if already exists)
+    await supabaseAdmin.auth.admin.createUser({
+      email,
+      email_confirm: true,
+    }).catch((err) => {
+      // User might already exist, that's fine
+      console.log('User creation (expected if already exists):', err.message)
+    })
+
+    // 4. Generate custom magic link token
     const token = crypto.randomUUID()
     const expiresAt = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) // 1 year
 
-    // 4. Save magic link
     const { error: linkError } = await supabase.from('magic_links').insert([
       {
         rider_id: riderRecord.id,
@@ -105,13 +113,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 5. Send email via Resend
+    // 5. Build magic link URL
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://miked.live'
-    const magicLink = `${appUrl}/riders/${riderRecord.id}?auth=${token}`
+    const magicLink = `${appUrl}/auth/callback?token=${token}&riderId=${riderRecord.id}`
 
     console.log(`[RESEND] Sending email to: ${email}`)
     console.log(`[RESEND] Magic link: ${magicLink}`)
     console.log(`[RESEND] API Key exists: ${!!process.env.RESEND_API_KEY}`)
+
+    // 6. Send email via Resend
 
     const senderEmail = process.env.SENDER_EMAIL || 'support@miked.live'
     const emailResponse = await resend.emails.send({
@@ -121,18 +131,18 @@ export async function POST(request: NextRequest) {
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Your rider is saved!</h2>
-          <p>You can access your rider anytime using the link below:</p>
+          <p>Click the link below to log in and access your rider:</p>
           <p>
             <a href="${magicLink}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-              Access your rider
+              Log in to your account
             </a>
           </p>
           <p style="color: #666; font-size: 14px;">
-            This link will be valid forever. You can:
+            After clicking this link, you'll be logged in to your account. You can:
           </p>
           <ul style="color: #666; font-size: 14px;">
-            <li>View your rider anytime</li>
-            <li>Share it with venues</li>
+            <li>View your rider anytime (you'll stay logged in)</li>
+            <li>Share your rider with venues</li>
             <li>Update your details (coming soon)</li>
           </ul>
           <p style="color: #999; font-size: 12px; margin-top: 32px;">

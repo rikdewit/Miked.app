@@ -2,7 +2,6 @@
 
 import { useEffect, use, useState, useRef } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { usePostHog } from 'posthog-js/react'
 import { Preview, PreviewHandle } from '@/components/Preview'
 import { RiderData } from '@/types'
@@ -13,15 +12,13 @@ interface RiderViewPageProps {
     riderId: string
   }>
   searchParams: Promise<{
-    auth?: string
     share?: string
   }>
 }
 
 export default function RiderViewPage({ params, searchParams }: RiderViewPageProps) {
   const { riderId } = use(params)
-  const { auth, share } = use(searchParams)
-  const router = useRouter()
+  const { share } = use(searchParams)
   const posthog = usePostHog()
   const previewRef = useRef<PreviewHandle>(null)
   const [riderData, setRiderData] = useState<RiderData | null>(null)
@@ -33,18 +30,12 @@ export default function RiderViewPage({ params, searchParams }: RiderViewPagePro
   const [isCopied, setIsCopied] = useState(false)
 
   useEffect(() => {
-    // Determine which token we're using
-    const token = auth || share
-    if (!token) {
-      router.push('/riders')
-      return
-    }
-
     const fetchRider = async () => {
       try {
         setIsLoading(true)
-        const queryParam = auth ? `auth=${auth}` : `share=${share}`
-        const response = await fetch(`/api/riders/${riderId}?${queryParam}`)
+        const queryParam = share ? `share=${share}` : ''
+        const url = `/api/riders/${riderId}${queryParam ? '?' + queryParam : ''}`
+        const response = await fetch(url, { credentials: 'include' })
 
         if (!response.ok) {
           const data = await response.json()
@@ -76,7 +67,7 @@ export default function RiderViewPage({ params, searchParams }: RiderViewPagePro
     }
 
     fetchRider()
-  }, [riderId, auth, share, router, posthog])
+  }, [riderId, share, posthog])
 
   const handleDownload = async () => {
     if (!previewRef.current) return
