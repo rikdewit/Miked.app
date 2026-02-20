@@ -36,8 +36,6 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   const stagePlotRef = useRef<HTMLDivElement>(null);
   const footerRef = useRef<HTMLDivElement>(null);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [topViewImage, setTopViewImage] = useState<string | null>(null);
-  const [isoViewImage, setIsoViewImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
   const [naturalHeight, setNaturalHeight] = useState(1123); // A4 height at 96dpi — avoids layout flash on first render
   const generatedPdfRef = useRef<jsPDF | null>(null);
@@ -239,7 +237,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
         await yieldToBrowser();
       }
 
-      // PAGE 2+: Add stage plot images directly (captured at fixed size for consistency)
+      // PAGE 2+: Add stage plot images directly (captured from visible canvases)
       pdf.addPage();
       currentY = pageMargin;
 
@@ -259,24 +257,46 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
         }
       }
 
-      // Add captured stage plot images at known 8:5 aspect ratio
+      // Capture stage plot images at known 8:5 aspect ratio
       const plotWidth = usableWidth * 0.9;
       const plotHeight = plotWidth * (5 / 8);
       const plotX = pageMargin + (usableWidth - plotWidth) / 2;
 
-      if (topViewImage) {
-        safeAddImage(topViewImage, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - Top View');
-        currentY += plotHeight + 6;
-        await yieldToBrowser();
-      }
-
-      if (isoViewImage) {
-        if (currentY + plotHeight > pdfHeight - pageMargin) {
-          pdf.addPage();
-          currentY = pageMargin;
+      if (clonedStagePlot) {
+        // Capture top view from DOM
+        const topViewDiv = clonedStagePlot.querySelector('div.grid > div:nth-child(1)') as HTMLElement | null;
+        if (topViewDiv) {
+          const topViewCanvas = await html2canvas(topViewDiv, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            removeContainer: true,
+          });
+          const topViewDataUrl = topViewCanvas.toDataURL('image/jpeg', 0.99);
+          safeAddImage(topViewDataUrl, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - Top View');
+          currentY += plotHeight + 6;
+          await yieldToBrowser();
         }
-        safeAddImage(isoViewImage, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - 3D View');
-        await yieldToBrowser();
+
+        // Capture iso view from DOM
+        const isoViewDiv = clonedStagePlot.querySelector('div.grid > div:nth-child(2)') as HTMLElement | null;
+        if (isoViewDiv) {
+          if (currentY + plotHeight > pdfHeight - pageMargin) {
+            pdf.addPage();
+            currentY = pageMargin;
+          }
+          const isoViewCanvas = await html2canvas(isoViewDiv, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff',
+            removeContainer: true,
+          });
+          const isoViewDataUrl = isoViewCanvas.toDataURL('image/jpeg', 0.99);
+          safeAddImage(isoViewDataUrl, plotX, currentY, plotWidth, plotHeight, 'Stage Plot - 3D View');
+          await yieldToBrowser();
+        }
       }
 
       // Add footer to all pages
@@ -305,8 +325,24 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
       console.error(err);
       alert('Error generating PDF. Please try again.');
     } finally {
-      // Remove the off-screen clone
+      // Remove the off-screen clone and dispose of WebGL contexts
       if (cloneContainer) {
+        // Find all canvases in the clone and dispose their WebGL contexts
+        const clonedCanvases = cloneContainer.querySelectorAll('canvas');
+        clonedCanvases.forEach((canvas) => {
+          try {
+            const gl = canvas.getContext('webgl2') || canvas.getContext('webgl');
+            if (gl) {
+              // Get the WebGL context's underlying extension to properly dispose
+              const loseContextExt = gl.getExtension('WEBGL_lose_context');
+              if (loseContextExt) {
+                loseContextExt.loseContext();
+              }
+            }
+          } catch (e) {
+            // Ignore errors during cleanup
+          }
+        });
         document.body.removeChild(cloneContainer);
       }
       // Remove CSS fix
@@ -434,28 +470,40 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
           </h3>
 
           <div className="grid grid-cols-1 gap-6 mt-4">
-              {/* Top View */}
-              <div className="relative w-full max-w-[90%] aspect-[8/5] mx-auto">
-                <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
-                   <Layers size={24} className="text-black" />
+              {/* Top View - Responsive sizing */}
+              <div className="flex justify-center w-full">
+                <div className="relative w-full h-96 border-2 border-slate-300 bg-slate-50 overflow-hidden flex flex-col">
+                  <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
+                     <Layers size={24} className="text-black" />
+                  </div>
+                  <StagePlotCanvas
+                    items={data.stagePlot}
+                    setItems={() => {}}
+                    editable={false}
+                    viewMode="top"
+                    showAudienceLabel={true}
+                    isPreview={false}
+                    members={data.members}
+                  />
                 </div>
-                {topViewImage ? (
-                  <img src={topViewImage} alt="Stage plot - top view" className="w-full h-full object-contain border-2 border-slate-300 bg-slate-50" />
-                ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-slate-300">Loading stage plot...</div>
-                )}
               </div>
 
-              {/* 3D View */}
-              <div className="relative w-full max-w-[90%] aspect-[8/5] mx-auto">
-                <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
-                   <Box size={24} className="text-black" />
+              {/* 3D View - Responsive sizing */}
+              <div className="flex justify-center w-full">
+                <div className="relative w-full h-96 border-2 border-slate-300 bg-slate-50 overflow-hidden flex flex-col">
+                  <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
+                     <Box size={24} className="text-black" />
+                  </div>
+                  <StagePlotCanvas
+                    items={data.stagePlot}
+                    setItems={() => {}}
+                    editable={false}
+                    viewMode="isometric"
+                    showAudienceLabel={true}
+                    isPreview={false}
+                    members={data.members}
+                  />
                 </div>
-                {isoViewImage ? (
-                  <img src={isoViewImage} alt="Stage plot - 3D view" className="w-full h-full object-contain border-2 border-slate-300 bg-slate-50" />
-                ) : (
-                  <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400 border-2 border-slate-300">Loading stage plot...</div>
-                )}
               </div>
           </div>
         </div>
@@ -470,17 +518,6 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
       </div>
       </div>
 
-      {/* Off-screen fixed-size containers for consistent stage plot captures */}
-      {!topViewImage && (
-        <div style={{ position: 'fixed', width: 1600, height: 1000, top: 0, left: -9999, pointerEvents: 'none', zIndex: -9999 }} aria-hidden="true">
-          <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="top" showAudienceLabel={true} isPreview={true} members={data.members} onScreenshot={setTopViewImage} />
-        </div>
-      )}
-      {!isoViewImage && (
-        <div style={{ position: 'fixed', width: 1600, height: 1000, top: 0, left: -9999, pointerEvents: 'none', zIndex: -9999 }} aria-hidden="true">
-          <StagePlotCanvas items={data.stagePlot} setItems={() => {}} editable={false} viewMode="isometric" showAudienceLabel={true} isPreview={true} members={data.members} onScreenshot={setIsoViewImage} />
-        </div>
-      )}
     </div>
   );
 });
