@@ -96,6 +96,22 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
       const previewEl = previewRef.current;
       if (!previewEl) return;
 
+      // Get references to the original canvases before cloning so we can convert them to images
+      const originalStagePlotEl = previewEl.querySelector('[data-pdf="stage-plot"]');
+      const originalCanvases = originalStagePlotEl?.querySelectorAll('canvas') as NodeListOf<HTMLCanvasElement> | undefined;
+
+      // Convert original WebGL canvases to data URLs for later insertion
+      let topCanvasDataUrl: string | null = null;
+      let isoCanvasDataUrl: string | null = null;
+      if (originalCanvases && originalCanvases.length >= 2) {
+        try {
+          topCanvasDataUrl = originalCanvases[0].toDataURL('image/png');
+          isoCanvasDataUrl = originalCanvases[1].toDataURL('image/png');
+        } catch (e) {
+          console.warn('Failed to capture canvas data URLs', e);
+        }
+      }
+
       // Create an off-screen clone at fixed A4 width so captures are screen-independent
       cloneContainer = document.createElement('div');
       cloneContainer.style.position = 'fixed';
@@ -112,6 +128,33 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
       clone.style.marginBottom = '0';
       clone.style.maxWidth = '100%';
       cloneContainer.appendChild(clone);
+
+      // Replace cloned WebGL canvases with images created from the original canvases
+      // This allows html2canvas to capture the stageplot properly
+      if (topCanvasDataUrl || isoCanvasDataUrl) {
+        const clonedCanvases = clone.querySelectorAll('canvas');
+        if (clonedCanvases.length >= 2) {
+          // Replace top view canvas with image
+          if (topCanvasDataUrl && clonedCanvases[0]) {
+            const topImg = document.createElement('img');
+            topImg.src = topCanvasDataUrl;
+            topImg.style.width = '100%';
+            topImg.style.height = '100%';
+            topImg.style.display = 'block';
+            clonedCanvases[0].parentNode?.replaceChild(topImg, clonedCanvases[0]);
+          }
+
+          // Replace iso view canvas with image
+          if (isoCanvasDataUrl && clonedCanvases[1]) {
+            const isoImg = document.createElement('img');
+            isoImg.src = isoCanvasDataUrl;
+            isoImg.style.width = '100%';
+            isoImg.style.height = '100%';
+            isoImg.style.display = 'block';
+            clonedCanvases[1].parentNode?.replaceChild(isoImg, clonedCanvases[1]);
+          }
+        }
+      }
 
       // Wait for reflow and images to settle at fixed width
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -258,10 +301,12 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
       const plotX = pageMargin + (usableWidth - plotWidth) / 2;
 
       if (clonedStagePlot) {
-        // Capture top view from DOM
-        const topViewDiv = clonedStagePlot.querySelector('div.grid > div:nth-child(1)') as HTMLElement | null;
-        if (topViewDiv) {
-          const topViewCanvas = await html2canvas(topViewDiv, {
+        // Capture stageplot containers (div.relative elements containing canvas/images)
+        const stageplotContainers = clonedStagePlot.querySelectorAll('div.relative');
+
+        // Capture top view from cloned DOM
+        if (stageplotContainers[0]) {
+          const topViewCanvas = await html2canvas(stageplotContainers[0] as HTMLElement, {
             scale: 2,
             useCORS: true,
             logging: false,
@@ -274,14 +319,13 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
           await yieldToBrowser();
         }
 
-        // Capture iso view from DOM
-        const isoViewDiv = clonedStagePlot.querySelector('div.grid > div:nth-child(2)') as HTMLElement | null;
-        if (isoViewDiv) {
+        // Capture iso view from cloned DOM
+        if (stageplotContainers[1]) {
           if (currentY + plotHeight > pdfHeight - pageMargin) {
             pdf.addPage();
             currentY = pageMargin;
           }
-          const isoViewCanvas = await html2canvas(isoViewDiv, {
+          const isoViewCanvas = await html2canvas(stageplotContainers[1] as HTMLElement, {
             scale: 2,
             useCORS: true,
             logging: false,

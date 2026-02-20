@@ -615,6 +615,10 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     const gl = state.gl;
     rendererRef.current = gl;
 
+    // Set clear color to white so canvas exports (for PDF) have proper background
+    // Using light gray (#f1f5f9) to match the container's bg-slate-50 CSS class
+    // gl.setClearColor(new THREE.Color(0xf1f5f9), 1);
+
     // R3F and drei's Html both call getBoundingClientRect() on the canvas to measure its size
     // and position HTML overlays. Inside a CSS transform this returns visual (scaled-down)
     // dimensions instead of the true layout dimensions, causing the canvas and labels to shift.

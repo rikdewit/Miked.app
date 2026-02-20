@@ -32,7 +32,7 @@ export const CAMERA_ISO_INTERACTIVE = {
 export const CAMERA_ISO_PREVIEW = {
   position: [-20, 30, 20] as [number, number, number],
   lookAt: [0, 1, 0] as [number, number, number],
-  padding: 0,
+  padding: 0.2,
   modelHeight: 3,
 };
 
