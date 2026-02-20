@@ -197,6 +197,7 @@ Create a public storage bucket for logos:
 - Supabase Auth user created automatically for future password/OAuth support
 - Owner controls (Share button) only visible to session holders
 
+
 ## Analytics
 
 PostHog analytics tracks the user funnel on production only:
