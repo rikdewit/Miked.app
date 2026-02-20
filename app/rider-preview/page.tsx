@@ -64,7 +64,7 @@ export default function RiderPreviewPage() {
     <div className="flex-1 overflow-hidden flex flex-col">
       {data.details.bandName ? (
         <>
-          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-8 py-4 md:py-8">
+          <div className="flex-1 overflow-y-auto">
             <Preview data={data} ref={previewRef} onDownloadClick={handleDownload} onGeneratingChange={setIsGeneratingPdf} />
           </div>
           <FooterNav onDownload={handleDownload} isDownloading={isGeneratingPdf} />

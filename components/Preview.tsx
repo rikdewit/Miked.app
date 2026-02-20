@@ -39,7 +39,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   const [topViewImage, setTopViewImage] = useState<string | null>(null);
   const [isoViewImage, setIsoViewImage] = useState<string | null>(null);
   const [scale, setScale] = useState(1);
-  const [naturalHeight, setNaturalHeight] = useState(0);
+  const [naturalHeight, setNaturalHeight] = useState(1123); // A4 height at 96dpi — avoids layout flash on first render
   const generatedPdfRef = useRef<jsPDF | null>(null);
 
   // Debug: Log logo URL when it changes
@@ -56,10 +56,9 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   // Update preview scale when window resizes
   useEffect(() => {
     const updateScale = () => {
-      const padding = 32; // accounts for responsive px-2 sm:px-4 md:px-8 padding
-      const maxWidth = window.innerWidth - padding;
-      const previewWidth = 794;
-      setScale(Math.min(1, maxWidth / previewWidth));
+      const previewWidth = 794; // Fixed A4 width
+      const newScale = Math.min(1, (window.innerWidth - 48) / previewWidth);
+      setScale(newScale);
     };
 
     updateScale();
@@ -71,8 +70,9 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   useEffect(() => {
     const el = previewRef.current;
     if (!el) return;
-    const observer = new ResizeObserver(entries => {
-      setNaturalHeight(entries[0].contentRect.height);
+    const observer = new ResizeObserver(() => {
+      // offsetHeight includes padding — contentRect.height would exclude it, cutting off the footer
+      setNaturalHeight(el.offsetHeight);
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -350,10 +350,12 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
          </button>
       </div>
 
-      {/* Scale container — no transform here, just centering */}
-      <div className="flex justify-center w-full bg-slate-900">
-      {/* A4 PAPER PREVIEW — scaled here so layout space collapses naturally via negative margin */}
-      <div ref={previewRef} className="a4-page bg-white text-black shadow-2xl relative flex flex-col gap-8" style={{ width: '794px', padding: '56px', boxSizing: 'border-box', transform: `scale(${scale})`, transformOrigin: 'top center', marginBottom: `${-naturalHeight * (1 - scale)}px` }}>
+      {/* Scale container — outer flex centers the placeholder; overflow-x: auto enables scroll if min-scale content is wider than viewport */}
+      <div className="flex justify-center w-full bg-slate-900 pb-8">
+      {/* Sized placeholder — overflow:hidden clips the absolute child's layout overflow without causing a ResizeObserver loop */}
+      <div style={{ position: 'relative', flexShrink: 0, width: `${794 * scale}px`, height: `${naturalHeight * scale}px`, overflow: 'hidden' }}>
+      {/* A4 PAPER PREVIEW — absolutely positioned so it doesn't affect the placeholder's size, scaled from top-left */}
+      <div ref={previewRef} className="a4-page bg-white text-black shadow-2xl flex flex-col gap-8" style={{ position: 'absolute', top: 0, left: 0, width: '794px', padding: '56px', boxSizing: 'border-box', transform: `scale(${scale})`, transformOrigin: 'top left' }}>
         
         {/* Header */}
         <div ref={headerRef} data-pdf="header" className="flex justify-between items-start border-b-2 border-black pb-6">
@@ -464,6 +466,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
            <span>Created with miked.app</span>
         </div>
 
+      </div>
       </div>
       </div>
 
