@@ -464,43 +464,39 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
             <Music2 size={20} /> Stage Plot
           </h3>
 
-          <div className="grid grid-cols-1 gap-6 mt-4">
-              {/* Top View - Responsive sizing */}
-              <div className="flex justify-center w-full">
-                <div className="relative w-full h-96 border-2 border-slate-300 bg-slate-50 overflow-hidden flex flex-col">
-                  <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
-                     <Layers size={24} className="text-black" />
-                  </div>
-                  <StagePlotCanvas
-                    key="stage-plot-top"
-                    items={data.stagePlot}
-                    setItems={() => {}}
-                    editable={false}
-                    viewMode="top"
-                    showAudienceLabel={true}
-                    isPreview={false}
-                    members={data.members}
-                  />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '16px' }}>
+              {/* Top View - Fixed sizing */}
+              <div className="relative border-2 border-slate-300 bg-slate-50 overflow-hidden flex flex-col" style={{ width: '682px', height: '384px', boxSizing: 'border-box' }}>
+                <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
+                   <Layers size={24} className="text-black" />
                 </div>
+                <StagePlotCanvas
+                  key="stage-plot-top"
+                  items={data.stagePlot}
+                  setItems={() => {}}
+                  editable={false}
+                  viewMode="top"
+                  showAudienceLabel={true}
+                  isPreview={false}
+                  members={data.members}
+                />
               </div>
 
-              {/* 3D View - Responsive sizing */}
-              <div className="flex justify-center w-full">
-                <div className="relative w-full h-96 border-2 border-slate-300 bg-slate-50 overflow-hidden flex flex-col">
-                  <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
-                     <Box size={24} className="text-black" />
-                  </div>
-                  <StagePlotCanvas
-                    key="stage-plot-isometric"
-                    items={data.stagePlot}
-                    setItems={() => {}}
-                    editable={false}
-                    viewMode="isometric"
-                    showAudienceLabel={true}
-                    isPreview={false}
-                    members={data.members}
-                  />
+              {/* 3D View - Fixed sizing */}
+              <div className="relative border-2 border-slate-300 bg-slate-50 overflow-hidden flex flex-col" style={{ width: '682px', height: '384px', boxSizing: 'border-box' }}>
+                <div className="absolute top-2 left-2 z-10 bg-white/90 p-1.5 rounded-md border border-slate-300 shadow-sm print:border-black">
+                   <Box size={24} className="text-black" />
                 </div>
+                <StagePlotCanvas
+                  key="stage-plot-isometric"
+                  items={data.stagePlot}
+                  setItems={() => {}}
+                  editable={false}
+                  viewMode="isometric"
+                  showAudienceLabel={true}
+                  isPreview={false}
+                  members={data.members}
+                />
               </div>
           </div>
         </div>

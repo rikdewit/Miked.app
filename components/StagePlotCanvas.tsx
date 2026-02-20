@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { StageItem, BandMember } from '../types';
-import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
+import { Canvas, ThreeEvent, useThree, useFrame } from '@react-three/fiber';
 import { OrthographicCamera, Grid, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
@@ -181,6 +181,25 @@ const ScreenshotCapture = ({ isPreview, containerRef, onScreenshot }: { isPrevie
       }
     };
   }, [isPreview, containerRef, onScreenshot]);
+
+  return null;
+};
+
+// Corrects R3F's internal `size` state back to layout dimensions after every frame.
+// R3F's ResizeObserver uses devicePixelContentBoxSize which accounts for CSS transforms,
+// so when the preview parent is scaled the size becomes visual pixels — breaking Html label positions.
+const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDivElement> }) => {
+  const { size, setSize } = useThree();
+
+  useFrame(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    if (w > 0 && h > 0 && (Math.abs(w - size.width) > 1 || Math.abs(h - size.height) > 1)) {
+      setSize(w, h);
+    }
+  });
 
   return null;
 };
@@ -596,6 +615,27 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     const gl = state.gl;
     rendererRef.current = gl;
 
+    // R3F and drei's Html both call getBoundingClientRect() on the canvas to measure its size
+    // and position HTML overlays. Inside a CSS transform this returns visual (scaled-down)
+    // dimensions instead of the true layout dimensions, causing the canvas and labels to shift.
+    // Fix: patch getBoundingClientRect to always return the layout (offsetWidth/Height) dimensions.
+    const canvas = gl.domElement;
+    const originalGetBCR = canvas.getBoundingClientRect.bind(canvas);
+    canvas.getBoundingClientRect = () => {
+      const rect = originalGetBCR();
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      return new DOMRect(rect.x, rect.y, w, h);
+    };
+
+    // Also patch setSize to never overwrite canvas CSS so the canvas stays at 100%/100%.
+    const originalSetSize = gl.setSize.bind(gl);
+    gl.setSize = (width: number, height: number) => {
+      originalSetSize(width, height, false);
+    };
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+
     console.log(`[StagePlotCanvas #${instanceId}] Canvas created`, {
       isPreview,
       isOffscreen: containerRef.current?.style.left === '-9999px',
@@ -632,14 +672,24 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
-      style={{ touchAction: 'none', cursor: resizingItemId ? 'crosshair' : undefined }}
+      className="bg-slate-50 print:border-black select-none"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        touchAction: 'none',
+        cursor: resizingItemId ? 'crosshair' : undefined,
+        position: 'absolute',
+        top: 0,
+        left: 0
+      }}
     >
       <Canvas
         key={`canvas-${viewMode}`}
         shadows
         gl={glConfig}
-        className="w-full h-full"
+        style={{ display: 'block', width: '100%', height: '100%' }}
         onCreated={handleCanvasCreated}
       >
         <OrthographicCamera
@@ -652,6 +702,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
         />
 
         <WebGLContextHandler instanceId={instanceId} />
+        <SizeCorrector containerRef={containerRef} />
         <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} />
 
         <ambientLight intensity={.9} />
