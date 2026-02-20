@@ -1,18 +1,13 @@
 'use client'
 
 import { useRef, useState, forwardRef, useImperativeHandle, useEffect } from 'react';
-import dynamic from 'next/dynamic';
 import { usePostHog } from 'posthog-js/react';
 import { Mic, Music2, Layers, Box, Clock, Download, Loader2 } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { RiderData } from '../types';
 import { InputList } from './InputList';
-
-const StagePlotCanvas = dynamic(
-  () => import('./StagePlotCanvas').then(m => ({ default: m.StagePlotCanvas })),
-  { ssr: false }
-);
+import { StagePlotCanvas } from './StagePlotCanvas';
 
 export interface PreviewHandle {
   generatePdf: () => Promise<void>;
@@ -477,6 +472,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
                      <Layers size={24} className="text-black" />
                   </div>
                   <StagePlotCanvas
+                    key="stage-plot-top"
                     items={data.stagePlot}
                     setItems={() => {}}
                     editable={false}
@@ -495,6 +491,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
                      <Box size={24} className="text-black" />
                   </div>
                   <StagePlotCanvas
+                    key="stage-plot-isometric"
                     items={data.stagePlot}
                     setItems={() => {}}
                     editable={false}

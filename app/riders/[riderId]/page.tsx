@@ -20,6 +20,8 @@ export default function RiderViewPage({ params, searchParams }: RiderViewPagePro
   const { riderId } = use(params)
   const { share } = use(searchParams)
   const posthog = usePostHog()
+  const posthogRef = useRef(posthog)
+  useEffect(() => { posthogRef.current = posthog }, [posthog])
   const previewRef = useRef<PreviewHandle>(null)
   const [riderData, setRiderData] = useState<RiderData | null>(null)
   const [shareToken, setShareToken] = useState<string | null>(null)
@@ -54,7 +56,7 @@ export default function RiderViewPage({ params, searchParams }: RiderViewPagePro
         setShareToken(data.shareToken ?? null)
         setAccessLevel(data.accessLevel)
 
-        posthog?.capture('rider_link_accessed', {
+        posthogRef.current?.capture('rider_link_accessed', {
           riderId,
           accessLevel: data.accessLevel,
         })
@@ -67,7 +69,7 @@ export default function RiderViewPage({ params, searchParams }: RiderViewPagePro
     }
 
     fetchRider()
-  }, [riderId, share, posthog])
+  }, [riderId, share])
 
   const handleDownload = async () => {
     if (!previewRef.current) return

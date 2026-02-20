@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { StageItem, BandMember } from '../types';
 import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
 import { OrthographicCamera, Grid, ContactShadows, Text } from '@react-three/drei';
@@ -272,8 +272,49 @@ const StagePlatform = () => {
   );
 };
 
+// Component to handle WebGL context loss/restore inside Canvas context (has access to useThree)
+const WebGLContextHandler = ({ instanceId }: { instanceId: number }) => {
+  const { gl, scene, invalidate } = useThree();
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      console.warn(`[StagePlotCanvas #${instanceId}] WebGL Context Lost — waiting for restore...`);
+    };
+
+    const handleContextRestored = () => {
+      console.debug(`[StagePlotCanvas #${instanceId}] WebGL Context Restored — reinitialising scene`);
+      // Mark all materials and textures for re-upload
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((m: any) => {
+            m.needsUpdate = true;
+            if (m.map) (m.map as THREE.Texture).needsUpdate = true;
+          });
+        }
+      });
+      // Force a render
+      invalidate();
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [gl, scene, invalidate, instanceId]);
+
+  return null;
+};
+
 // Component to handle External Drag Logic inside Canvas context
-const ExternalDragHandler = ({ 
+const ExternalDragHandler = ({
   dragCoords, 
   onUpdate 
 }: { 
@@ -310,7 +351,7 @@ const ExternalDragHandler = ({
 
 let canvasInstanceCounter = 0;
 
-export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
+const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   items,
   setItems,
   editable,
@@ -333,7 +374,6 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   const resizingItemIdRef = useRef<string | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
-  const contextListenersRef = useRef<Array<{ canvas: HTMLCanvasElement; listener: (e: Event) => void; event: string }>>([]);
 
   const handleScreenshot = (dataUrl: string) => {
     setScreenshotUrl(dataUrl);
@@ -341,32 +381,35 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   };
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
 
-  // Track component mount/unmount
+  // Component lifecycle tracking (minimal)
   useEffect(() => {
-    console.log(`[StagePlotCanvas #${instanceId}] Component mounted`, { viewMode, isPreview });
     return () => {
-      console.log(`[StagePlotCanvas #${instanceId}] Component unmounted`, { viewMode, isPreview });
+      console.debug(`[StagePlotCanvas #${instanceId}] Cleaning up - disposing renderer and contexts`);
     };
-  }, [instanceId, viewMode, isPreview]);
+  }, [instanceId]);
 
   // Keep ref in sync so the DOM listener can read the current resizingItemId without stale closure
   useEffect(() => {
     resizingItemIdRef.current = resizingItemId;
   }, [resizingItemId]);
 
-  // Cleanup event listeners when component unmounts
-  // Note: Don't manually dispose the renderer as React Three Fiber manages its lifecycle
+  // Explicitly dispose of renderer to ensure WebGL contexts are cleaned up properly
+  // This is critical to prevent accumulation of contexts which leads to context loss
   useEffect(() => {
     return () => {
-      // Remove all tracked event listeners
-      contextListenersRef.current.forEach(({ canvas, listener, event }) => {
+      if (rendererRef.current) {
         try {
-          canvas.removeEventListener(event, listener);
+          // Dispose the renderer and all its resources
+          const renderer = rendererRef.current;
+          const renderTarget = renderer.getRenderTarget();
+          if (renderTarget) {
+            renderTarget.dispose();
+          }
+          renderer.dispose();
         } catch (e) {
-          // Ignore errors during cleanup
+          // R3F might have already disposed, ignore errors
         }
-      });
-      contextListenersRef.current = [];
+      }
       rendererRef.current = null;
     };
   }, []);
@@ -537,6 +580,35 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   const isTopView = viewMode === 'top';
   const camPosition: [number, number, number] = isTopView ? [0, 70, -1] : [-20, 30, 20];
 
+  // Memoize GL config to prevent Canvas reinitialization when parent re-renders
+  const glConfig = useMemo(() => ({
+    preserveDrawingBuffer: true,
+    antialias: true,
+    failIfMajorPerformanceCaveat: false,
+    powerPreference: 'high-performance' as const,
+    alpha: true,
+    stencil: false,
+    depth: true
+  }), []);
+
+  // Memoize onCreated callback to prevent unnecessary canvas reinitialization on parent re-renders
+  const handleCanvasCreated = useCallback((state: any) => {
+    const gl = state.gl;
+    rendererRef.current = gl;
+
+    console.log(`[StagePlotCanvas #${instanceId}] Canvas created`, {
+      isPreview,
+      isOffscreen: containerRef.current?.style.left === '-9999px',
+      rendererType: gl.constructor.name,
+      canvasSize: {
+        width: gl.domElement.width,
+        height: gl.domElement.height,
+      },
+      maxTextureSize: gl.capabilities.maxTextureSize,
+      devicePixelRatio: window.devicePixelRatio,
+    });
+  }, [instanceId, isPreview]);
+
   // Responsive font sizes for audience label
   const baseAudienceFontSize = 0.5; // Smaller for audience
   const audienceFontSize = baseAudienceFontSize * (isPreview ? AUDIENCE_TEXT_FONT_SCALE_PREVIEW : AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE);
@@ -564,76 +636,11 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
       style={{ touchAction: 'none', cursor: resizingItemId ? 'crosshair' : undefined }}
     >
       <Canvas
+        key={`canvas-${viewMode}`}
         shadows
-        gl={{
-          preserveDrawingBuffer: true,
-          antialias: true,
-          failIfMajorPerformanceCaveat: false,
-          powerPreference: 'high-performance',
-          alpha: true,
-          stencil: false,
-          depth: true
-        }}
+        gl={glConfig}
         className="w-full h-full"
-        onCreated={(state) => {
-          const gl = state.gl;
-          const containerElement = containerRef.current;
-          const isOffscreen = containerElement?.style.left === '-9999px';
-
-          // Store renderer for cleanup
-          rendererRef.current = gl;
-
-          console.log(`[StagePlotCanvas #${instanceId}] Canvas created`, {
-            isPreview,
-            isOffscreen,
-            rendererType: gl.constructor.name,
-            canvasSize: {
-              width: gl.domElement.width,
-              height: gl.domElement.height,
-            },
-            maxTextureSize: gl.capabilities.maxTextureSize,
-            devicePixelRatio: window.devicePixelRatio,
-          });
-
-          // Create and store context loss handler with detailed debugging
-          const handleContextLoss = (e: Event) => {
-            const event = e as WebGLContextEvent;
-            const perf = performance as any;
-            console.warn(`[StagePlotCanvas #${instanceId}] WebGL Context Lost`, {
-              preview: isPreview,
-              offscreen: isOffscreen,
-              statusMessage: event.statusMessage,
-              timestamp: new Date().toISOString(),
-              activeMemory: perf.memory ? {
-                usedJSHeapSize: (perf.memory.usedJSHeapSize / 1048576).toFixed(2) + ' MB',
-                jsHeapSizeLimit: (perf.memory.jsHeapSizeLimit / 1048576).toFixed(2) + ' MB'
-              } : 'N/A (non-Chrome browser)',
-              rendererInfo: {
-                canvasSize: gl.domElement.width + 'x' + gl.domElement.height,
-                pixelRatio: window.devicePixelRatio,
-                maxTextureSize: gl.capabilities.maxTextureSize
-              }
-            });
-            e.preventDefault();
-          };
-
-          // Create and store context restored handler
-          const handleContextRestored = () => {
-            console.debug(`[StagePlotCanvas #${instanceId}] WebGL Context Restored`, {
-              preview: isPreview,
-              timestamp: new Date().toISOString()
-            });
-          };
-
-          // Add listeners and track them for cleanup
-          gl.domElement.addEventListener('webglcontextlost', handleContextLoss);
-          gl.domElement.addEventListener('webglcontextrestored', handleContextRestored);
-
-          contextListenersRef.current.push(
-            { canvas: gl.domElement, listener: handleContextLoss, event: 'webglcontextlost' },
-            { canvas: gl.domElement, listener: handleContextRestored, event: 'webglcontextrestored' }
-          );
-        }}
+        onCreated={handleCanvasCreated}
       >
         <OrthographicCamera
             key={viewMode}
@@ -644,6 +651,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             far={200}
         />
 
+        <WebGLContextHandler instanceId={instanceId} />
         <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} />
 
         <ambientLight intensity={.9} />
@@ -762,3 +770,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     </div>
   );
 };
+
+// Memoize to prevent re-renders when props haven't changed
+// This is critical to prevent Canvas recreation when parent re-renders
+export const StagePlotCanvas = React.memo(StagePlotCanvasInner);
