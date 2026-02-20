@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, Suspense } from 'react';
+import React, { useState, useRef, useEffect, Suspense, useCallback, useMemo } from 'react';
 import { StageItem, BandMember } from '../types';
-import { Canvas, ThreeEvent, useThree } from '@react-three/fiber';
+import { Canvas, ThreeEvent, useThree, useFrame } from '@react-three/fiber';
 import { OrthographicCamera, Grid, ContactShadows, Text } from '@react-three/drei';
 import * as THREE from 'three';
 import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
@@ -14,81 +14,192 @@ import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAM
 const ScreenshotCapture = ({ isPreview, containerRef, onScreenshot }: { isPreview: boolean; containerRef: React.RefObject<HTMLDivElement>; onScreenshot: (dataUrl: string) => void }) => {
   const frameCountRef = useRef(0);
   const hasCaptureedRef = useRef(false);
+  const captureIdRef = useRef<string>(Math.random().toString(36).slice(2, 9));
 
   useEffect(() => {
     if (!isPreview || hasCaptureedRef.current) return;
 
+    const captureId = captureIdRef.current;
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {
+      console.log(`[ScreenshotCapture ${captureId}] Container not found`);
+      return;
+    }
+
+    console.log(`[ScreenshotCapture ${captureId}] Starting screenshot capture process`);
 
     // Find the canvas element inside the container
     const findCanvas = () => container.querySelector('canvas') as HTMLCanvasElement | null;
 
+    let canvasFoundTime: number | null = null;
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
     // Wait for canvas to exist and render frames
     const checkAndCapture = () => {
+      if (hasCaptureedRef.current) {
+        console.log(`[ScreenshotCapture ${captureId}] Already captured during check, stopping`);
+        return;
+      }
+
       const canvas = findCanvas();
       if (!canvas) {
+        if (frameCountRef.current % 30 === 0) {
+          console.log(`[ScreenshotCapture ${captureId}] Waiting for canvas... (attempt ${Math.floor(frameCountRef.current / 30)})`);
+        }
+        frameCountRef.current++;
         requestAnimationFrame(checkAndCapture);
         return;
+      }
+
+      if (canvasFoundTime === null) {
+        canvasFoundTime = performance.now();
+        try {
+          const context = canvas.getContext('webgl2') || canvas.getContext('webgl');
+          const dimensions = `${canvas.width}x${canvas.height}`;
+          const hasContext = !!context;
+          console.log(`[ScreenshotCapture ${captureId}] Canvas found! Dimensions: ${dimensions}, WebGL context: ${hasContext ? 'active' : 'missing'}`);
+          if (context) {
+            const pixels = new Uint8Array(4);
+            context.readPixels(0, 0, 1, 1, context.RGBA, context.UNSIGNED_BYTE, pixels);
+            console.log(`[ScreenshotCapture ${captureId}] Canvas pixel sample (RGBA): [${pixels[0]}, ${pixels[1]}, ${pixels[2]}, ${pixels[3]}]`);
+          }
+        } catch (e) {
+          console.warn(`[ScreenshotCapture ${captureId}] Error checking canvas context:`, e);
+        }
       }
 
       // Increment frame counter
       frameCountRef.current++;
 
-      // After at least 15 frames (ensures THREE.js has rendered multiple times),
-      // and context is stable, capture the screenshot. Higher frame count reduces
-      // WebGL context loss on off-screen canvases.
-      if (frameCountRef.current >= 15) {
-        // Additional delay to ensure final render is complete and WebGL context is stable
-        setTimeout(() => {
-          captureScreenshot();
-        }, 200);
+      // After at least 30 frames (ensures THREE.js has rendered multiple times),
+      // capture immediately - no waiting to prevent context loss
+      if (frameCountRef.current >= 30) {
+        console.log(`[ScreenshotCapture ${captureId}] Frames ready (${frameCountRef.current}), capturing immediately now`);
+        // Capture in next macrotask to ensure render is flushed, but don't wait
+        queueMicrotask(() => captureScreenshot());
       } else {
+        if (frameCountRef.current % 10 === 0) {
+          console.log(`[ScreenshotCapture ${captureId}] Frame ${frameCountRef.current}/30`);
+        }
         requestAnimationFrame(checkAndCapture);
       }
     };
 
-    const captureScreenshot = () => {
-      if (hasCaptureedRef.current) return;
-      hasCaptureedRef.current = true;
-
-      if (containerRef.current) {
-        // Add CSS fix before capturing
-        const style = document.createElement('style');
-        style.textContent = `
-          img { display: inline-block !important; }
-          div { line-height: 1 !important; }
-          * { line-height: 1 !important; }
-        `;
-        document.head.appendChild(style);
-
-        import('html2canvas').then((html2canvas) => {
-          html2canvas.default(containerRef.current!, {
-            backgroundColor: '#f1f5f9',
-            scale: 2,
-            logging: false,
-            useCORS: true,
-            imageTimeout: 5000,
-            allowTaint: true,
-          }).then((canvas) => {
-            onScreenshot(canvas.toDataURL('image/png'));
-            // Clean up the style
-            document.head.removeChild(style);
-          }).catch((err) => {
-            console.error('[StagePlotCanvas] Screenshot capture failed:', err);
-            document.head.removeChild(style);
-          });
-        });
+    const captureScreenshot = (retryCount = 0) => {
+      if (hasCaptureedRef.current) {
+        console.log(`[ScreenshotCapture ${captureId}] Already captured, skipping`);
+        return;
       }
+
+      if (!containerRef.current) {
+        console.error(`[ScreenshotCapture ${captureId}] Container disappeared before capture!`);
+        return;
+      }
+
+      // Check WebGL context health before capturing
+      const canvas = containerRef.current.querySelector('canvas') as HTMLCanvasElement | null;
+      if (canvas) {
+        try {
+          const context = canvas.getContext('webgl2') || canvas.getContext('webgl');
+          if (!context) {
+            console.warn(`[ScreenshotCapture ${captureId}] WebGL context not available, retrying... (attempt ${retryCount + 1})`);
+            if (retryCount < 3) {
+              // Retry after 200ms to allow context to recover
+              setTimeout(() => captureScreenshot(retryCount + 1), 200);
+              return;
+            } else {
+              console.error(`[ScreenshotCapture ${captureId}] WebGL context unavailable after ${retryCount} retries`);
+            }
+          } else {
+            console.log(`[ScreenshotCapture ${captureId}] WebGL context confirmed before capture`);
+          }
+        } catch (e) {
+          console.warn(`[ScreenshotCapture ${captureId}] Error checking WebGL context before capture:`, e);
+        }
+      }
+
+      hasCaptureedRef.current = true;
+      console.log(`[ScreenshotCapture ${captureId}] Starting html2canvas capture (attempt ${retryCount + 1})`);
+
+      // Add CSS fix before capturing
+      const style = document.createElement('style');
+      style.textContent = `
+        img { display: inline-block !important; }
+        div { line-height: 1 !important; }
+        * { line-height: 1 !important; }
+      `;
+      document.head.appendChild(style);
+
+      import('html2canvas').then((html2canvas) => {
+        console.log(`[ScreenshotCapture ${captureId}] html2canvas loaded, starting conversion`);
+        const startTime = performance.now();
+
+        html2canvas.default(containerRef.current!, {
+          backgroundColor: '#f1f5f9',
+          scale: 2,
+          logging: false,
+          useCORS: true,
+          imageTimeout: 5000,
+          allowTaint: true,
+          removeContainer: true,
+        }).then((canvas) => {
+          const endTime = performance.now();
+          const dataUrl = canvas.toDataURL('image/png');
+          console.log(`[ScreenshotCapture ${captureId}] Screenshot captured successfully in ${(endTime - startTime).toFixed(2)}ms`, {
+            imageDataLength: dataUrl.length,
+            canvasWidth: canvas.width,
+            canvasHeight: canvas.height,
+          });
+          onScreenshot(dataUrl);
+          // Clean up the style
+          if (document.head.contains(style)) {
+            document.head.removeChild(style);
+          }
+        }).catch((err) => {
+          console.error(`[ScreenshotCapture ${captureId}] Screenshot capture failed:`, err);
+          if (document.head.contains(style)) {
+            document.head.removeChild(style);
+          }
+        });
+      }).catch((err) => {
+        console.error(`[ScreenshotCapture ${captureId}] Failed to import html2canvas:`, err);
+        if (document.head.contains(style)) {
+          document.head.removeChild(style);
+        }
+      });
     };
 
     // Start checking for canvas and frames
+    console.log(`[ScreenshotCapture ${captureId}] Beginning frame check loop`);
     const raf = requestAnimationFrame(checkAndCapture);
 
     return () => {
+      console.log(`[ScreenshotCapture ${captureId}] Cleanup: canceling animation frame and timeout (captured: ${hasCaptureedRef.current})`);
       cancelAnimationFrame(raf);
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
     };
   }, [isPreview, containerRef, onScreenshot]);
+
+  return null;
+};
+
+// Corrects R3F's internal `size` state back to layout dimensions after every frame.
+// R3F's ResizeObserver uses devicePixelContentBoxSize which accounts for CSS transforms,
+// so when the preview parent is scaled the size becomes visual pixels — breaking Html label positions.
+const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDivElement> }) => {
+  const { size, setSize } = useThree();
+
+  useFrame(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    if (w > 0 && h > 0 && (Math.abs(w - size.width) > 1 || Math.abs(h - size.height) > 1)) {
+      setSize(w, h);
+    }
+  });
 
   return null;
 };
@@ -180,8 +291,49 @@ const StagePlatform = () => {
   );
 };
 
+// Component to handle WebGL context loss/restore inside Canvas context (has access to useThree)
+const WebGLContextHandler = ({ instanceId }: { instanceId: number }) => {
+  const { gl, scene, invalidate } = useThree();
+
+  useEffect(() => {
+    const canvas = gl.domElement;
+
+    const handleContextLost = (e: Event) => {
+      e.preventDefault();
+      console.warn(`[StagePlotCanvas #${instanceId}] WebGL Context Lost — waiting for restore...`);
+    };
+
+    const handleContextRestored = () => {
+      console.debug(`[StagePlotCanvas #${instanceId}] WebGL Context Restored — reinitialising scene`);
+      // Mark all materials and textures for re-upload
+      scene.traverse((obj) => {
+        const mesh = obj as THREE.Mesh;
+        if (mesh.material) {
+          const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+          mats.forEach((m: any) => {
+            m.needsUpdate = true;
+            if (m.map) (m.map as THREE.Texture).needsUpdate = true;
+          });
+        }
+      });
+      // Force a render
+      invalidate();
+    };
+
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [gl, scene, invalidate, instanceId]);
+
+  return null;
+};
+
 // Component to handle External Drag Logic inside Canvas context
-const ExternalDragHandler = ({ 
+const ExternalDragHandler = ({
   dragCoords, 
   onUpdate 
 }: { 
@@ -216,7 +368,9 @@ const ExternalDragHandler = ({
   return null;
 };
 
-export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
+let canvasInstanceCounter = 0;
+
+const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   items,
   setItems,
   editable,
@@ -231,11 +385,14 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   onRotateItem,
   onScreenshot: onScreenshotProp
 }) => {
+  const instanceIdRef = useRef<number>(++canvasInstanceCounter);
+  const instanceId = instanceIdRef.current;
   const [activeId, setActiveId] = useState<string | null>(null);
   const [rotationUiItemId, setRotationUiItemId] = useState<string | null>(null);
   const [resizingItemId, setResizingItemId] = useState<string | null>(null);
   const resizingItemIdRef = useRef<string | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
 
   const handleScreenshot = (dataUrl: string) => {
     setScreenshotUrl(dataUrl);
@@ -243,10 +400,38 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   };
   const dragOffset = useRef<{ x: number, z: number }>({ x: 0, z: 0 });
 
+  // Component lifecycle tracking (minimal)
+  useEffect(() => {
+    return () => {
+      console.debug(`[StagePlotCanvas #${instanceId}] Cleaning up - disposing renderer and contexts`);
+    };
+  }, [instanceId]);
+
   // Keep ref in sync so the DOM listener can read the current resizingItemId without stale closure
   useEffect(() => {
     resizingItemIdRef.current = resizingItemId;
   }, [resizingItemId]);
+
+  // Explicitly dispose of renderer to ensure WebGL contexts are cleaned up properly
+  // This is critical to prevent accumulation of contexts which leads to context loss
+  useEffect(() => {
+    return () => {
+      if (rendererRef.current) {
+        try {
+          // Dispose the renderer and all its resources
+          const renderer = rendererRef.current;
+          const renderTarget = renderer.getRenderTarget();
+          if (renderTarget) {
+            renderTarget.dispose();
+          }
+          renderer.dispose();
+        } catch (e) {
+          // R3F might have already disposed, ignore errors
+        }
+      }
+      rendererRef.current = null;
+    };
+  }, []);
 
   // Stop resize on any native pointerdown in the canvas container (fires even when THREE.js
   // stopPropagation prevents the floor-plane mesh from receiving the event)
@@ -414,6 +599,60 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   const isTopView = viewMode === 'top';
   const camPosition: [number, number, number] = isTopView ? [0, 70, -1] : [-20, 30, 20];
 
+  // Memoize GL config to prevent Canvas reinitialization when parent re-renders
+  const glConfig = useMemo(() => ({
+    preserveDrawingBuffer: true,
+    antialias: true,
+    failIfMajorPerformanceCaveat: false,
+    powerPreference: 'high-performance' as const,
+    alpha: true,
+    stencil: false,
+    depth: true
+  }), []);
+
+  // Memoize onCreated callback to prevent unnecessary canvas reinitialization on parent re-renders
+  const handleCanvasCreated = useCallback((state: any) => {
+    const gl = state.gl;
+    rendererRef.current = gl;
+
+    // Set clear color to white so canvas exports (for PDF) have proper background
+    // Using light gray (#f1f5f9) to match the container's bg-slate-50 CSS class
+    // gl.setClearColor(new THREE.Color(0xf1f5f9), 1);
+
+    // R3F and drei's Html both call getBoundingClientRect() on the canvas to measure its size
+    // and position HTML overlays. Inside a CSS transform this returns visual (scaled-down)
+    // dimensions instead of the true layout dimensions, causing the canvas and labels to shift.
+    // Fix: patch getBoundingClientRect to always return the layout (offsetWidth/Height) dimensions.
+    const canvas = gl.domElement;
+    const originalGetBCR = canvas.getBoundingClientRect.bind(canvas);
+    canvas.getBoundingClientRect = () => {
+      const rect = originalGetBCR();
+      const w = canvas.offsetWidth;
+      const h = canvas.offsetHeight;
+      return new DOMRect(rect.x, rect.y, w, h);
+    };
+
+    // Also patch setSize to never overwrite canvas CSS so the canvas stays at 100%/100%.
+    const originalSetSize = gl.setSize.bind(gl);
+    gl.setSize = (width: number, height: number) => {
+      originalSetSize(width, height, false);
+    };
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
+
+    console.log(`[StagePlotCanvas #${instanceId}] Canvas created`, {
+      isPreview,
+      isOffscreen: containerRef.current?.style.left === '-9999px',
+      rendererType: gl.constructor.name,
+      canvasSize: {
+        width: gl.domElement.width,
+        height: gl.domElement.height,
+      },
+      maxTextureSize: gl.capabilities.maxTextureSize,
+      devicePixelRatio: window.devicePixelRatio,
+    });
+  }, [instanceId, isPreview]);
+
   // Responsive font sizes for audience label
   const baseAudienceFontSize = 0.5; // Smaller for audience
   const audienceFontSize = baseAudienceFontSize * (isPreview ? AUDIENCE_TEXT_FONT_SCALE_PREVIEW : AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE);
@@ -437,38 +676,25 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
-      style={{ touchAction: 'none', cursor: resizingItemId ? 'crosshair' : undefined }}
+      className="bg-slate-50 print:border-black select-none"
+      style={{
+        display: 'block',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        touchAction: 'none',
+        cursor: resizingItemId ? 'crosshair' : undefined,
+        position: 'absolute',
+        top: 0,
+        left: 0
+      }}
     >
       <Canvas
+        key={`canvas-${viewMode}`}
         shadows
-        gl={{
-          preserveDrawingBuffer: true,
-          antialias: true,
-          failIfMajorPerformanceCaveat: false,
-          powerPreference: 'high-performance',
-          alpha: true,
-          stencil: false,
-          depth: true
-        }}
-        className="w-full h-full"
-        onCreated={(state) => {
-          const gl = state.gl;
-          console.debug('[StagePlotCanvas] WebGL initialized', {
-            renderer: gl.constructor.name,
-            maxTextureSize: gl.capabilities.maxTextureSize
-          });
-
-          // Log context loss events
-          gl.domElement.addEventListener('webglcontextlost', (e) => {
-            console.warn('[StagePlotCanvas] WebGL Context Lost (recovering)');
-            e.preventDefault();
-          });
-
-          gl.domElement.addEventListener('webglcontextrestored', () => {
-            console.debug('[StagePlotCanvas] WebGL Context Restored');
-          });
-        }}
+        gl={glConfig}
+        style={{ display: 'block', width: '100%', height: '100%' }}
+        onCreated={handleCanvasCreated}
       >
         <OrthographicCamera
             key={viewMode}
@@ -479,6 +705,8 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
             far={200}
         />
 
+        <WebGLContextHandler instanceId={instanceId} />
+        <SizeCorrector containerRef={containerRef} />
         <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} />
 
         <ambientLight intensity={.9} />
@@ -597,3 +825,7 @@ export const StagePlotCanvas: React.FC<StagePlotCanvasProps> = ({
     </div>
   );
 };
+
+// Memoize to prevent re-renders when props haven't changed
+// This is critical to prevent Canvas recreation when parent re-renders
+export const StagePlotCanvas = React.memo(StagePlotCanvasInner);

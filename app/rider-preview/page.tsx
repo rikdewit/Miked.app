@@ -13,6 +13,12 @@ export default function RiderPreviewPage() {
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [hasPdfGenerated, setHasPdfGenerated] = useState(false)
   const [lastSentEmail, setLastSentEmail] = useState<string | null>(null)
+  const [isMounted, setIsMounted] = useState(false)
+
+  // Mark as mounted to prevent hydration mismatch
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
 
   // Reset PDF generation when rider data changes
   useEffect(() => {
@@ -62,9 +68,9 @@ export default function RiderPreviewPage() {
 
   return (
     <div className="flex-1 overflow-hidden flex flex-col">
-      {data.details.bandName ? (
+      {isMounted && data.details.bandName ? (
         <>
-          <div className="flex-1 overflow-y-auto px-2 sm:px-4 md:px-8 py-4 md:py-8">
+          <div className="flex-1 overflow-y-auto">
             <Preview data={data} ref={previewRef} onDownloadClick={handleDownload} onGeneratingChange={setIsGeneratingPdf} />
           </div>
           <FooterNav onDownload={handleDownload} isDownloading={isGeneratingPdf} />
