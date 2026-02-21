@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion } from 'motion/react';
 import {
   Mic2,
@@ -17,6 +17,9 @@ import {
   Keyboard,
 } from 'lucide-react';
 import { MemberPreview3D } from './MemberPreview3D';
+import { StagePlotCanvas } from './StagePlotCanvas';
+import { generateMemberItems } from '@/utils/stageHelpers';
+import type { StageItem } from '@/types';
 
 interface LandingProps {
   onStart: () => void;
@@ -80,6 +83,27 @@ Button.displayName = 'Button';
 
 // --- Main Component ---
 export const Landing: React.FC<LandingProps> = ({ onStart }) => {
+  const [stageItems, setStageItems] = useState<StageItem[]>([]);
+
+  // Generate stage plot with rock band members positioned
+  useMemo(() => {
+    const items: StageItem[] = [];
+    const positions = [
+      { x: 50, y: 75 },  // Drummer - back center
+      { x: 30, y: 50 },  // Bassist - center left
+      { x: 70, y: 50 },  // Guitarist - center right
+      { x: 50, y: 25 },  // Lead Singer - front center
+    ];
+
+    ROCK_BAND_MEMBERS.forEach((member, idx) => {
+      const pos = positions[idx];
+      const memberItems = generateMemberItems(member, pos.x, pos.y);
+      items.push(...memberItems);
+    });
+
+    setStageItems(items);
+  }, []);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
       {/* Hero Section */}
@@ -161,6 +185,31 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             <p className="text-center mt-6 text-sm text-slate-400 flex items-center justify-center gap-2">
               <Layout className="w-4 h-4" /> Customize each band member's setup and export professional PDFs
             </p>
+          </motion.div>
+
+          {/* Interactive Stage Plot */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="mt-20"
+          >
+            <div className="mb-8">
+              <h3 className="text-2xl md:text-3xl font-bold text-center mb-3">See it in action</h3>
+              <p className="text-center text-slate-400 text-sm">Interactive 3D stage plot — drag members and equipment to customize your setup</p>
+            </div>
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-2xl">
+              <div className="w-full h-96 bg-slate-950 relative">
+                <StagePlotCanvas
+                  items={stageItems}
+                  setItems={setStageItems}
+                  editable={true}
+                  viewMode="isometric"
+                  members={ROCK_BAND_MEMBERS}
+                  showAudienceLabel={true}
+                />
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
