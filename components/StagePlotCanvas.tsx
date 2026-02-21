@@ -430,6 +430,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   const resizingItemIdRef = useRef<string | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const isDraggingRef = useRef(false);
 
   const handleScreenshot = (dataUrl: string) => {
     setScreenshotUrl(dataUrl);
@@ -495,6 +496,24 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   }, [resizingItemId]);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Prevent scrolling when actively dragging an item
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDraggingRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   const handleDeleteItem = (id: string) => {
     setItems(items.filter(i => i.id !== id));
     setRotationUiItemId(null);
@@ -534,11 +553,13 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     // While in resize mode, don't start a drag — the DOM listener handles stopping resize
     if (resizingItemId) return;
     e.stopPropagation();
-    
+
+    isDraggingRef.current = true;
+
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     const pointOnPlane = new THREE.Vector3();
     e.ray.intersectPlane(plane, pointOnPlane);
-    
+
     const item = items.find(i => i.id === id);
     if (item) {
         const currentX = percentToX(item.x);
@@ -553,6 +574,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     if (!editable) return;
+    isDraggingRef.current = false;
     setActiveId(null);
     dragOffset.current = { x: 0, z: 0 };
   };
