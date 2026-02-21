@@ -11,10 +11,6 @@ import {
   Music,
   ArrowRight,
   CheckCircle2,
-  Drum,
-  GitBranch,
-  Mic,
-  Keyboard,
 } from 'lucide-react';
 import { MemberPreview3D } from './MemberPreview3D';
 import { StagePlotCanvas } from './StagePlotCanvas';
@@ -192,14 +188,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.4 }}
-            className="mt-20"
+            className="mt-24 mb-0"
           >
-            <div className="mb-8">
-              <h3 className="text-2xl md:text-3xl font-bold text-center mb-3">See it in action</h3>
-              <p className="text-center text-slate-400 text-sm">Interactive 3D stage plot — drag members and equipment to customize your setup</p>
+            <div className="text-center max-w-3xl mx-auto mb-8">
+              <h3 className="text-3xl md:text-4xl font-bold mb-3">See it in action</h3>
+              <p className="text-slate-400">Build your complete stage setup interactively — drag band members and equipment to position them exactly as needed, then export to PDF</p>
             </div>
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-2xl">
-              <div className="w-full h-96 bg-slate-950 relative">
+            <div className="rounded-t-2xl border border-slate-800 border-b-0 bg-slate-900 overflow-hidden shadow-2xl">
+              <div className="w-full h-[600px] bg-slate-950 relative">
                 <StagePlotCanvas
                   items={stageItems}
                   setItems={setStageItems}
