@@ -693,7 +693,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
         key={`canvas-${viewMode}`}
         shadows
         gl={glConfig}
-        style={{ display: 'block', width: '100%', height: '100%' }}
+        style={{ display: 'block', width: '100%', height: '100%', background: 'transparent' }}
         onCreated={handleCanvasCreated}
       >
         <OrthographicCamera

@@ -302,7 +302,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               <p className="text-slate-400">Build your complete stage setup interactively — drag band members and equipment to position them exactly as needed, then export to PDF</p>
             </div>
             {/* Stage Plot Container - seamless background */}
-            <div className="relative w-full h-[600px]">
+            <div className="relative w-full h-[600px]" style={{ background: 'transparent' }}>
               {/* Floating View Toggle Buttons */}
               <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
                 <button
