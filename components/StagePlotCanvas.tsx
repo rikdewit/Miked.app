@@ -205,7 +205,7 @@ const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDiv
 };
 
 // Component to handle responsive camera zoom and orientation
-const ResponsiveCameraAdjuster = ({ isTopView, isPreview }: { isTopView: boolean; isPreview: boolean }) => {
+const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { isTopView: boolean; isPreview: boolean; topViewPadding?: number }) => {
   const { camera, size } = useThree();
 
   useEffect(() => {
@@ -254,11 +254,12 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview }: { isTopView: boolean
     }
 
     // NDC range [-1,1] covers the full viewport. Zoom needed to fit the projected extent:
-    const zoomX = 2 / ((maxX - minX) * (1 + cfg.padding));
-    const zoomY = 2 / ((maxY - minY) * (1 + cfg.padding));
+    const padding = isTopView && topViewPadding !== undefined ? topViewPadding : cfg.padding;
+    const zoomX = 2 / ((maxX - minX) * (1 + padding));
+    const zoomY = 2 / ((maxY - minY) * (1 + padding));
     orthoCamera.zoom = Math.min(zoomX, zoomY);
     camera.updateProjectionMatrix();
-  }, [size, camera, isTopView, isPreview]);
+  }, [size, camera, isTopView, isPreview, topViewPadding]);
 
   return null;
 };
@@ -281,6 +282,7 @@ interface StagePlotCanvasProps {
   platformColor?: string;
   showAudienceLabel?: boolean;
   showItemLabels?: boolean;
+  topViewPadding?: number;
 }
 
 const StagePlatform = ({ color = '#e2e8f0' }: { color?: string }) => {
@@ -391,7 +393,8 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   gridSectionColor = '#94a3b8',
   platformColor = '#e2e8f0',
   showAudienceLabel = true,
-  showItemLabels = true
+  showItemLabels = true,
+  topViewPadding
 }) => {
   const instanceIdRef = useRef<number>(++canvasInstanceCounter);
   const instanceId = instanceIdRef.current;
@@ -711,7 +714,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
 
         <WebGLContextHandler instanceId={instanceId} />
         <SizeCorrector containerRef={containerRef} />
-        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} />
+        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} topViewPadding={topViewPadding} />
 
         <ambientLight intensity={.9} />
         <directionalLight

@@ -314,11 +314,14 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   return (
     <group position={[x, 0, z]}>
-      {showLabel && (
+      {showLabel && !isDragging && (
+        (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') ||
+        (viewMode === 'top')
+      ) && (
         <Html
             position={[0 + offX, item.type === 'custom' && item.labelHeight ? item.labelHeight : height + labelYPadding + offY, 0 + offZ]}
             center
-            zIndexRange={isDragging ? [500, 400] : [100, 0]}
+            zIndexRange={isDragging ? [10, 5] : [1, 0]}
             style={{ pointerEvents: isPreview ? 'none' : 'none' }}
         >
           <div
@@ -332,7 +335,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
               verticalAlign: 'baseline'
             }}
           >
-            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.type === 'monitor' && item.monitorNumber ? `${item.label} ${item.monitorNumber}` : item.label}
+            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.type === 'monitor' && item.monitorNumber ? `${item.label} ${item.monitorNumber}` : viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055' ? 'move me' : item.label}
           </div>
         </Html>
       )}

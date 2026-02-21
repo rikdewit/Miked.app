@@ -210,7 +210,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
       {/* Hero + Stage Section */}
-      <section className="relative h-screen flex flex-col overflow-hidden">
+      <section className="relative h-[140vh] flex flex-col overflow-hidden">
         {/* Stage Plot - Full Background */}
         <motion.div
           initial={{ opacity: 0 }}
@@ -236,13 +236,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               gridSectionColor="#334155"
               platformColor="#64748b"
               showAudienceLabel={false}
-              showItemLabels={viewMode === 'top'}
+              showItemLabels={true}
+              topViewPadding={0.6}
             />
           </div>
         </motion.div>
 
         {/* Hero Content Overlay */}
-        <div className="relative z-20 flex-1 flex flex-col items-center justify-center pointer-events-none px-4">
+        <div className="relative z-50 flex flex-col items-center justify-start pt-24 flex-1 pointer-events-none px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -257,7 +258,8 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               No Login Required
             </div>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-300">
-              Professional Tech Riders <br className="hidden md:block" />
+              Professional Tech Riders
+              <br />
               <span className="text-indigo-400">&amp; 3D Stage Plots.</span>
             </h1>
             <p className="text-base md:text-lg text-slate-200 mb-8 leading-relaxed">
@@ -273,9 +275,8 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               </Button>
               <a href="#features" className="pointer-events-auto">
                 <Button
-                  variant="outline"
                   size="lg"
-                  className="text-base h-12 px-8 border-slate-600 hover:bg-slate-800/50 text-slate-200"
+                  className="text-base h-12 px-8 bg-slate-800 hover:bg-slate-700 text-slate-100 shadow-lg"
                 >
                   View Example PDF
                 </Button>
