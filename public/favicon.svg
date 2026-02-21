@@ -1,15 +1,17 @@
 <svg
   xmlns="http://www.w3.org/2000/svg"
-  width="24"
-  height="24"
-  viewBox="0 0 24 24"
+  width="256"
+  height="256"
+  viewBox="0 0 256 256"
   fill="none"
-  stroke="#4f46e5"
-  stroke-width="2"
-  stroke-linecap="round"
-  stroke-linejoin="round"
 >
-  <path d="M12 19v3" />
-  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-  <rect x="9" y="2" width="6" height="13" rx="3" />
+  <!-- Background rounded rectangle (indigo-600) with rounded corners -->
+  <rect x="0" y="0" width="256" height="256" rx="56" ry="56" fill="#4f46e5" />
+
+  <!-- Microphone vocal icon (white), scaled and centered -->
+  <g transform="translate(128, 128) scale(6.4) translate(-12, -12)">
+    <path d="m11 7.601-5.994 8.19a1 1 0 0 0 .1 1.298l.817.818a1 1 0 0 0 1.314.087L15.09 12" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <path d="M16.5 21.174C15.5 20.5 14.372 20 13 20c-2.058 0-3.928 2.356-6 2-2.072-.356-2.775-3.369-1.5-4.5" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none" />
+    <circle cx="16" cy="7" r="5" stroke="white" stroke-width="2" fill="none" />
+  </g>
 </svg>

@@ -16,6 +16,26 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.svg',
   },
+  openGraph: {
+    title: 'Your Tech Rider. Done in 5 Minutes.',
+    description: 'Create professional 3D stage plots and technical riders instantly. Drag, drop, and download.',
+    url: 'https://miked.live',
+    type: 'website',
+    images: [
+      {
+        url: 'https://miked.live/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'Miked.live - Professional Stage Plot Designer',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Your Tech Rider. Done in 5 Minutes.',
+    description: 'Create professional 3D stage plots and technical riders instantly.',
+    images: ['https://miked.live/opengraph-image'],
+  },
 }
 
 export default function RootLayout({
