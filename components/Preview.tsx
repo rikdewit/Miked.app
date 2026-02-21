@@ -547,8 +547,8 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
 
         {/* Footer */}
         <div ref={footerRef} data-pdf="footer" className="mt-auto pt-8 pb-2 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-400 uppercase">
-           <span>{data.details.bandName} - Tech Rider</span>
-           <span>Created with miked.app</span>
+           <span>{data.details.bandName} - Rider</span>
+           <span>Created with miked.live</span>
         </div>
 
       </div>
