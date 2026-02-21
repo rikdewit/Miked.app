@@ -34,6 +34,7 @@ interface DraggableItemProps {
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
+  showLabels?: boolean;
 }
 
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({
@@ -58,7 +59,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onResizeStart,
   isEditable = false,
   viewMode = 'isometric',
-  isPreview = false
+  isPreview = false,
+  showLabels = true
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -113,7 +115,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const prevShowRotationUIRef = useRef(false);
   const [menuReady, setMenuReady] = useState(false);
 
-  const showLabel = true;
+  const showLabel = showLabels;
   const labelLower = (item.label || '').toLowerCase();
 
   // Calculate scaled font size for preview vs interactive
@@ -312,11 +314,11 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   return (
     <group position={[x, 0, z]}>
-      {showLabel && (
+      {showLabel && !isDragging && (isPreview ? (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') : true) && (
         <Html
             position={[0 + offX, item.type === 'custom' && item.labelHeight ? item.labelHeight : height + labelYPadding + offY, 0 + offZ]}
             center
-            zIndexRange={isDragging ? [500, 400] : [100, 0]}
+            zIndexRange={isDragging ? [10, 5] : [1, 0]}
             style={{ pointerEvents: isPreview ? 'none' : 'none' }}
         >
           <div
@@ -330,7 +332,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
               verticalAlign: 'baseline'
             }}
           >
-            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.type === 'monitor' && item.monitorNumber ? `${item.label} ${item.monitorNumber}` : item.label}
+            {item.type === 'power' && item.quantity ? `${item.label} (${item.quantity})` : item.type === 'monitor' && item.monitorNumber ? `${item.label} ${item.monitorNumber}` : viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055' ? 'move me' : item.label}
           </div>
         </Html>
       )}

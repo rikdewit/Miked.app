@@ -508,6 +508,11 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
              >
+                {/* Background Gradients */}
+                <div className="absolute inset-0 pointer-events-none overflow-hidden">
+                  <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px]" />
+                  <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
+                </div>
                 <StagePlotCanvas
                     items={data.stagePlot}
                     setItems={updateStageItems}
@@ -519,6 +524,9 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
                     members={data.members}
                     rotatingItemId={rotatingItemId}
                     onRotateItem={handleRotateItem}
+                    gridCellColor="#94a3b8"
+                    gridSectionColor="#64748b"
+                    showItemLabels={true}
                 />
 
                 {data.stagePlot.length === 0 && !draggingMemberId && (

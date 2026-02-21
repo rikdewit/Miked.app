@@ -18,7 +18,7 @@ export const CAMERA_TOP_INTERACTIVE = {
 export const CAMERA_TOP_PREVIEW = {
   position: [0, 30, -1] as [number, number, number],
   lookAt: [0, -20, 1] as [number, number, number],
-  padding: .2,
+  padding: 0.2,
   modelHeight: 0,
 };
 

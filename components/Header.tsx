@@ -2,63 +2,72 @@
 
 import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { Mic } from 'lucide-react'
+import { Mic2 } from 'lucide-react'
+import { usePostHog } from 'posthog-js/react'
 
 export const Header: React.FC = () => {
   const pathname = usePathname()
   const router = useRouter()
+  const posthog = usePostHog()
 
   const routes = ['/', '/band', '/stage', '/details', '/rider-preview']
   const stepIndex = routes.indexOf(pathname)
+  const isLanding = stepIndex === 0
 
-  const handleLogoClick = () => {
-    router.push('/')
-  }
+  const handleLogoClick = () => router.push('/')
 
-  // Only show breadcrumb on non-landing pages (stepIndex >= 1)
-  if (stepIndex <= 0) {
-    return (
-      <nav className="no-print bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-[1000]">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <div className="font-bold text-xl flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
-            <Mic className="text-indigo-500" />
-            <span>miked<span className="text-indigo-500">.live</span></span>
-          </div>
-        </div>
-      </nav>
-    )
+  const handleStart = () => {
+    posthog?.capture('start_now_clicked')
+    router.push('/band')
   }
 
   return (
-    <nav className="no-print bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-[1000]">
-      <div className="max-w-6xl mx-auto flex justify-between items-center">
-        <div className="font-bold text-xl flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
-          <Mic className="text-indigo-500" />
-          <span>miked<span className="text-indigo-500">.live</span></span>
-        </div>
-        <div className="flex-1 flex items-center justify-end gap-6 text-sm text-slate-400">
-          {/* Full text version - shown only on larger screens */}
-          <span className="hidden md:inline">
-            <span className={stepIndex >= 1 ? 'text-indigo-400 font-bold' : ''}>1. Band</span>
-            <span className="mx-3">→</span>
-            <span className={stepIndex >= 2 ? 'text-indigo-400 font-bold' : ''}>2. Stage</span>
-            <span className="mx-3">→</span>
-            <span className={stepIndex >= 3 ? 'text-indigo-400 font-bold' : ''}>3. Details</span>
-            <span className="mx-3">→</span>
-            <span className={stepIndex >= 4 ? 'text-indigo-400 font-bold' : ''}>4. Download</span>
+    <nav className="no-print bg-slate-950 border-b border-slate-800/50 sticky top-0 z-50">
+      <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-2 cursor-pointer" onClick={handleLogoClick}>
+          <div className="bg-indigo-600 p-1.5 rounded-lg">
+            <Mic2 className="w-5 h-5 text-white" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">
+            Miked<span className="text-indigo-500">.live</span>
           </span>
+        </div>
 
-          {/* Number-only version - shown on smaller screens */}
-          <span className="md:hidden">
-            <span className={stepIndex >= 1 ? 'text-indigo-400 font-bold' : ''}>1</span>
-            <span className="mx-4">→</span>
-            <span className={stepIndex >= 2 ? 'text-indigo-400 font-bold' : ''}>2</span>
-            <span className="mx-4">→</span>
-            <span className={stepIndex >= 3 ? 'text-indigo-400 font-bold' : ''}>3</span>
-            <span className="mx-4">→</span>
-            <span className={stepIndex >= 4 ? 'text-indigo-400 font-bold' : ''}>4</span>
-          </span>
-        </div>
+        {/* Right side */}
+        {isLanding ? (
+          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+            <a href="#features" className="hover:text-indigo-400 transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-indigo-400 transition-colors">How it Works</a>
+            <button
+              onClick={handleStart}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
+            >
+              Start Now
+            </button>
+          </div>
+        ) : (
+          <div className="flex-1 flex items-center justify-end gap-6 text-sm text-slate-400">
+            <span className="hidden md:inline">
+              <span className={stepIndex >= 1 ? 'text-indigo-400 font-bold' : ''}>1. Band</span>
+              <span className="mx-3">→</span>
+              <span className={stepIndex >= 2 ? 'text-indigo-400 font-bold' : ''}>2. Stage</span>
+              <span className="mx-3">→</span>
+              <span className={stepIndex >= 3 ? 'text-indigo-400 font-bold' : ''}>3. Details</span>
+              <span className="mx-3">→</span>
+              <span className={stepIndex >= 4 ? 'text-indigo-400 font-bold' : ''}>4. Download</span>
+            </span>
+            <span className="md:hidden">
+              <span className={stepIndex >= 1 ? 'text-indigo-400 font-bold' : ''}>1</span>
+              <span className="mx-4">→</span>
+              <span className={stepIndex >= 2 ? 'text-indigo-400 font-bold' : ''}>2</span>
+              <span className="mx-4">→</span>
+              <span className={stepIndex >= 3 ? 'text-indigo-400 font-bold' : ''}>3</span>
+              <span className="mx-4">→</span>
+              <span className={stepIndex >= 4 ? 'text-indigo-400 font-bold' : ''}>4</span>
+            </span>
+          </div>
+        )}
       </div>
     </nav>
   )
