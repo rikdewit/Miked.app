@@ -695,7 +695,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     return (
       <div
         className="w-full h-full bg-transparent overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: 'pan-y' }}
       >
         <img
           src={screenshotUrl}
@@ -715,7 +715,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        touchAction: 'none',
+        touchAction: 'pan-y',
         cursor: resizingItemId ? 'crosshair' : undefined,
         position: 'absolute',
         top: 0,

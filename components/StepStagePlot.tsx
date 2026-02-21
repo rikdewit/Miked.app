@@ -503,7 +503,7 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
              </div>
 
              <div
-                className="flex-1 bg-slate-900 rounded-xl overflow-hidden shadow-2xl border border-slate-700 relative min-h-[300px] sm:min-h-[500px]"
+                className="flex-1 bg-slate-900 rounded-xl overflow-auto shadow-2xl border border-slate-700 relative min-h-[300px] sm:min-h-[500px]"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
