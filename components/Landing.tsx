@@ -209,62 +209,116 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
-      {/* Hero Section */}
-      <section className="relative pt-16 pb-20 md:pt-24 md:pb-32 overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-[100px]" />
-          <div className="absolute top-40 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
+      {/* Hero + Stage Section */}
+      <section className="relative h-screen flex flex-col overflow-hidden">
+        {/* Stage Plot - Full Background */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7 }}
+          className="absolute inset-0 w-full h-full"
+        >
+          {/* Stage Plot Container - Full Height */}
+          <div className="relative w-full h-full" style={{ background: 'transparent' }}>
+            {/* Background Gradients */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px]" />
+              <div className="absolute top-1/2 right-1/4 -translate-y-1/2 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
+            </div>
+            {/* Canvas */}
+            <StagePlotCanvas
+              items={stageItems}
+              setItems={setStageItems}
+              editable={true}
+              viewMode={viewMode}
+              members={ROCK_BAND_MEMBERS}
+              gridCellColor="#334155"
+              gridSectionColor="#334155"
+              platformColor="#64748b"
+              showAudienceLabel={false}
+              showItemLabels={viewMode === 'top'}
+            />
+          </div>
+        </motion.div>
+
+        {/* Hero Content Overlay */}
+        <div className="relative z-20 flex-1 flex flex-col items-center justify-center pointer-events-none px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-center max-w-2xl pointer-events-auto"
+          >
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/80 backdrop-blur-sm border border-slate-800 text-indigo-400 text-xs font-medium mb-6">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+              </span>
+              No Login Required
+            </div>
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-300">
+              Professional Tech Riders <br className="hidden md:block" />
+              <span className="text-indigo-400">&amp; 3D Stage Plots.</span>
+            </h1>
+            <p className="text-base md:text-lg text-slate-200 mb-8 leading-relaxed">
+              Create a professional technical rider and stage plot for your band in 5 minutes.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Button
+                size="lg"
+                className="text-base h-12 px-8 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/25"
+                onClick={onStart}
+              >
+                Create Your Rider
+              </Button>
+              <a href="#features" className="pointer-events-auto">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="text-base h-12 px-8 border-slate-600 hover:bg-slate-800/50 text-slate-200"
+                >
+                  View Example PDF
+                </Button>
+              </a>
+            </div>
+          </motion.div>
         </div>
 
-        <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-4xl mx-auto text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-indigo-400 text-xs font-medium mb-6">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-                No Login Required
-              </div>
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
-                Professional Tech Riders <br className="hidden md:block" />
-                <span className="text-indigo-500">&amp; 3D Stage Plots.</span>
-              </h1>
-              <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-                Create a professional technical rider and stage plot for your band in 5 minutes. No account needed, instant results.
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button
-                  size="lg"
-                  className="w-full sm:w-auto text-base h-12 px-8 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/25"
-                  onClick={onStart}
-                >
-                  Create Your Rider <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-                <a href="#features">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full sm:w-auto text-base h-12 px-8 border-slate-700 hover:bg-slate-800 text-slate-300"
-                  >
-                    View Example PDF
-                  </Button>
-                </a>
-              </div>
-            </motion.div>
-          </div>
+        {/* View Toggle Buttons - Bottom of viewport */}
+        <div className="relative z-20 flex items-center justify-center gap-2 pb-6 pointer-events-auto">
+          <button
+            onClick={() => setViewMode('isometric')}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'isometric'
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
+            }`}
+          >
+            <Box size={16} />
+            <span className="hidden sm:inline">3D View</span>
+          </button>
+          <button
+            onClick={() => setViewMode('top')}
+            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              viewMode === 'top'
+                ? 'bg-indigo-600 text-white shadow-lg'
+                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
+            }`}
+          >
+            <Layers size={16} />
+            <span className="hidden sm:inline">Top View</span>
+          </button>
+        </div>
+      </section>
 
-          {/* Band Member Previews */}
+      {/* Band Member Previews */}
+      <section className="py-16 md:py-24 px-4">
+        <div className="container mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="mt-20 relative max-w-6xl mx-auto"
+            transition={{ duration: 0.7, delay: 0.4 }}
+            className="relative max-w-6xl mx-auto"
           >
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {ROCK_BAND_MEMBERS.map((member) => (
@@ -288,56 +342,6 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             <p className="text-center mt-6 text-sm text-slate-400 flex items-center justify-center gap-2">
               <Layout className="w-4 h-4" /> Customize each band member's setup and export professional PDFs
             </p>
-          </motion.div>
-
-          {/* Interactive Stage Plot */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-            className="mt-24 mb-0"
-          >
-            <div className="text-center max-w-3xl mx-auto mb-8">
-              <h3 className="text-3xl md:text-4xl font-bold mb-3">See it in action</h3>
-              <p className="text-slate-400">Build your complete stage setup interactively — drag band members and equipment to position them exactly as needed, then export to PDF</p>
-            </div>
-            {/* Stage Plot Container - seamless background */}
-            <div className="relative w-full h-[600px]" style={{ background: 'transparent' }}>
-              {/* Floating View Toggle Buttons */}
-              <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
-                <button
-                  onClick={() => setViewMode('isometric')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === 'isometric'
-                      ? 'bg-indigo-600 text-white shadow-lg'
-                      : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
-                  }`}
-                >
-                  <Box size={16} />
-                  <span className="hidden sm:inline">3D View</span>
-                </button>
-                <button
-                  onClick={() => setViewMode('top')}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    viewMode === 'top'
-                      ? 'bg-indigo-600 text-white shadow-lg'
-                      : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
-                  }`}
-                >
-                  <Layers size={16} />
-                  <span className="hidden sm:inline">Top View</span>
-                </button>
-              </div>
-              {/* Canvas - seamless with page background */}
-              <StagePlotCanvas
-                items={stageItems}
-                setItems={setStageItems}
-                editable={true}
-                viewMode={viewMode}
-                members={ROCK_BAND_MEMBERS}
-                showAudienceLabel={true}
-              />
-            </div>
           </motion.div>
         </div>
       </section>

@@ -7,7 +7,7 @@ import { STAGE_WIDTH, STAGE_DEPTH, getItemConfig } from '../utils/stageConfig';
 import { percentToX, percentToZ, xToPercent, zToPercent } from '../utils/stageHelpers';
 import { StageDraggableItem } from './3d/StageDraggableItem';
 import { MODEL_OFFSETS } from './3d/StageModels';
-import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAMERA_ISO_PREVIEW, AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE, AUDIENCE_TEXT_FONT_SCALE_PREVIEW } from '../constants';
+import { CAMERA_TOP_INTERACTIVE, CAMERA_TOP_PREVIEW, CAMERA_ISO_INTERACTIVE, CAMERA_ISO_PREVIEW } from '../constants';
 
 // Component that captures canvas screenshot for preview mode
 // Waits for actual rendering completion instead of using a fixed timeout
@@ -268,7 +268,6 @@ interface StagePlotCanvasProps {
   setItems: (items: StageItem[]) => void;
   editable: boolean;
   viewMode?: 'isometric' | 'top';
-  showAudienceLabel?: boolean;
   isPreview?: boolean;
   ghostItems?: StageItem[];
   dragCoords?: { x: number; y: number; width: number; height: number } | null;
@@ -277,15 +276,20 @@ interface StagePlotCanvasProps {
   rotatingItemId?: string | null;
   onRotateItem?: (itemId: string, direction: 'left' | 'right') => void;
   onScreenshot?: (dataUrl: string) => void;
+  gridCellColor?: string;
+  gridSectionColor?: string;
+  platformColor?: string;
+  showAudienceLabel?: boolean;
+  showItemLabels?: boolean;
 }
 
-const StagePlatform = () => {
+const StagePlatform = ({ color = '#e2e8f0' }: { color?: string }) => {
   const thickness = 0.2;
   return (
     <group position={[0, -thickness / 2, 0]}>
       <mesh receiveShadow position={[0, 0, 0]}>
         <boxGeometry args={[STAGE_WIDTH, thickness, STAGE_DEPTH]} />
-        <meshStandardMaterial color="#e2e8f0" roughness={0.6} />
+        <meshStandardMaterial color={color} roughness={0.6} />
       </mesh>
     </group>
   );
@@ -375,7 +379,6 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   setItems,
   editable,
   viewMode = 'isometric',
-  showAudienceLabel = true,
   isPreview = false,
   ghostItems = [],
   dragCoords,
@@ -383,7 +386,12 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   members,
   rotatingItemId,
   onRotateItem,
-  onScreenshot: onScreenshotProp
+  onScreenshot: onScreenshotProp,
+  gridCellColor = '#cbd5e1',
+  gridSectionColor = '#94a3b8',
+  platformColor = '#e2e8f0',
+  showAudienceLabel = true,
+  showItemLabels = true
 }) => {
   const instanceIdRef = useRef<number>(++canvasInstanceCounter);
   const instanceId = instanceIdRef.current;
@@ -653,15 +661,11 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     });
   }, [instanceId, isPreview]);
 
-  // Responsive font sizes for audience label
-  const baseAudienceFontSize = 0.5; // Smaller for audience
-  const audienceFontSize = baseAudienceFontSize * (isPreview ? AUDIENCE_TEXT_FONT_SCALE_PREVIEW : AUDIENCE_TEXT_FONT_SCALE_INTERACTIVE);
-
   // For preview with screenshot, show static image instead of threejs canvas
   if (isPreview && screenshotUrl) {
     return (
       <div
-        className="w-full h-full bg-slate-50 overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
+        className="w-full h-full bg-transparent overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
         style={{ touchAction: 'none' }}
       >
         <img
@@ -676,7 +680,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   return (
     <div
       ref={containerRef}
-      className="bg-slate-50 print:border-black select-none"
+      className="bg-transparent print:border-black select-none"
       style={{
         display: 'block',
         width: '100%',
@@ -720,24 +724,24 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
         <directionalLight position={[10, 10, -10]} intensity={0.4} />
 
         <group position={[0, 0, 0]}>
-          <StagePlatform />
-          <Grid 
-            position={[0, 0.01, 0]} 
-            args={[STAGE_WIDTH, STAGE_DEPTH]} 
-            cellSize={1} 
-            cellThickness={0.6} 
-            cellColor="#cbd5e1" 
-            sectionSize={2} 
-            sectionThickness={1} 
-            sectionColor="#94a3b8" 
+          <StagePlatform color={platformColor} />
+          <Grid
+            position={[0, 0.01, 0]}
+            args={[STAGE_WIDTH, STAGE_DEPTH]}
+            cellSize={1}
+            cellThickness={0.6}
+            cellColor={gridCellColor}
+            sectionSize={2}
+            sectionThickness={1}
+            sectionColor={gridSectionColor}
             infiniteGrid={false}
           />
-          
+
           {showAudienceLabel && (
             <Text
               position={[0, 0.05, STAGE_DEPTH / 2 + 0.3]}
               rotation={[-Math.PI / 2, 0, 0]}
-              fontSize={audienceFontSize}
+              fontSize={0.5}
               color="#64748b"
               anchorX="center"
               anchorY="middle"
@@ -793,6 +797,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
                 isEditable={editable}
                 viewMode={viewMode}
                 isPreview={isPreview}
+                showLabels={showItemLabels}
               />
             ))}
 
@@ -807,6 +812,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
                 isGhost={true}
                 member={members?.find(m => m.id === item.memberId)}
                 isPreview={isPreview}
+                showLabels={showItemLabels}
               />
             ))}
         </Suspense>

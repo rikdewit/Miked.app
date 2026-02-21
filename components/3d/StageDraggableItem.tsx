@@ -34,6 +34,7 @@ interface DraggableItemProps {
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
+  showLabels?: boolean;
 }
 
 export const StageDraggableItem: React.FC<DraggableItemProps> = ({
@@ -58,7 +59,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   onResizeStart,
   isEditable = false,
   viewMode = 'isometric',
-  isPreview = false
+  isPreview = false,
+  showLabels = true
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
   const x = percentToX(item.x);
@@ -113,7 +115,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const prevShowRotationUIRef = useRef(false);
   const [menuReady, setMenuReady] = useState(false);
 
-  const showLabel = true;
+  const showLabel = showLabels;
   const labelLower = (item.label || '').toLowerCase();
 
   // Calculate scaled font size for preview vs interactive
