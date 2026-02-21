@@ -32,7 +32,7 @@ export const metadata: Metadata = {
       {
         url: '/og-image',
         width: 1200,
-        height: 630,
+        height: 675,
         alt: 'Miked.live - Professional Stage Plot Designer',
       },
     ],

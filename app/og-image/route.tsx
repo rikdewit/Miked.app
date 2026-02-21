@@ -1,52 +1,26 @@
 import { NextResponse } from 'next/server'
-import type { Browser } from 'playwright'
+import { readFileSync } from 'fs'
+import { join } from 'path'
 
 export const runtime = 'nodejs'
-export const revalidate = 3600 // Cache for 1 hour
+export const revalidate = 86400 // Cache for 24 hours
 
 export async function GET() {
   try {
-    const playwright = await import('playwright')
-    const browser: Browser = await playwright.chromium.launch({
-      headless: true,
-    })
+    // Read the static OG image from public folder
+    const imagePath = join(process.cwd(), 'public', 'og-image.png')
+    const imageBuffer = readFileSync(imagePath)
 
-    const page = await browser.newPage()
-
-    // Set viewport to OG image dimensions
-    await page.setViewportSize({ width: 1200, height: 630 })
-
-    // Navigate to the homepage
-    const baseUrl = process.env.VERCEL_ENV === 'production'
-      ? 'https://miked.live'
-      : process.env.VERCEL_ENV
-        ? 'https://dev.miked.live'
-        : 'http://localhost:3000'
-
-    await page.goto(`${baseUrl}/`, {
-      waitUntil: 'networkidle',
-      timeout: 30000,
-    })
-
-    // Wait for the stage plot to render
-    await page.waitForTimeout(2000)
-
-    // Take screenshot
-    const screenshot = await page.screenshot({ type: 'png' })
-
-    await page.close()
-    await browser.close()
-
-    return new NextResponse(screenshot, {
+    return new NextResponse(imageBuffer, {
       headers: {
         'Content-Type': 'image/png',
-        'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400',
       },
     })
   } catch (error) {
-    console.error('OG image screenshot failed:', error)
+    console.error('Failed to load OG image:', error)
 
-    // Fallback: Return a simple gradient image if screenshot fails
+    // Fallback: minimal 1x1 if image not found
     return new NextResponse(
       Buffer.from(
         'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
@@ -55,7 +29,7 @@ export async function GET() {
       {
         headers: {
           'Content-Type': 'image/png',
-          'Cache-Control': 'public, max-age=3600',
+          'Cache-Control': 'public, max-age=60',
         },
       }
     )
