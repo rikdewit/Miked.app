@@ -11,6 +11,8 @@ import {
   Music,
   ArrowRight,
   CheckCircle2,
+  Box,
+  Layers,
 } from 'lucide-react';
 import { MemberPreview3D } from './MemberPreview3D';
 import { StagePlotCanvas } from './StagePlotCanvas';
@@ -301,26 +303,28 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             </div>
             <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden shadow-2xl">
               {/* Header with view toggle */}
-              <div className="flex items-center justify-end gap-2 p-4 border-b border-slate-800 bg-slate-900/50">
+              <div className="flex items-center justify-start gap-2 p-4 border-b border-slate-800 bg-slate-900/50">
                 <button
                   onClick={() => setViewMode('isometric')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'isometric'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  3D View
+                  <Box size={16} />
+                  <span className="hidden sm:inline">3D View</span>
                 </button>
                 <button
                   onClick={() => setViewMode('top')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'top'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                      ? 'bg-indigo-600 text-white shadow'
+                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  Top View
+                  <Layers size={16} />
+                  <span className="hidden sm:inline">Top View</span>
                 </button>
               </div>
               {/* Canvas */}
