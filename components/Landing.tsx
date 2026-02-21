@@ -1,45 +1,296 @@
 'use client'
 
 import React from 'react';
-import { Mic, Info, ArrowRight } from 'lucide-react';
+import { motion } from 'motion/react';
+import {
+  Mic2,
+  Layout,
+  FileDown,
+  Zap,
+  Users,
+  Music,
+  ArrowRight,
+  CheckCircle2,
+} from 'lucide-react';
 
 interface LandingProps {
   onStart: () => void;
 }
 
+// --- Component: Button ---
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'default' | 'outline';
+  size?: 'default' | 'sm' | 'lg';
+  asLink?: boolean;
+  href?: string;
+}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className = '', variant = 'default', size = 'default', ...props }, ref) => {
+    const base =
+      'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
+    const variants = {
+      default: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20',
+      outline: 'border border-slate-700 bg-transparent hover:bg-slate-800 text-slate-200',
+    };
+    const sizes = {
+      default: 'h-10 px-4 py-2',
+      sm: 'h-9 rounded-md px-3',
+      lg: 'h-12 rounded-md px-8 text-base',
+    };
+    return (
+      <button
+        ref={ref}
+        className={`${base} ${variants[variant]} ${sizes[size]} ${className}`}
+        {...props}
+      />
+    );
+  }
+);
+Button.displayName = 'Button';
+
+// --- Main Component ---
 export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   return (
-    <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4">
-      <div className="bg-indigo-600 p-6 rounded-full mb-6 animate-bounce">
-        <Mic size={64} className="text-white" />
-      </div>
-      <h1 className="text-4xl md:text-6xl font-bold text-white mb-4">
-        Miked<span className="text-indigo-500">.live</span>
-      </h1>
-      <p className="text-xl text-slate-300 max-w-2xl mb-8">
-        Create a professional technical rider and stage plot for your band in 5 minutes. 
-        No account needed, instant results.
-      </p>
-      <button 
-        onClick={onStart}
-        className="bg-white text-indigo-900 px-8 py-4 rounded-full font-bold text-lg hover:bg-indigo-50 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
-      >
-        Start Now <ArrowRight />
-      </button>
-      <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 text-slate-400 text-sm">
-        <div className="flex flex-col items-center">
-          <Info className="mb-2" />
-          <span>Automatic Input List</span>
+    <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
+      {/* Hero Section */}
+      <section className="relative pt-16 pb-20 md:pt-24 md:pb-32 overflow-hidden">
+        {/* Background Gradients */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full max-w-7xl pointer-events-none">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-indigo-500/20 rounded-full blur-[100px]" />
+          <div className="absolute top-40 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]" />
         </div>
-        <div className="flex flex-col items-center">
-          <Info className="mb-2" />
-          <span>Drag & Drop Stage Plot</span>
+
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-indigo-400 text-xs font-medium mb-6">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
+                </span>
+                No Login Required
+              </div>
+              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400">
+                Professional Tech Riders <br className="hidden md:block" />
+                <span className="text-indigo-500">&amp; 3D Stage Plots.</span>
+              </h1>
+              <p className="text-lg md:text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+                Create a professional technical rider and stage plot for your band in 5 minutes. No account needed, instant results.
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto text-base h-12 px-8 bg-indigo-600 hover:bg-indigo-700 shadow-lg shadow-indigo-500/25"
+                  onClick={onStart}
+                >
+                  Create Your Rider <ArrowRight className="ml-2 w-4 h-4" />
+                </Button>
+                <a href="#features">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto text-base h-12 px-8 border-slate-700 hover:bg-slate-800 text-slate-300"
+                  >
+                    View Example PDF
+                  </Button>
+                </a>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Hero Mockup */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="mt-20 relative max-w-5xl mx-auto"
+          >
+            <div className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm p-2 shadow-2xl">
+              <div className="rounded-lg overflow-hidden bg-slate-950 aspect-[16/9] relative grid place-items-center group">
+                {/* Grid background */}
+                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+
+                {/* Stage area */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 border-2 border-dashed border-slate-800 rounded-lg flex items-center justify-center">
+                  <span className="text-slate-700 font-mono text-sm uppercase tracking-widest">Stage Area</span>
+                </div>
+
+                {/* Mock draggable items */}
+                <div className="absolute top-1/3 left-1/3 p-4 bg-indigo-600/20 border border-indigo-500/50 rounded-full backdrop-blur-md shadow-xl">
+                  <Mic2 className="w-6 h-6 text-indigo-400" />
+                </div>
+                <div className="absolute bottom-1/3 right-1/3 p-4 bg-emerald-600/20 border border-emerald-500/50 rounded-lg backdrop-blur-md shadow-xl">
+                  <Music className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div className="absolute top-1/4 right-1/4 p-3 bg-slate-800 border border-slate-700 rounded-md shadow-lg">
+                  <div className="w-8 h-8 rounded-full border-2 border-slate-600" />
+                </div>
+
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-full text-xs text-slate-400 flex items-center gap-2 shadow-xl">
+                  <Layout className="w-3 h-3" /> Drag and drop instruments to position
+                </div>
+              </div>
+            </div>
+          </motion.div>
         </div>
-        <div className="flex flex-col items-center">
-          <Info className="mb-2" />
-          <span>Direct PDF Export</span>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="py-24 bg-slate-900/30 border-y border-slate-800/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need to get booked</h2>
+            <p className="text-slate-400 text-lg">
+              Stop using napkins and MS Paint. Give venues the professional documentation they expect.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={<Zap className="w-6 h-6 text-amber-400" />}
+              title="Smart Input Lists"
+              description="Automatically assigns standard mics (SM57, Beta52) and DI boxes based on your instrument selection."
+            />
+            <FeatureCard
+              icon={<Layout className="w-6 h-6 text-indigo-400" />}
+              title="3D Stage Designer"
+              description="Visualize your setup in 3D or Top-Down view. Place monitors, power drops, and band members easily."
+            />
+            <FeatureCard
+              icon={<FileDown className="w-6 h-6 text-emerald-400" />}
+              title="Instant PDF Export"
+              description="Download a complete technical packet with input list, stage plot, and rider notes in one click."
+            />
+            <FeatureCard
+              icon={<Users className="w-6 h-6 text-pink-400" />}
+              title="No Account Required"
+              description="We don't want your data. Just build your plot, download it, and go play your show."
+            />
+            <FeatureCard
+              icon={<CheckCircle2 className="w-6 h-6 text-blue-400" />}
+              title="Comprehensive Logistics"
+              description="Include essential details like stage dimensions, show duration, soundcheck times, and social handles."
+            />
+            <FeatureCard
+              icon={<Music className="w-6 h-6 text-purple-400" />}
+              title="Gear Configuration"
+              description="Specify Amps, DIs, or Direct lines for each member to ensure the venue is ready for your rig."
+            />
+          </div>
         </div>
-      </div>
+      </section>
+
+      {/* How It Works */}
+      <section id="how-it-works" className="py-24 relative overflow-hidden">
+        <div className="container mx-auto px-4">
+          <div className="mb-16 md:text-center max-w-3xl mx-auto">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">From idea to rider in 5 minutes</h2>
+            <p className="text-slate-400 text-lg">
+              A simple workflow designed to get you back to practicing.
+            </p>
+          </div>
+
+          <div className="relative grid md:grid-cols-4 gap-8">
+            {/* Connecting line (desktop) */}
+            <div className="hidden md:block absolute top-12 left-[12%] right-[12%] h-0.5 bg-gradient-to-r from-indigo-500/0 via-indigo-500/50 to-indigo-500/0 border-t border-dashed border-slate-700 z-0" />
+
+            <StepCard
+              number="01"
+              title="Band & Gear"
+              description="Add members and define their rig—Amps, DIs, or Direct. We handle the channel assignment."
+            />
+            <StepCard
+              number="02"
+              title="Stage Layout"
+              description="Switch to 3D view. Place risers, monitors, and power drops exactly where you need them."
+            />
+            <StepCard
+              number="03"
+              title="Event Details"
+              description="Add stage dimensions, contact info, and show timings to keep the venue crew informed."
+            />
+            <StepCard
+              number="04"
+              title="Download PDF"
+              description="Generate a complete technical packet with input list, stage plot, and rider notes."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-24">
+        <div className="container mx-auto px-4">
+          <div className="relative rounded-3xl overflow-hidden bg-indigo-600 px-6 py-16 md:px-16 md:py-20 text-center">
+            <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
+            <div className="relative z-10 max-w-2xl mx-auto">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">Ready to sound check?</h2>
+              <p className="text-indigo-100 text-lg mb-10">
+                Join thousands of musicians who use Miked.live to communicate professionally with venues.
+              </p>
+              <button
+                onClick={onStart}
+                className="inline-flex items-center justify-center bg-white text-indigo-600 hover:bg-indigo-50 h-14 px-8 text-lg font-semibold rounded-md shadow-xl transition-colors"
+              >
+                Start Building Now
+              </button>
+              <p className="mt-6 text-sm text-indigo-200 opacity-80">
+                No credit card required • No login • Free to use
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 border-t border-slate-800 bg-slate-950 text-slate-400 text-sm">
+        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex items-center gap-2">
+            <div className="bg-slate-800 p-1 rounded">
+              <Mic2 className="w-4 h-4 text-slate-200" />
+            </div>
+            <span className="font-semibold text-slate-200">
+              Miked<span className="text-indigo-500">.live</span>
+            </span>
+          </div>
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-white transition-colors">Privacy</a>
+            <a href="#" className="hover:text-white transition-colors">Terms</a>
+            <a href="#" className="hover:text-white transition-colors">Contact</a>
+          </div>
+          <div>&copy; {new Date().getFullYear()} Miked.live. All rights reserved.</div>
+        </div>
+      </footer>
     </div>
   );
 };
+
+// --- Helper Components ---
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
+  return (
+    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 transition-colors group">
+      <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-indigo-500/10 transition-colors">
+        {icon}
+      </div>
+      <h3 className="text-xl font-semibold mb-2 text-slate-100">{title}</h3>
+      <p className="text-slate-400 leading-relaxed">{description}</p>
+    </div>
+  );
+}
+
+function StepCard({ number, title, description }: { number: string; title: string; description: string }) {
+  return (
+    <div className="relative z-10 flex flex-col items-center text-center">
+      <div className="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-700 flex items-center justify-center text-2xl font-bold text-indigo-500 mb-6 shadow-xl shadow-black/50">
+        {number}
+      </div>
+      <h3 className="text-xl font-semibold mb-3 text-white">{title}</h3>
+      <p className="text-slate-400 max-w-xs mx-auto">{description}</p>
+    </div>
+  );
+}

@@ -14,7 +14,7 @@ export default function Page() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto flex flex-col items-center p-4 md:p-8">
+    <div className="flex-1 overflow-y-auto">
       <Landing onStart={handleStart} />
     </div>
   )
