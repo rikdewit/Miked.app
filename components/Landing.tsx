@@ -11,11 +11,40 @@ import {
   Music,
   ArrowRight,
   CheckCircle2,
+  Drum,
+  GitBranch,
+  Mic,
+  Keyboard,
 } from 'lucide-react';
+import { MemberPreview3D } from './MemberPreview3D';
 
 interface LandingProps {
   onStart: () => void;
 }
+
+// Default rock band members for preview
+const ROCK_BAND_MEMBERS = [
+  {
+    id: '1',
+    name: 'Drummer',
+    instruments: [{ instrumentId: 'drums', inputs: [] }],
+  },
+  {
+    id: '2',
+    name: 'Bassist',
+    instruments: [{ instrumentId: 'bass_amp', inputs: [] }],
+  },
+  {
+    id: '3',
+    name: 'Guitarist',
+    instruments: [{ instrumentId: 'gtr_amp', inputs: [] }],
+  },
+  {
+    id: '4',
+    name: 'Lead Singer',
+    instruments: [{ instrumentId: 'voc_lead', inputs: [] }],
+  },
+];
 
 // --- Component: Button ---
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -103,39 +132,35 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             </motion.div>
           </div>
 
-          {/* Hero Mockup */}
+          {/* Band Member Previews */}
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="mt-20 relative max-w-5xl mx-auto"
+            className="mt-20 relative max-w-6xl mx-auto"
           >
-            <div className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm p-2 shadow-2xl">
-              <div className="rounded-lg overflow-hidden bg-slate-950 aspect-[16/9] relative grid place-items-center group">
-                {/* Grid background */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-
-                {/* Stage area */}
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 border-2 border-dashed border-slate-800 rounded-lg flex items-center justify-center">
-                  <span className="text-slate-700 font-mono text-sm uppercase tracking-widest">Stage Area</span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {ROCK_BAND_MEMBERS.map((member) => (
+                <div
+                  key={member.id}
+                  className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-lg hover:border-indigo-500/30 transition-colors group"
+                >
+                  {/* Canvas container */}
+                  <div className="aspect-square bg-slate-950 relative">
+                    <MemberPreview3D member={member} isSidebarPreview={true} isDragging={false} />
+                  </div>
+                  {/* Label */}
+                  <div className="p-3 bg-slate-950/50 border-t border-slate-800">
+                    <p className="text-sm font-medium text-slate-200 text-center group-hover:text-indigo-400 transition-colors">
+                      {member.name}
+                    </p>
+                  </div>
                 </div>
-
-                {/* Mock draggable items */}
-                <div className="absolute top-1/3 left-1/3 p-4 bg-indigo-600/20 border border-indigo-500/50 rounded-full backdrop-blur-md shadow-xl">
-                  <Mic2 className="w-6 h-6 text-indigo-400" />
-                </div>
-                <div className="absolute bottom-1/3 right-1/3 p-4 bg-emerald-600/20 border border-emerald-500/50 rounded-lg backdrop-blur-md shadow-xl">
-                  <Music className="w-6 h-6 text-emerald-400" />
-                </div>
-                <div className="absolute top-1/4 right-1/4 p-3 bg-slate-800 border border-slate-700 rounded-md shadow-lg">
-                  <div className="w-8 h-8 rounded-full border-2 border-slate-600" />
-                </div>
-
-                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-slate-900 border border-slate-800 rounded-full text-xs text-slate-400 flex items-center gap-2 shadow-xl">
-                  <Layout className="w-3 h-3" /> Drag and drop instruments to position
-                </div>
-              </div>
+              ))}
             </div>
+            <p className="text-center mt-6 text-sm text-slate-400 flex items-center justify-center gap-2">
+              <Layout className="w-4 h-4" /> Customize each band member's setup and export professional PDFs
+            </p>
           </motion.div>
         </div>
       </section>
