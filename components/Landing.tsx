@@ -239,6 +239,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
                   setItems={setStageItems}
                   editable={true}
                   viewMode={viewMode}
+                  isLandingPage={true}
                   members={ROCK_BAND_MEMBERS}
                   gridCellColor="#334155"
                   gridSectionColor="#334155"

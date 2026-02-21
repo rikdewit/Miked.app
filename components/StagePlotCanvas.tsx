@@ -286,6 +286,7 @@ interface StagePlotCanvasProps {
   editable: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
+  isLandingPage?: boolean;
   ghostItems?: StageItem[];
   dragCoords?: { x: number; y: number; width: number; height: number } | null;
   onDragPosChange?: (x: number, y: number) => void;
@@ -399,6 +400,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   editable,
   viewMode = 'isometric',
   isPreview = false,
+  isLandingPage = false,
   ghostItems = [],
   dragCoords,
   onDragPosChange,
@@ -818,6 +820,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
                 isEditable={editable}
                 viewMode={viewMode}
                 isPreview={isPreview}
+                isLandingPage={isLandingPage}
                 showLabels={showItemLabels}
               />
             ))}
@@ -833,6 +836,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
                 isGhost={true}
                 member={members?.find(m => m.id === item.memberId)}
                 isPreview={isPreview}
+                isLandingPage={isLandingPage}
                 showLabels={showItemLabels}
               />
             ))}

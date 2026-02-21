@@ -34,6 +34,7 @@ interface DraggableItemProps {
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
+  isLandingPage?: boolean;
   showLabels?: boolean;
 }
 
@@ -60,6 +61,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   isEditable = false,
   viewMode = 'isometric',
   isPreview = false,
+  isLandingPage = false,
   showLabels = true
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
@@ -314,7 +316,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   return (
     <group position={[x, 0, z]}>
-      {showLabel && !isDragging && (isPreview ? (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') : true) && (
+      {!isDragging && (isLandingPage ? (viewMode === 'isometric' ? item.id === 'person-txa0opdqa-1771633629055' : showLabel) : (isPreview ? (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') : showLabel)) && (
         <Html
             position={[0 + offX, item.type === 'custom' && item.labelHeight ? item.labelHeight : height + labelYPadding + offY, 0 + offZ]}
             center
