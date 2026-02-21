@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import type { Browser } from 'playwright'
 
 export const runtime = 'nodejs'
 export const revalidate = 3600 // Cache for 1 hour
@@ -6,12 +7,11 @@ export const revalidate = 3600 // Cache for 1 hour
 export async function GET() {
   try {
     const playwright = await import('playwright')
-    const browser = await playwright.chromium.launch({
+    const browser: Browser = await playwright.chromium.launch({
       headless: true,
     })
 
-    const context = await browser.createBrowserContext()
-    const page = await context.newPage()
+    const page = await browser.newPage()
 
     // Set viewport to OG image dimensions
     await page.setViewportSize({ width: 1200, height: 630 })
@@ -34,7 +34,7 @@ export async function GET() {
     // Take screenshot
     const screenshot = await page.screenshot({ type: 'png' })
 
-    await context.close()
+    await page.close()
     await browser.close()
 
     return new NextResponse(screenshot, {
