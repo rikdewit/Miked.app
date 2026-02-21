@@ -205,7 +205,7 @@ const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDiv
 };
 
 // Responsive lookat adjustments for small screens (adjust these values to fine-tune positioning)
-const RESPONSIVE_LOOKAT_ADJUSTMENT_ISOMETRIC = 4; // Shift for 3D isometric view
+const RESPONSIVE_LOOKAT_ADJUSTMENT_ISOMETRIC = 5; // Shift for 3D isometric view
 const RESPONSIVE_LOOKAT_ADJUSTMENT_TOP = -6;       // Shift for top view
 
 // Component to handle responsive camera zoom and orientation
@@ -695,7 +695,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     return (
       <div
         className="w-full h-full bg-transparent overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
-        style={{ touchAction: 'pan-y' }}
+        style={{ touchAction: resizingItemId ? 'none' : 'pan-y' }}
       >
         <img
           src={screenshotUrl}
@@ -715,7 +715,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        touchAction: 'pan-y',
+        touchAction: activeId ? 'none' : 'pan-y',
         cursor: resizingItemId ? 'crosshair' : undefined,
         position: 'absolute',
         top: 0,
