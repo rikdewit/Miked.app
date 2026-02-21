@@ -207,10 +207,21 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   const [stageItems, setStageItems] = useState<StageItem[]>(LANDING_STAGE_PLOT);
   const [viewMode, setViewMode] = useState<'isometric' | 'top'>('isometric');
   const [showViewToggle, setShowViewToggle] = React.useState(false);
+  const [topViewPadding, setTopViewPadding] = React.useState(0.6);
 
   React.useEffect(() => {
     const timer = setTimeout(() => setShowViewToggle(true), 1000);
     return () => clearTimeout(timer);
+  }, []);
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setTopViewPadding(window.innerWidth < 768 ? 0.1 : 0.6);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return (
@@ -246,7 +257,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
                   platformColor="#64748b"
                   showAudienceLabel={false}
                   showItemLabels={viewMode === 'top'}
-                  topViewPadding={0.6}
+                  topViewPadding={topViewPadding}
                   responsiveLookAt={true}
                 />
               </div>

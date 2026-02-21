@@ -204,6 +204,10 @@ const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDiv
   return null;
 };
 
+// Responsive lookat adjustments for small screens (adjust these values to fine-tune positioning)
+const RESPONSIVE_LOOKAT_ADJUSTMENT_ISOMETRIC = 4; // Shift for 3D isometric view
+const RESPONSIVE_LOOKAT_ADJUSTMENT_TOP = -6;       // Shift for top view
+
 // Component to handle responsive camera zoom and orientation
 const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding, responsiveLookAt }: { isTopView: boolean; isPreview: boolean; topViewPadding?: number; responsiveLookAt?: boolean }) => {
   const { camera, size } = useThree();
@@ -225,17 +229,19 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding, respon
 
     // Apply responsive lookAt adjustment on smaller screens (landing page only)
     let lookAtPoint = cfg.lookAt;
-    if (responsiveLookAt && !isTopView) {
-      // For isometric view, adjust Y below md breakpoint (768px) to compensate for layout shift
+    if (responsiveLookAt) {
       const width = size.width;
-      let adjustedY = cfg.lookAt[1];
 
       if (width < 768) {
         // Below md breakpoint: shift stage plot downward to match layout padding removal
-        adjustedY = cfg.lookAt[1] + 4;
+        if (isTopView) {
+          // For top view, adjust Z (front-to-back) to shift stage position
+          lookAtPoint = [cfg.lookAt[0], cfg.lookAt[1], cfg.lookAt[2] + RESPONSIVE_LOOKAT_ADJUSTMENT_TOP];
+        } else {
+          // For isometric view, adjust Y (height) to shift stage position
+          lookAtPoint = [cfg.lookAt[0], cfg.lookAt[1] + RESPONSIVE_LOOKAT_ADJUSTMENT_ISOMETRIC, cfg.lookAt[2]];
+        }
       }
-
-      lookAtPoint = [cfg.lookAt[0], adjustedY, cfg.lookAt[2]];
     }
 
     camera.lookAt(...(lookAtPoint as [number, number, number]));

@@ -120,8 +120,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const showLabel = showLabels;
   const labelLower = (item.label || '').toLowerCase();
 
-  // Calculate scaled font size for preview vs interactive
-  const baseFontSize = 10;
+  // Calculate scaled font size for preview vs interactive (smaller on mobile)
+  const baseFontSize = typeof window !== 'undefined' && window.innerWidth < 768 ? 7 : 10;
   const fontScale = isPreview ? MODEL_LABEL_FONT_SCALE_PREVIEW : MODEL_LABEL_FONT_SCALE_INTERACTIVE;
   const scaledFontSize = baseFontSize * fontScale;
 
