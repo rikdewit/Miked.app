@@ -30,9 +30,9 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/OG-image.png',
-        width: 2140,
-        height: 1436,
+        url: '/og-image',
+        width: 1200,
+        height: 630,
         alt: 'Miked.live - Professional Stage Plot Designer',
       },
     ],
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Your Tech Rider. Done in 5 Minutes.',
     description: 'Create professional 3D stage plots and technical riders instantly.',
-    images: ['/OG-image.png'],
+    images: ['/og-image'],
   },
 }
 
