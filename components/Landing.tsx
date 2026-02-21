@@ -206,6 +206,12 @@ Button.displayName = 'Button';
 export const Landing: React.FC<LandingProps> = ({ onStart }) => {
   const [stageItems, setStageItems] = useState<StageItem[]>(LANDING_STAGE_PLOT);
   const [viewMode, setViewMode] = useState<'isometric' | 'top'>('isometric');
+  const [showViewToggle, setShowViewToggle] = React.useState(false);
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setShowViewToggle(true), 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
@@ -285,31 +291,36 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           </motion.div>
         </div>
 
-        {/* View Toggle Buttons - Bottom of viewport */}
-        <div className="relative z-20 flex items-center justify-center gap-2 pb-6 pointer-events-auto">
+        {/* View Toggle Buttons - Absolute overlay */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: showViewToggle ? 1 : 0 }}
+          transition={{ duration: 0.4 }}
+          className="absolute top-6 right-6 z-40 flex items-center justify-center gap-2 pointer-events-auto"
+        >
           <button
             onClick={() => setViewMode('isometric')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center w-10 h-10 rounded-md font-medium transition-colors ${
               viewMode === 'isometric'
                 ? 'bg-indigo-600 text-white shadow-lg'
-                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
+                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm hover:bg-slate-800'
             }`}
+            title="3D View"
           >
             <Box size={16} />
-            <span className="hidden sm:inline">3D View</span>
           </button>
           <button
             onClick={() => setViewMode('top')}
-            className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center w-10 h-10 rounded-md font-medium transition-colors ${
               viewMode === 'top'
                 ? 'bg-indigo-600 text-white shadow-lg'
-                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
+                : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm hover:bg-slate-800'
             }`}
+            title="Top View"
           >
             <Layers size={16} />
-            <span className="hidden sm:inline">Top View</span>
           </button>
-        </div>
+        </motion.div>
       </section>
 
       {/* Band Member Previews */}
@@ -321,6 +332,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             transition={{ duration: 0.7, delay: 0.4 }}
             className="relative max-w-6xl mx-auto"
           >
+            <div className="mb-8">
+              <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">Create your band members</h2>
+              <p className="text-slate-400">Add instruments, customize gear, and configure inputs</p>
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {ROCK_BAND_MEMBERS.map((member) => (
                 <div
@@ -340,9 +355,6 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
                 </div>
               ))}
             </div>
-            <p className="text-center mt-6 text-sm text-slate-400 flex items-center justify-center gap-2">
-              <Layout className="w-4 h-4" /> Customize each band member's setup and export professional PDFs
-            </p>
           </motion.div>
         </div>
       </section>
@@ -418,13 +430,13 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
             />
             <StepCard
               number="03"
-              title="Event Details"
-              description="Add stage dimensions, contact info, and show timings to keep the venue crew informed."
+              title="Rider Details"
+              description="Add contact info, setlist duration, and other essential rider details."
             />
             <StepCard
               number="04"
-              title="Download PDF"
-              description="Generate a complete technical packet with input list, stage plot, and rider notes."
+              title="Download & Share"
+              description="Download and share your complete technical packet with venues and promoters."
             />
           </div>
         </div>

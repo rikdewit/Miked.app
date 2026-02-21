@@ -314,10 +314,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   return (
     <group position={[x, 0, z]}>
-      {showLabel && !isDragging && (
-        (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') ||
-        (viewMode === 'top')
-      ) && (
+      {showLabel && !isDragging && (isPreview ? (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') : true) && (
         <Html
             position={[0 + offX, item.type === 'custom' && item.labelHeight ? item.labelHeight : height + labelYPadding + offY, 0 + offZ]}
             center
