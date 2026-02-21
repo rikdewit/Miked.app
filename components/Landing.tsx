@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import {
   Mic2,
@@ -14,7 +14,6 @@ import {
 } from 'lucide-react';
 import { MemberPreview3D } from './MemberPreview3D';
 import { StagePlotCanvas } from './StagePlotCanvas';
-import { generateMemberItems } from '@/utils/stageHelpers';
 import type { StageItem } from '@/types';
 
 interface LandingProps {
@@ -24,24 +23,148 @@ interface LandingProps {
 // Default rock band members for preview
 const ROCK_BAND_MEMBERS = [
   {
-    id: '1',
+    id: 'i0kaczwfs',
     name: 'Drummer',
     instruments: [{ instrumentId: 'drums', inputs: [] }],
   },
   {
-    id: '2',
+    id: 'dvbxo4prq',
     name: 'Bassist',
     instruments: [{ instrumentId: 'bass_amp', inputs: [] }],
   },
   {
-    id: '3',
+    id: '7bjtpzq6u',
     name: 'Guitarist',
     instruments: [{ instrumentId: 'gtr_amp', inputs: [] }],
   },
   {
-    id: '4',
+    id: 'txa0opdqa',
     name: 'Lead Singer',
     instruments: [{ instrumentId: 'voc_lead', inputs: [] }],
+  },
+];
+
+// Pre-configured rock band stage plot setup
+const LANDING_STAGE_PLOT: StageItem[] = [
+  {
+    x: 51.88274108786931,
+    y: 10.551932367149792,
+    id: 'person-i0kaczwfs-1771633623189',
+    type: 'person',
+    label: 'Drummer',
+    memberId: 'i0kaczwfs',
+    isPeripheral: false,
+  },
+  {
+    x: 16.89860079610786,
+    y: 50.12151529961497,
+    id: 'person-dvbxo4prq-1771633625433',
+    type: 'person',
+    label: 'Bassist',
+    memberId: 'dvbxo4prq',
+    isPeripheral: false,
+  },
+  {
+    x: 13.437873406711919,
+    y: 23.264631241643947,
+    id: 'amp-dvbxo4prq-1771633625433-0-0',
+    type: 'member',
+    label: 'Amp',
+    memberId: 'dvbxo4prq',
+    isPeripheral: true,
+    fromInstrumentIndex: 0,
+  },
+  {
+    x: 11.207708476707701,
+    y: 67.3378623188406,
+    id: 'pedal-dvbxo4prq-1771633625433-0',
+    type: 'member',
+    label: 'Pedals',
+    memberId: 'dvbxo4prq',
+    isPeripheral: true,
+    fromInstrumentIndex: 0,
+  },
+  {
+    x: 80.82334073758153,
+    y: 55.98383857450416,
+    id: 'person-7bjtpzq6u-1771633627184',
+    type: 'person',
+    label: 'Guitarist',
+    memberId: '7bjtpzq6u',
+    isPeripheral: false,
+  },
+  {
+    x: 88.25792489372168,
+    y: 16.09921914823226,
+    id: 'amp-7bjtpzq6u-1771633627184-0-0',
+    type: 'member',
+    label: 'Amp',
+    memberId: '7bjtpzq6u',
+    isPeripheral: true,
+    fromInstrumentIndex: 0,
+  },
+  {
+    x: 95.42902456688573,
+    y: 51.17844202898555,
+    id: 'pedal-7bjtpzq6u-1771633627184-0',
+    type: 'member',
+    label: 'Pedals',
+    memberId: '7bjtpzq6u',
+    isPeripheral: true,
+    fromInstrumentIndex: 0,
+  },
+  {
+    x: 52.2303298538215,
+    y: 74.48438443116603,
+    id: 'person-txa0opdqa-1771633629055',
+    type: 'person',
+    label: 'Lead Singer',
+    memberId: 'txa0opdqa',
+    isPeripheral: false,
+  },
+  {
+    x: 42.23286807590819,
+    y: 94.50649154589378,
+    id: 'mon-1771633655806',
+    type: 'monitor',
+    label: 'Mon',
+    rotation: 5.497787143782137,
+    monitorNumber: 2,
+  },
+  {
+    x: 62.20901930933085,
+    y: 93.90473012031674,
+    id: 'mon-1771633672914',
+    type: 'monitor',
+    label: 'Mon',
+    rotation: 0.7853981633974492,
+    monitorNumber: 2,
+  },
+  {
+    x: 82.90382818881668,
+    y: 88.08940428884725,
+    id: 'mon-1771633693520',
+    type: 'monitor',
+    label: 'Mon',
+    monitorNumber: 3,
+  },
+  {
+    x: 64.96342206342266,
+    y: 14.568559860433911,
+    id: 'mon-1771633698897',
+    type: 'monitor',
+    label: 'Mon',
+    rotation: 1.5707963267948983,
+    monitorNumber: 4,
+  },
+  {
+    x: 23.443045327536403,
+    y: 88.17926649374002,
+    id: 'mon-1771633713237',
+    type: 'monitor',
+    label: 'Mon',
+    rotation: 0.3926990816987246,
+    monitorNumber: 1,
   },
 ];
 
@@ -79,26 +202,8 @@ Button.displayName = 'Button';
 
 // --- Main Component ---
 export const Landing: React.FC<LandingProps> = ({ onStart }) => {
-  const [stageItems, setStageItems] = useState<StageItem[]>([]);
-
-  // Generate stage plot with rock band members positioned
-  useMemo(() => {
-    const items: StageItem[] = [];
-    const positions = [
-      { x: 50, y: 75 },  // Drummer - back center
-      { x: 30, y: 50 },  // Bassist - center left
-      { x: 70, y: 50 },  // Guitarist - center right
-      { x: 50, y: 25 },  // Lead Singer - front center
-    ];
-
-    ROCK_BAND_MEMBERS.forEach((member, idx) => {
-      const pos = positions[idx];
-      const memberItems = generateMemberItems(member, pos.x, pos.y);
-      items.push(...memberItems);
-    });
-
-    setStageItems(items);
-  }, []);
+  const [stageItems, setStageItems] = useState<StageItem[]>(LANDING_STAGE_PLOT);
+  const [viewMode, setViewMode] = useState<'isometric' | 'top'>('isometric');
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-50 font-sans selection:bg-indigo-500/30">
@@ -194,13 +299,37 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               <h3 className="text-3xl md:text-4xl font-bold mb-3">See it in action</h3>
               <p className="text-slate-400">Build your complete stage setup interactively — drag band members and equipment to position them exactly as needed, then export to PDF</p>
             </div>
-            <div className="rounded-t-2xl border border-slate-800 border-b-0 bg-slate-900 overflow-hidden shadow-2xl">
-              <div className="w-full h-[600px] bg-slate-950 relative">
+            <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden shadow-2xl">
+              {/* Header with view toggle */}
+              <div className="flex items-center justify-end gap-2 p-4 border-b border-slate-800 bg-slate-900/50">
+                <button
+                  onClick={() => setViewMode('isometric')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode === 'isometric'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  3D View
+                </button>
+                <button
+                  onClick={() => setViewMode('top')}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    viewMode === 'top'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  Top View
+                </button>
+              </div>
+              {/* Canvas */}
+              <div className="w-full h-[600px] bg-purple-950 relative">
                 <StagePlotCanvas
                   items={stageItems}
                   setItems={setStageItems}
                   editable={true}
-                  viewMode="isometric"
+                  viewMode={viewMode}
                   members={ROCK_BAND_MEMBERS}
                   showAudienceLabel={true}
                 />
