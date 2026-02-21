@@ -11,6 +11,13 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.VERCEL_ENV === 'production'
+      ? 'https://miked.live'
+      : process.env.VERCEL_ENV
+        ? 'https://dev.miked.live'
+        : 'http://localhost:3000'
+  ),
   title: 'miked.live',
   description: 'Create a professional technical rider and stage plot in 5 minutes. No account needed.',
   icons: {
@@ -23,9 +30,9 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: 'https://miked.live/opengraph-image',
+        url: '/og-image',
         width: 1200,
-        height: 630,
+        height: 675,
         alt: 'Miked.live - Professional Stage Plot Designer',
       },
     ],
@@ -34,7 +41,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Your Tech Rider. Done in 5 Minutes.',
     description: 'Create professional 3D stage plots and technical riders instantly.',
-    images: ['https://miked.live/opengraph-image'],
+    images: ['/og-image'],
   },
 }
 
