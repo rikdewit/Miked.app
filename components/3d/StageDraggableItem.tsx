@@ -34,6 +34,7 @@ interface DraggableItemProps {
   isEditable?: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
+  isLandingPage?: boolean;
   showLabels?: boolean;
 }
 
@@ -60,6 +61,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   isEditable = false,
   viewMode = 'isometric',
   isPreview = false,
+  isLandingPage = false,
   showLabels = true
 }) => {
   const { width, height, depth, color, shape } = getItemConfig(item);
@@ -118,8 +120,8 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
   const showLabel = showLabels;
   const labelLower = (item.label || '').toLowerCase();
 
-  // Calculate scaled font size for preview vs interactive
-  const baseFontSize = 10;
+  // Calculate scaled font size for preview vs interactive (smaller on mobile)
+  const baseFontSize = typeof window !== 'undefined' && window.innerWidth < 768 ? 7 : 10;
   const fontScale = isPreview ? MODEL_LABEL_FONT_SCALE_PREVIEW : MODEL_LABEL_FONT_SCALE_INTERACTIVE;
   const scaledFontSize = baseFontSize * fontScale;
 
@@ -314,7 +316,7 @@ export const StageDraggableItem: React.FC<DraggableItemProps> = ({
 
   return (
     <group position={[x, 0, z]}>
-      {showLabel && !isDragging && (isPreview ? (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') : true) && (
+      {!isDragging && (isLandingPage ? (viewMode === 'isometric' ? item.id === 'person-txa0opdqa-1771633629055' : showLabel) : (isPreview ? (viewMode === 'isometric' && item.id === 'person-txa0opdqa-1771633629055') : showLabel)) && (
         <Html
             position={[0 + offX, item.type === 'custom' && item.labelHeight ? item.labelHeight : height + labelYPadding + offY, 0 + offZ]}
             center

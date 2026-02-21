@@ -204,8 +204,12 @@ const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDiv
   return null;
 };
 
+// Responsive lookat adjustments for small screens (adjust these values to fine-tune positioning)
+const RESPONSIVE_LOOKAT_ADJUSTMENT_ISOMETRIC = 5; // Shift for 3D isometric view
+const RESPONSIVE_LOOKAT_ADJUSTMENT_TOP = -6;       // Shift for top view
+
 // Component to handle responsive camera zoom and orientation
-const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { isTopView: boolean; isPreview: boolean; topViewPadding?: number }) => {
+const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding, responsiveLookAt }: { isTopView: boolean; isPreview: boolean; topViewPadding?: number; responsiveLookAt?: boolean }) => {
   const { camera, size } = useThree();
 
   useEffect(() => {
@@ -222,7 +226,25 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { is
     camera.up.set(...(isTopView ? [0, 0, -1] : [0, 1, 0]) as [number, number, number]);
 
     camera.position.set(...cfg.position);
-    camera.lookAt(...cfg.lookAt);
+
+    // Apply responsive lookAt adjustment on smaller screens (landing page only)
+    let lookAtPoint = cfg.lookAt;
+    if (responsiveLookAt) {
+      const width = size.width;
+
+      if (width < 768) {
+        // Below md breakpoint: shift stage plot downward to match layout padding removal
+        if (isTopView) {
+          // For top view, adjust Z (front-to-back) to shift stage position
+          lookAtPoint = [cfg.lookAt[0], cfg.lookAt[1], cfg.lookAt[2] + RESPONSIVE_LOOKAT_ADJUSTMENT_TOP];
+        } else {
+          // For isometric view, adjust Y (height) to shift stage position
+          lookAtPoint = [cfg.lookAt[0], cfg.lookAt[1] + RESPONSIVE_LOOKAT_ADJUSTMENT_ISOMETRIC, cfg.lookAt[2]];
+        }
+      }
+    }
+
+    camera.lookAt(...(lookAtPoint as [number, number, number]));
 
     camera.updateMatrix();
     camera.updateMatrixWorld();
@@ -259,7 +281,7 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { is
     const zoomY = 2 / ((maxY - minY) * (1 + padding));
     orthoCamera.zoom = Math.min(zoomX, zoomY);
     camera.updateProjectionMatrix();
-  }, [size, camera, isTopView, isPreview, topViewPadding]);
+  }, [size, camera, isTopView, isPreview, topViewPadding, responsiveLookAt]);
 
   return null;
 };
@@ -270,6 +292,7 @@ interface StagePlotCanvasProps {
   editable: boolean;
   viewMode?: 'isometric' | 'top';
   isPreview?: boolean;
+  isLandingPage?: boolean;
   ghostItems?: StageItem[];
   dragCoords?: { x: number; y: number; width: number; height: number } | null;
   onDragPosChange?: (x: number, y: number) => void;
@@ -283,6 +306,7 @@ interface StagePlotCanvasProps {
   showAudienceLabel?: boolean;
   showItemLabels?: boolean;
   topViewPadding?: number;
+  responsiveLookAt?: boolean;
 }
 
 const StagePlatform = ({ color = '#e2e8f0' }: { color?: string }) => {
@@ -382,6 +406,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   editable,
   viewMode = 'isometric',
   isPreview = false,
+  isLandingPage = false,
   ghostItems = [],
   dragCoords,
   onDragPosChange,
@@ -394,7 +419,8 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   platformColor = '#e2e8f0',
   showAudienceLabel = true,
   showItemLabels = true,
-  topViewPadding
+  topViewPadding,
+  responsiveLookAt = false
 }) => {
   const instanceIdRef = useRef<number>(++canvasInstanceCounter);
   const instanceId = instanceIdRef.current;
@@ -404,6 +430,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   const resizingItemIdRef = useRef<string | null>(null);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  const isDraggingRef = useRef(false);
 
   const handleScreenshot = (dataUrl: string) => {
     setScreenshotUrl(dataUrl);
@@ -469,6 +496,24 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   }, [resizingItemId]);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Prevent scrolling when actively dragging an item
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (isDraggingRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    container.addEventListener('touchmove', handleTouchMove, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, []);
+
   const handleDeleteItem = (id: string) => {
     setItems(items.filter(i => i.id !== id));
     setRotationUiItemId(null);
@@ -508,11 +553,13 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     // While in resize mode, don't start a drag — the DOM listener handles stopping resize
     if (resizingItemId) return;
     e.stopPropagation();
-    
+
+    isDraggingRef.current = true;
+
     const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
     const pointOnPlane = new THREE.Vector3();
     e.ray.intersectPlane(plane, pointOnPlane);
-    
+
     const item = items.find(i => i.id === id);
     if (item) {
         const currentX = percentToX(item.x);
@@ -527,6 +574,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
 
   const handlePointerUp = (e: ThreeEvent<PointerEvent>) => {
     if (!editable) return;
+    isDraggingRef.current = false;
     setActiveId(null);
     dragOffset.current = { x: 0, z: 0 };
   };
@@ -669,7 +717,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     return (
       <div
         className="w-full h-full bg-transparent overflow-hidden border-2 border-slate-300 print:border-black shadow-inner relative select-none"
-        style={{ touchAction: 'none' }}
+        style={{ touchAction: resizingItemId ? 'none' : 'pan-y' }}
       >
         <img
           src={screenshotUrl}
@@ -689,7 +737,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
         width: '100%',
         height: '100%',
         overflow: 'hidden',
-        touchAction: 'none',
+        touchAction: activeId ? 'none' : 'pan-y',
         cursor: resizingItemId ? 'crosshair' : undefined,
         position: 'absolute',
         top: 0,
@@ -714,7 +762,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
 
         <WebGLContextHandler instanceId={instanceId} />
         <SizeCorrector containerRef={containerRef} />
-        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} topViewPadding={topViewPadding} />
+        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} topViewPadding={topViewPadding} responsiveLookAt={responsiveLookAt} />
 
         <ambientLight intensity={.9} />
         <directionalLight
@@ -800,6 +848,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
                 isEditable={editable}
                 viewMode={viewMode}
                 isPreview={isPreview}
+                isLandingPage={isLandingPage}
                 showLabels={showItemLabels}
               />
             ))}
@@ -815,6 +864,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
                 isGhost={true}
                 member={members?.find(m => m.id === item.memberId)}
                 isPreview={isPreview}
+                isLandingPage={isLandingPage}
                 showLabels={showItemLabels}
               />
             ))}
