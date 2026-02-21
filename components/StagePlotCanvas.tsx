@@ -205,7 +205,7 @@ const SizeCorrector = ({ containerRef }: { containerRef: React.RefObject<HTMLDiv
 };
 
 // Component to handle responsive camera zoom and orientation
-const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { isTopView: boolean; isPreview: boolean; topViewPadding?: number }) => {
+const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding, responsiveLookAt }: { isTopView: boolean; isPreview: boolean; topViewPadding?: number; responsiveLookAt?: boolean }) => {
   const { camera, size } = useThree();
 
   useEffect(() => {
@@ -222,7 +222,23 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { is
     camera.up.set(...(isTopView ? [0, 0, -1] : [0, 1, 0]) as [number, number, number]);
 
     camera.position.set(...cfg.position);
-    camera.lookAt(...cfg.lookAt);
+
+    // Apply responsive lookAt adjustment on smaller screens (landing page only)
+    let lookAtPoint = cfg.lookAt;
+    if (responsiveLookAt && !isTopView) {
+      // For isometric view, adjust Y below md breakpoint (768px) to compensate for layout shift
+      const width = size.width;
+      let adjustedY = cfg.lookAt[1];
+
+      if (width < 768) {
+        // Below md breakpoint: shift stage plot downward to match layout padding removal
+        adjustedY = cfg.lookAt[1] + 4;
+      }
+
+      lookAtPoint = [cfg.lookAt[0], adjustedY, cfg.lookAt[2]];
+    }
+
+    camera.lookAt(...(lookAtPoint as [number, number, number]));
 
     camera.updateMatrix();
     camera.updateMatrixWorld();
@@ -259,7 +275,7 @@ const ResponsiveCameraAdjuster = ({ isTopView, isPreview, topViewPadding }: { is
     const zoomY = 2 / ((maxY - minY) * (1 + padding));
     orthoCamera.zoom = Math.min(zoomX, zoomY);
     camera.updateProjectionMatrix();
-  }, [size, camera, isTopView, isPreview, topViewPadding]);
+  }, [size, camera, isTopView, isPreview, topViewPadding, responsiveLookAt]);
 
   return null;
 };
@@ -283,6 +299,7 @@ interface StagePlotCanvasProps {
   showAudienceLabel?: boolean;
   showItemLabels?: boolean;
   topViewPadding?: number;
+  responsiveLookAt?: boolean;
 }
 
 const StagePlatform = ({ color = '#e2e8f0' }: { color?: string }) => {
@@ -394,7 +411,8 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
   platformColor = '#e2e8f0',
   showAudienceLabel = true,
   showItemLabels = true,
-  topViewPadding
+  topViewPadding,
+  responsiveLookAt = false
 }) => {
   const instanceIdRef = useRef<number>(++canvasInstanceCounter);
   const instanceId = instanceIdRef.current;
@@ -714,7 +732,7 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
 
         <WebGLContextHandler instanceId={instanceId} />
         <SizeCorrector containerRef={containerRef} />
-        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} topViewPadding={topViewPadding} />
+        <ResponsiveCameraAdjuster isTopView={isTopView} isPreview={isPreview} topViewPadding={topViewPadding} responsiveLookAt={responsiveLookAt} />
 
         <ambientLight intensity={.9} />
         <directionalLight
