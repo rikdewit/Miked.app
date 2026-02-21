@@ -301,15 +301,16 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               <h3 className="text-3xl md:text-4xl font-bold mb-3">See it in action</h3>
               <p className="text-slate-400">Build your complete stage setup interactively — drag band members and equipment to position them exactly as needed, then export to PDF</p>
             </div>
-            <div className="rounded-2xl border border-slate-800 bg-slate-900 overflow-hidden shadow-2xl">
-              {/* Header with view toggle */}
-              <div className="flex items-center justify-start gap-2 p-4 border-b border-slate-800 bg-slate-900/50">
+            {/* Stage Plot Container - seamless background */}
+            <div className="relative w-full h-[600px]">
+              {/* Floating View Toggle Buttons */}
+              <div className="absolute top-4 left-4 flex items-center gap-2 z-10">
                 <button
                   onClick={() => setViewMode('isometric')}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'isometric'
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-lg'
+                      : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
                   }`}
                 >
                   <Box size={16} />
@@ -319,25 +320,23 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
                   onClick={() => setViewMode('top')}
                   className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                     viewMode === 'top'
-                      ? 'bg-indigo-600 text-white shadow'
-                      : 'bg-slate-800 text-slate-400 hover:text-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-lg'
+                      : 'bg-slate-800/80 text-slate-400 hover:text-slate-200 backdrop-blur-sm'
                   }`}
                 >
                   <Layers size={16} />
                   <span className="hidden sm:inline">Top View</span>
                 </button>
               </div>
-              {/* Canvas */}
-              <div className="w-full h-[600px] bg-purple-950 relative">
-                <StagePlotCanvas
-                  items={stageItems}
-                  setItems={setStageItems}
-                  editable={true}
-                  viewMode={viewMode}
-                  members={ROCK_BAND_MEMBERS}
-                  showAudienceLabel={true}
-                />
-              </div>
+              {/* Canvas - seamless with page background */}
+              <StagePlotCanvas
+                items={stageItems}
+                setItems={setStageItems}
+                editable={true}
+                viewMode={viewMode}
+                members={ROCK_BAND_MEMBERS}
+                showAudienceLabel={true}
+              />
             </div>
           </motion.div>
         </div>

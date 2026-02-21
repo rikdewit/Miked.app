@@ -615,9 +615,9 @@ const StagePlotCanvasInner: React.FC<StagePlotCanvasProps> = ({
     const gl = state.gl;
     rendererRef.current = gl;
 
-    // Set clear color to dark purple for landing page / light gray for exports
-    // Dark purple (#581c87) for interactive preview, light gray for PDF exports
-    gl.setClearColor(new THREE.Color(0x581c87), 1);
+    // Set clear color to transparent for landing page
+    // Allows the page background to show through
+    gl.setClearColor(new THREE.Color(0x000000), 0);
 
     // R3F and drei's Html both call getBoundingClientRect() on the canvas to measure its size
     // and position HTML overlays. Inside a CSS transform this returns visual (scaled-down)
