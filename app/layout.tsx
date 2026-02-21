@@ -31,8 +31,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: '/OG-image.png',
-        width: 1200,
-        height: 630,
+        width: 2140,
+        height: 1436,
         alt: 'Miked.live - Professional Stage Plot Designer',
       },
     ],
