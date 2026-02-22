@@ -18,7 +18,7 @@ interface StepStagePlotProps {
 }
 
 export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, updateStageItems }) => {
-  const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('isometric');
+  const [stageViewMode, setStageViewMode] = useState<'isometric' | 'top'>('top');
   const [draggingMemberId, setDraggingMemberId] = useState<string | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [rotatingItemId, setRotatingItemId] = useState<string | null>(null);
@@ -438,16 +438,16 @@ export const StepStagePlot: React.FC<StepStagePlotProps> = ({ data, setData, upd
              <div className="flex flex-wrap gap-2 mb-4 w-full lg:w-auto">
                 {/* View mode buttons */}
                 <button
-                    onClick={() => setStageViewMode('isometric')}
-                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
-                >
-                    <Box size={16} /> <span className="hidden sm:inline">3D View</span>
-                </button>
-                <button
                     onClick={() => setStageViewMode('top')}
                     className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'top' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
                 >
                     <Layers size={16} /> <span className="hidden sm:inline">Top View</span>
+                </button>
+                <button
+                    onClick={() => setStageViewMode('isometric')}
+                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-2 sm:px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-all ${stageViewMode === 'isometric' ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 hover:text-slate-200'}`}
+                >
+                    <Box size={16} /> <span className="hidden sm:inline">3D View</span>
                 </button>
 
                 {/* Spacer to push remaining buttons right (except on mobile when buttons fill width) */}
