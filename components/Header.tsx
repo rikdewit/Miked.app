@@ -13,6 +13,7 @@ export const Header: React.FC = () => {
   const routes = ['/', '/band', '/stage', '/details', '/rider-preview']
   const stepIndex = routes.indexOf(pathname)
   const isLanding = stepIndex === 0
+  const isChangelog = pathname === '/changelog'
 
   const handleLogoClick = () => router.push('/')
 
@@ -35,10 +36,11 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right side */}
-        {isLanding ? (
+        {isLanding || isChangelog ? (
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
-            <a href="#features" className="hover:text-indigo-400 transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-indigo-400 transition-colors">How it Works</a>
+            <a href={isLanding ? "#features" : "/#features"} className="hover:text-indigo-400 transition-colors">Features</a>
+            <a href={isLanding ? "#how-it-works" : "/#how-it-works"} className="hover:text-indigo-400 transition-colors">How it Works</a>
+            <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
             <button
               onClick={handleStart}
               className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"

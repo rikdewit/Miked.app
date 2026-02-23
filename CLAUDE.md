@@ -35,6 +35,10 @@
 
 **Note:** The `main` branch has branch protection enabled. Pull requests require approval before merging to production.
 
+## Communication Style
+
+**Always speak in first person** when communicating about work. Use "I've created", "I'll update", "I found", etc. instead of "Claude has", "The code", or passive voice.
+
 ## Analytics
 
 PostHog analytics is configured to track only **production (miked.live)** data:

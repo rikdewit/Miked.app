@@ -57,7 +57,7 @@ export default function RootLayout({
           <PHProvider>
             <div className="h-dvh overflow-hidden flex flex-col">
               <Header />
-              <main className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <main className="flex-1 min-h-0 overflow-auto flex flex-col">
                 {children}
               </main>
             </div>
