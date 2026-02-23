@@ -189,19 +189,16 @@ export default function PrivacyPage() {
 
           {/* Contact */}
           <section className="space-y-4">
-            <h2 className="text-2xl font-bold text-white">Contact Us</h2>
+            <h2 className="text-2xl font-bold text-white">Contact Me</h2>
             <p className="text-slate-300 mb-3">
               If you have questions about this Privacy Policy or our data practices, please reach out:
             </p>
             <ul className="space-y-2 text-slate-300 ml-2">
               <li>
-                Email us at: <a href="mailto:contact@miked.live" className="text-indigo-400 hover:text-indigo-300">contact@miked.live</a>
+                Visit my <Link href="/contact" className="text-indigo-400 hover:text-indigo-300">contact page</Link>
               </li>
               <li>
-                Visit our <Link href="/contact" className="text-indigo-400 hover:text-indigo-300">contact page</Link>
-              </li>
-              <li>
-                Join our <a href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">WhatsApp community</a>
+                Join the <a href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:text-indigo-300">WhatsApp community</a>
               </li>
             </ul>
           </section>
