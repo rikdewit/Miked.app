@@ -32,10 +32,10 @@ export default function ChangelogPage() {
       </div>
       <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-8">
         {/* Page Title */}
-        <div className="mb-16 mt-4 flex gap-8">
-          <div className="w-24 flex-shrink-0"></div>
+        <div className="mb-16 mt-0 flex gap-8 md:gap-8 gap-0 md:flex-row flex-col">
+          <div className="hidden md:block w-24 flex-shrink-0"></div>
           <div className="flex-1">
-            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent leading-tight">Changelog</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-indigo-400">Changelog</h1>
             <p className="text-slate-300 mb-8 text-lg">Latest updates and improvements to Miked.live</p>
             <div className="pt-8 border-t border-white/10 bg-white/5 backdrop-blur-sm rounded-xl p-6">
             <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
@@ -69,8 +69,8 @@ export default function ChangelogPage() {
 
               return (
                 <div key={post.date} className="relative flex gap-8">
-                  {/* Sticky Date */}
-                  <div className="w-24 flex-shrink-0 sticky top-32 h-fit">
+                  {/* Sticky Date - Hidden on small screens */}
+                  <div className="hidden md:block w-24 flex-shrink-0 sticky top-32 h-fit">
                     <div className="text-center">
                       <div className="text-xs font-bold text-indigo-300 mb-2 opacity-75">#{posts.length - index}</div>
                       <time className="text-lg font-bold text-indigo-400">{date.getDate()}</time>
@@ -82,14 +82,25 @@ export default function ChangelogPage() {
                   </div>
 
                   {/* Post Content */}
-                  <article className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-lg">
-                    <h2 className="text-2xl font-bold mb-2">{post.title}</h2>
-                    <p className="text-slate-300 mb-4">{post.description}</p>
+                  <article className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 pt-12 hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-lg">
+                    {/* Date and number for small screens */}
+                    <div className="md:hidden flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
+                      <div className="text-center">
+                        <div className="text-xs font-bold text-indigo-300 opacity-75">#{posts.length - index}</div>
+                        <time className="text-sm font-bold text-indigo-400">{date.getDate()}</time>
+                        <p className="text-xs text-slate-400 uppercase tracking-wide">
+                          {date.toLocaleDateString('en-US', { month: 'short' })}
+                          {!isCurrentYear && <span className="block text-xs text-slate-500">{date.getFullYear()}</span>}
+                        </p>
+                      </div>
+                    </div>
+                    <h2 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h2>
+                    <p className="text-slate-300 mb-6">{post.description}</p>
                     {post.image && (
                       <img
                         src={post.image}
                         alt={post.title}
-                        className="w-full rounded-lg mb-6 border border-white/10"
+                        className="w-full rounded-lg mb-8 border border-white/10"
                       />
                     )}
                   <div className="max-w-none text-slate-300 space-y-4">
