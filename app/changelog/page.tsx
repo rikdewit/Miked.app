@@ -82,7 +82,7 @@ export default function ChangelogPage() {
                   </div>
 
                   {/* Post Content */}
-                  <article className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 pt-12 hover:bg-white/10 hover:border-white/20 transition-all duration-300 shadow-lg">
+                  <article className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 pt-12 hover:border-indigo-500/30 transition-colors shadow-lg">
                     {/* Date and number for small screens */}
                     <div className="md:hidden flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
                       <div className="text-center">

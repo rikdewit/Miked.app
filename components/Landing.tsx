@@ -239,8 +239,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           <div className="relative w-full h-full pt-48 sm:pt-40 md:pt-0" style={{ background: 'transparent' }}>
             {/* Background Gradients */}
             <div className="absolute inset-0 h-100 pointer-events-none overflow-hidden">
-              <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px]" />
-              <div className="absolute top-1/3 right-1/4 -translate-y-1/2 w-[32rem] h-[32rem] bg-purple-500/15 rounded-full blur-[100px]" />
+              <div className="absolute top-1/2 -left-40 md:left-1/4 -translate-y-1/2 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px]" />
+              <div className="absolute top-1/3 -right-32 md:right-1/4 -translate-y-1/2 w-[32rem] h-[32rem] bg-purple-500/15 rounded-full blur-[100px]" />
+              <div className="absolute bottom-1/4 -right-48 md:right-1/3 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px]" />
+              <div className="absolute -bottom-32 left-1/2 w-[40rem] h-[40rem] bg-purple-500/15 rounded-full blur-[120px]" />
             </div>
             {/* Canvas - Square Container */}
             <div className="flex items-center justify-center w-full aspect-square p-4 mt-12 sm:mt-20 md:mt-0 h-fit">
@@ -341,8 +343,15 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </section>
 
       {/* Band Member Previews */}
-      <section className="pt-0 sm:pt-8 md:pt-24 pb-16 md:pb-24 px-4">
-        <div className="container mx-auto">
+      <section className="pt-8 sm:pt-8 md:pt-24 pb-16 md:pb-24 px-4 relative overflow-hidden border-t border-slate-800/50">
+        {/* Background Orbs - gradient from bottom */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Left side orb - bottom */}
+          <div className="absolute -bottom-48 -left-64 md:-left-40 w-[32rem] h-[32rem] bg-purple-500/10 rounded-full blur-[120px]" />
+          {/* Right side orb - bottom */}
+          <div className="absolute -bottom-64 -right-64 md:-right-40 w-[40rem] h-[40rem] bg-indigo-500/15 rounded-full blur-[140px]" />
+        </div>
+        <div className="container mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -377,8 +386,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="py-24 bg-slate-900/30 border-y border-slate-800/50">
-        <div className="container mx-auto px-4">
+      <section id="features" className="py-24 bg-slate-900/30 border-y border-slate-800/50 relative overflow-hidden">
+        {/* Background Orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 -left-48 md:-left-32 w-80 h-80 bg-indigo-500/15 rounded-full blur-[100px]" />
+          <div className="absolute top-1/2 -right-40 md:right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-40 -left-48 md:left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px]" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need to get booked</h2>
             <p className="text-slate-400 text-lg">
@@ -423,7 +438,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
       {/* How It Works */}
       <section id="how-it-works" className="py-24 relative overflow-hidden">
-        <div className="container mx-auto px-4">
+        {/* Background Orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 -right-48 md:right-1/3 w-96 h-96 bg-purple-500/15 rounded-full blur-[100px]" />
+          <div className="absolute bottom-1/3 -left-48 md:-left-32 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px]" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="mb-16 md:text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">From idea to rider in 5 minutes</h2>
             <p className="text-slate-400 text-lg">
