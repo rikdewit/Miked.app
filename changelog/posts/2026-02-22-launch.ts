@@ -40,6 +40,14 @@ It's free because I believe venues and engineers deserve to have your tech specs
 
 This is about making live audio better. Better communication means better shows. And better shows are what it's all about.
 
+## The Real Vision
+
+Right now, Miked.live generates static PDFs and stage plots. But that's just the beginning. My goal is to build the **best rider creation tool out there**—something so good that people actually use it without thinking twice.
+
+But here's the bigger picture: I want to solve the communication problem once and for all. Instead of static documents that sit in someone's inbox, imagine a **living platform where venues, engineers, and band members are all on the same page**. Real-time updates. Everyone sees the latest changes. No more surprises on gig day because the engineer didn't read your PDF from three weeks ago.
+
+That's what I'm building towards. First, let's nail the rider tool. Then, let's make sure the right people actually see what you need—and stay updated when things change.
+
 Give it a try and let me know what you think!
   `.trim()
 }
