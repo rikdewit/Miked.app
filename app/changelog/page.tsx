@@ -37,7 +37,7 @@ export default function ChangelogPage() {
           <div className="flex-1">
             <h1 className="text-4xl md:text-5xl font-bold mb-6 text-indigo-400">Changelog</h1>
             <p className="text-slate-300 mb-8 text-lg">Latest updates and improvements to Miked.live</p>
-            <div className="pt-8 border-t border-white/10 bg-white/5 backdrop-blur-sm rounded-xl p-6">
+            <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
             <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
             <a
               href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG"
@@ -82,7 +82,7 @@ export default function ChangelogPage() {
                   </div>
 
                   {/* Post Content */}
-                  <article className="flex-1 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 pt-12 hover:border-indigo-500/30 transition-colors shadow-lg">
+                  <article className="flex-1 bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl p-8 pt-12 hover:border-indigo-500/30 transition-colors shadow-lg">
                     {/* Date and number for small screens */}
                     <div className="md:hidden flex items-center gap-4 mb-4 pb-4 border-b border-white/10">
                       <div className="text-center">
