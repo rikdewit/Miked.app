@@ -39,7 +39,9 @@ export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
                 alt="Miked.live"
                 style={logo}
               />
-              <Text style={logoText}>Miked.live</Text>
+              <Text style={logoText}>
+                Miked<span style={{ color: '#4f46e5' }}>.live</span>
+              </Text>
             </div>
           </Row>
           <Text style={title}>Welcome to the changelog!</Text>

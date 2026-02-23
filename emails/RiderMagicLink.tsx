@@ -43,7 +43,9 @@ export const RiderMagicLinkEmail: React.FC<RiderMagicLinkEmailProps> = ({
                 alt="Miked.live"
                 style={logo}
               />
-              <Text style={logoText}>Miked.live</Text>
+              <Text style={logoText}>
+                Miked<span style={{ color: '#4f46e5' }}>.live</span>
+              </Text>
             </div>
           </Row>
         </Section>
@@ -82,7 +84,7 @@ export const RiderMagicLinkEmail: React.FC<RiderMagicLinkEmailProps> = ({
         {/* Footer */}
         <Section style={footer}>
           <Text style={footerText}>
-            Questions? Check out our{' '}
+            Questions? Check out my{' '}
             <Link href={`${baseUrl}`} style={footerLink}>
               website
             </Link>
