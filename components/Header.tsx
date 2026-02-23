@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Mic2 } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
@@ -9,11 +9,21 @@ export const Header: React.FC = () => {
   const pathname = usePathname()
   const router = useRouter()
   const posthog = usePostHog()
+  const [isHidden, setIsHidden] = useState(false)
+
+  useEffect(() => {
+    const riderBuildingRoutes = ['/band', '/stage', '/details', '/rider-preview']
+    setIsHidden(riderBuildingRoutes.includes(pathname))
+  }, [pathname])
 
   const routes = ['/', '/band', '/stage', '/details', '/rider-preview']
   const stepIndex = routes.indexOf(pathname)
   const isLanding = stepIndex === 0
   const isChangelog = pathname === '/changelog'
+
+  if (isHidden) {
+    return null
+  }
 
   const handleLogoClick = () => router.push('/')
 

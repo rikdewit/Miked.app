@@ -1,7 +1,21 @@
 import { getChangelogPosts } from '@/lib/changelogLoader'
 import { parseMarkdown } from '@/lib/parseMarkdown'
 import Link from 'next/link'
-import { Mic2 } from 'lucide-react'
+import { Instagram } from 'lucide-react'
+import { PageHeader } from '@/components/PageHeader'
+import { Footer } from '@/components/Footer'
+
+const XIcon = ({ size = 24 }: { size?: number }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <path d="M21.742 21.75l-7.563-11.179 7.056-8.321h-2.456l-5.691 6.714-4.54-6.714H2.359l7.29 10.776L2.25 21.75h2.456l6.035-7.118 4.818 7.118h6.191-.008zM7.739 3.818L18.81 20.182h-2.447L5.29 3.818h2.447z" />
+  </svg>
+)
 
 export const metadata = {
   title: 'Changelog - Miked.live',
@@ -30,31 +44,63 @@ export default function ChangelogPage() {
         <div className="absolute bottom-0 -right-40 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl"></div>
       </div>
-      <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-8">
-        {/* Page Title */}
-        <div className="mb-16 mt-0 flex gap-8 md:gap-8 gap-0 md:flex-row flex-col">
-          <div className="hidden md:block w-24 flex-shrink-0"></div>
-          <div className="flex-1">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-indigo-400">Changelog</h1>
-            <p className="text-slate-300 mb-8 text-lg">Latest updates and improvements to Miked.live</p>
-            <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
-            <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
-            <a
-              href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-4 py-2 rounded-lg"
-            >
-              <span>Join the WhatsApp community</span>
-              <span>↗</span>
-            </a>
-            <p className="text-xs text-slate-400 mt-3">Share ideas, feedback, and feature requests with me directly</p>
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-16">
+        <PageHeader
+          title="Changelog"
+          description="Latest updates and improvements to Miked.live"
+          showBadge={false}
+          titleColor="indigo"
+        />
+
+        <div className="space-y-12 mb-24">
+          {/* Feedback Section */}
+          <div className="relative flex gap-8">
+            {/* Hidden date column for alignment - matches post layout */}
+            <div className="hidden md:block w-24 flex-shrink-0"></div>
+            {/* Feedback content */}
+            <div className="flex-1 pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
+              <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
+              <a
+                href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-indigo-300 hover:text-indigo-200 transition-colors bg-indigo-500/10 hover:bg-indigo-500/20 px-4 py-2 rounded-lg mb-4"
+              >
+                <span>Join the WhatsApp community</span>
+                <span>↗</span>
+              </a>
+              <p className="text-xs text-slate-400 mb-4">Share ideas, feedback, and feature requests with me directly</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-400">Or follow me:</span>
+                <a
+                  href="https://twitter.com/Woesnos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-slate-400 hover:text-indigo-300 transition-colors"
+                  title="X"
+                >
+                  <div className="sm:hidden">
+                    <XIcon size={24} />
+                  </div>
+                  <div className="hidden sm:block">
+                    <XIcon size={28} />
+                  </div>
+                </a>
+                <a
+                  href="https://instagram.com/woesnos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-slate-400 hover:text-indigo-300 transition-colors"
+                  title="Instagram"
+                >
+                  <Instagram size={24} className="sm:hidden" />
+                  <Instagram size={28} className="hidden sm:block" />
+                </a>
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Posts */}
-        <div className="space-y-12 mb-24">
+          {/* Posts */}
           {posts.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-slate-400">No updates yet. Check back soon!</p>
@@ -94,8 +140,8 @@ export default function ChangelogPage() {
                         </p>
                       </div>
                     </div>
-                    <h2 className="text-3xl md:text-4xl font-bold mb-4">{post.title}</h2>
-                    <p className="text-slate-300 mb-6">{post.description}</p>
+                    <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4">{post.title}</h2>
+                    <p className="text-base sm:text-lg text-slate-300 mb-6">{post.description}</p>
                     {post.image && (
                       <img
                         src={post.image}
@@ -103,7 +149,7 @@ export default function ChangelogPage() {
                         className="w-full rounded-lg mb-8 border border-white/10"
                       />
                     )}
-                  <div className="max-w-none text-slate-300 space-y-4">
+                  <div className="max-w-none text-base sm:text-lg text-slate-300 space-y-4">
                     {parseMarkdown(post.content).map((node, i) => {
                       if (node.type === 'paragraph') {
                         return (
@@ -167,25 +213,7 @@ export default function ChangelogPage() {
         </div>
       </div>
 
-      {/* Footer - Full Width */}
-      <footer className="py-12 border-t border-slate-800 bg-slate-950 text-slate-400 text-sm">
-        <div className="max-w-4xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="bg-slate-800 p-1 rounded">
-              <Mic2 className="w-4 h-4 text-slate-200" />
-            </div>
-            <span className="font-semibold text-slate-200">
-              Miked<span className="text-indigo-500">.live</span>
-            </span>
-          </div>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <div>&copy; {new Date().getFullYear()} Miked.live. All rights reserved.</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   )
 }

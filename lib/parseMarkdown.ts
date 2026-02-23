@@ -1,6 +1,6 @@
 export interface MarkdownNode {
   type: 'paragraph' | 'list' | 'heading'
-  content: string | MarkdownInline[]
+  content: string | MarkdownInline[] | MarkdownInline[][]
 }
 
 export interface MarkdownInline {

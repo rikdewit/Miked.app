@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  Mic2,
   Layout,
   FileDown,
   Zap,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { MemberPreview3D } from './MemberPreview3D';
 import { StagePlotCanvas } from './StagePlotCanvas';
+import { Footer } from './Footer';
 import type { StageItem } from '@/types';
 
 interface LandingProps {
@@ -503,25 +503,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-slate-800 bg-slate-950 text-slate-400 text-sm">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="bg-slate-800 p-1 rounded">
-              <Mic2 className="w-4 h-4 text-slate-200" />
-            </div>
-            <span className="font-semibold text-slate-200">
-              Miked<span className="text-indigo-500">.live</span>
-            </span>
-          </div>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <div>&copy; {new Date().getFullYear()} Miked.live. All rights reserved.</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
