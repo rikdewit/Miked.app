@@ -18,6 +18,9 @@ interface WelcomeSubscriberEmailProps {
   baseUrl?: string
 }
 
+// Base64 encoded favicon SVG for email compatibility
+const LOGO_DATA_URL = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjU2IDI1NiIgZmlsbD0ibm9uZSI+PHJlY3QgeD0iMCIgeT0iMCIgd2lkdGg9IjI1NiIgaGVpZ2h0PSIyNTYiIHJ4PSI1NiIgcnk9IjU2IiBmaWxsPSIjNGY0NmU1Ii8+PGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMTI4LCAxMjgpIHNjYWxlKDYuNCkgdHJhbnNsYXRlKC0xMiwgLTEyKSI+PHBhdGggZD0ibTExIDcuNjAxLTUuOTk0IDguMTlhMSAxIDAgMCAwIC4xIDEuMjk4bC44MTcuODE4YTEgMSAwIDAgMCAxLjMxNC4wODdMMTUuMDkgMTIiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBmaWxsPSJub25lIi8+PHBhdGggZD0iTTE2LjUgMjEuMTc0QzE1LjUgMjAuNSAxNC4zNzIgMjAgMTMgMjBjLTIuMDU4IDAtMy45MjggMi4zNTYtNiAyLTIuMDcyLS4zNTYtMi43NzUtMy4zNjktMS41LTQuNSIgc3Ryb2tlPSJ3aGl0ZSIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiIGZpbGw9Im5vbmUiLz48Y2lyY2xlIGN4PSIxNiIgY3k9IjciIHI9IjUiIHN0cm9rZT0id2hpdGUiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIvPjwvZz48L3N2Zz4='
+
 export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
   email,
   baseUrl = 'https://miked.live',
@@ -32,7 +35,7 @@ export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
           <Row style={{ marginBottom: '16px' }}>
             <div style={logoContainer}>
               <Img
-                src={`${baseUrl}/favicon.svg`}
+                src={LOGO_DATA_URL}
                 alt="Miked.live"
                 style={logo}
               />
