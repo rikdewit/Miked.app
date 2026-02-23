@@ -12,8 +12,8 @@ export const Header: React.FC = () => {
 
   const routes = ['/', '/band', '/stage', '/details', '/rider-preview']
   const stepIndex = routes.indexOf(pathname)
-  const isFlowPage = stepIndex !== -1
-  const isLanding = stepIndex === 0
+  const isFlowPage = stepIndex !== -1 && !pathname.startsWith('/riders/')
+  const isLanding = stepIndex === 0 || pathname.startsWith('/riders/')
 
   const handleLogoClick = () => router.push('/')
 

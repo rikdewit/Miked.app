@@ -298,7 +298,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               >
                 Create Your Rider
               </Button>
-              <a href="https://miked.live/riders/bb5bb520-9f9f-4584-b549-da2be1fbff4d?share=f9055408-becc-4e06-a5bf-6a5a4801f0a2" target="_blank" rel="noopener noreferrer" className="pointer-events-auto">
+              <a href={`${typeof window !== 'undefined' ? window.location.origin : ''}/riders/bb5bb520-9f9f-4584-b549-da2be1fbff4d?share=f9055408-becc-4e06-a5bf-6a5a4801f0a2`} target="_blank" rel="noopener noreferrer" className="pointer-events-auto">
                 <Button
                   size="lg"
                   className="text-base h-12 px-8 bg-slate-800 hover:bg-slate-700 text-slate-100 shadow-lg"
