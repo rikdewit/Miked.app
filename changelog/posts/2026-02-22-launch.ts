@@ -8,19 +8,17 @@ I'm excited to announce the launch of **Miked.live**! 🚀
 
 ## The Journey
 
-I started in music by producing tracks and playing guitar. Eventually, I was in a band for a bit and did a few shows. Communication between band members is hard, especially when you're just starting out. And when it comes to communicating your technical needs to venues and engineers, the tools available aren't great.
+I started in music by producing tracks and playing guitar. Eventually, I was in a band for a bit and did a few shows. Communication between band members is hard, especially when you're just starting out. But the biggest frustration came from the sound itself—bad mixing, bad tech communication, and poor sound quality on gigs. Those painful experiences inspired me to become a freelance audio engineer. Now I see the problem from both sides of the table: I understand the pain points from the engineer's perspective. I know exactly what information I need before a gig, what gets lost in communication, and how frustrating it is when artists don't have their technical specs organized.
 
-Before each gig, we'd go through this whole process: ask band members what gear they're bringing, wait for replies, edit old stage plots in Photoshop, create technical riders—Word docs, spreadsheets, PDFs—repeating the same tedious workflow every time. It was hours of work just to send something to a venue. And here's the real problem: you mostly communicate with the venue, not the engineers. You never really know if they read it, or if they're actually prepared when you show up on gig day. The stage plot tools can be basic or cumbersome, and the process of creating and updating them is just painful.
+When it comes to communicating your technical needs to venues and engineers, the tools available aren't great. Before each gig, we'd go through this whole process: ask band members what gear they're bringing, wait for replies, edit old stage plots in Photoshop, create technical riders—Word docs, spreadsheets, PDFs—repeating the same tedious workflow every time. It was hours of work just to send something to a venue. And here's the real problem: you mostly communicate with the venue, not the engineers. You never really know if they read it, or if they're actually prepared when you show up on gig day. The stage plot tools can be basic or cumbersome, and the process of creating and updating them is just painful.
 
 **The tools for communicating technical needs just aren't optimal, and the communication itself doesn't reach the people who need it most.**
 
-Then I discovered **Claude Code**—and it changed how I think about building. AI is genuinely great at helping you build websites. Instead of spending weeks on boilerplate, I could describe what I wanted and have it help me build faster. It was like finally having a developer partner who understood the vision.
+Then I discovered AI tools for building. Over the years, I've built my own websites and apps, so I understand the friction of web development—the boilerplate, the configuration, wrestling with frameworks. I built my first website for my freelance audio engineering business with AI assistance, and it was transformative. What would normally take me weeks moved so much faster. I suddenly had the bandwidth and speed to think bigger.
 
-So I thought—why not build something that fixes this problem?
+That's when everything clicked. I realized: I could actually build that thing I'd been thinking about—an online platform where bands could actually communicate their technical needs properly. Instead of spending weeks architecting every detail, I could describe the vision and iterate with AI by my side. It's like finally having a developer partner who gets it, who understands what you're trying to build and helps you move fast without getting bogged down.
 
 ## Building Miked.live
-
-I started building without knowing if it would work, but with AI by my side, it actually became possible.
 
 Here's what I've built:
 
