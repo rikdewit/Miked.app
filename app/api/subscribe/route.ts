@@ -1,3 +1,4 @@
+import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { Resend } from 'resend'
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
         from: senderEmail,
         to: email,
         subject: '🎸 Welcome to the Miked.live changelog!',
-        react: WelcomeSubscriberEmail({ email, baseUrl }),
+        react: React.createElement(WelcomeSubscriberEmail, { email, baseUrl }),
       })
 
       if (emailResponse.error) {
