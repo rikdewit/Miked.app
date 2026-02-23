@@ -25,32 +25,64 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // 1. Save to Supabase subscribers table
-    const { data: subscriber, error: insertError } = await supabase
+    // 1. Check if email already exists
+    const { data: existingSubscriber } = await supabase
       .from('subscribers')
-      .insert([
-        {
-          email,
-          source: 'changelog',
-          created_at: new Date().toISOString(),
-        },
-      ])
-      .select()
+      .select('id, subscribed')
+      .eq('email', email)
       .single()
 
-    if (insertError) {
-      // Check if it's a duplicate email error
-      if (insertError.code === '23505') {
+    let subscriber
+
+    if (existingSubscriber) {
+      // Email exists - check if they're already subscribed
+      if (existingSubscriber.subscribed) {
         return NextResponse.json(
           { error: 'This email is already subscribed' },
           { status: 400 }
         )
       }
-      console.error('Subscriber insert error:', insertError)
-      return NextResponse.json(
-        { error: 'Failed to save subscription' },
-        { status: 500 }
-      )
+
+      // Re-subscribe by updating subscribed to true
+      const { data: updatedSubscriber, error: updateError } = await supabase
+        .from('subscribers')
+        .update({ subscribed: true })
+        .eq('id', existingSubscriber.id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Subscriber update error:', updateError)
+        return NextResponse.json(
+          { error: 'Failed to save subscription' },
+          { status: 500 }
+        )
+      }
+
+      subscriber = updatedSubscriber
+    } else {
+      // New subscriber - insert
+      const { data: newSubscriber, error: insertError } = await supabase
+        .from('subscribers')
+        .insert([
+          {
+            email,
+            source: 'changelog',
+            created_at: new Date().toISOString(),
+          },
+        ])
+        .select()
+        .single()
+
+      if (insertError) {
+        console.error('Subscriber insert error:', insertError)
+        return NextResponse.json(
+          { error: 'Failed to save subscription' },
+          { status: 500 }
+        )
+      }
+
+      subscriber = newSubscriber
     }
 
     // 2. Add to Resend contacts and send welcome email (non-blocking - don't fail if this fails)
@@ -64,11 +96,12 @@ export async function POST(request: NextRequest) {
 
       // 3. Send welcome email
       const senderEmail = process.env.SENDER_EMAIL || 'updates@miked.live'
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://miked.live'
       const emailResponse = await resend.emails.send({
         from: senderEmail,
         to: email,
         subject: '🎸 Welcome to the Miked.live changelog!',
-        react: WelcomeSubscriberEmail({ email }),
+        react: WelcomeSubscriberEmail({ email, baseUrl }),
       })
 
       if (emailResponse.error) {

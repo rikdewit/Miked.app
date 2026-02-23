@@ -14,10 +14,12 @@ import {
 
 interface WelcomeSubscriberEmailProps {
   email: string
+  baseUrl?: string
 }
 
 export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
   email,
+  baseUrl = 'https://miked.live',
 }) => (
   <Html>
     <Head />
@@ -77,11 +79,7 @@ export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
             You received this email because you subscribed to the Miked.live changelog.
           </Text>
           <Text style={footerText}>
-            <Link href="#" style={footerLink}>
-              Manage preferences
-            </Link>
-            {' '}•{' '}
-            <Link href="#" style={footerLink}>
+            <Link href={`${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}`} style={footerLink}>
               Unsubscribe
             </Link>
           </Text>
