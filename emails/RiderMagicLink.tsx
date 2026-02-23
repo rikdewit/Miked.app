@@ -13,23 +13,27 @@ import {
   Img,
 } from '@react-email/components'
 
-interface WelcomeSubscriberEmailProps {
-  email: string
+interface RiderMagicLinkEmailProps {
+  bandName?: string
+  magicLink: string
   baseUrl?: string
+  email: string
 }
 
-export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
-  email,
+export const RiderMagicLinkEmail: React.FC<RiderMagicLinkEmailProps> = ({
+  bandName,
+  magicLink,
   baseUrl = 'https://miked.live',
+  email,
 }) => (
   <Html>
     <Head />
-    <Preview>Welcome to the Miked.live changelog</Preview>
+    <Preview>Access your Miked.live tech rider</Preview>
     <Body style={main}>
       <Container style={container}>
         {/* Header with Logo */}
         <Section style={header}>
-          <Row style={{ marginBottom: '16px' }}>
+          <Row>
             <div style={logoContainer}>
               <Img
                 src={`${baseUrl}/favicon.svg`}
@@ -39,46 +43,34 @@ export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
               <Text style={logoText}>Miked.live</Text>
             </div>
           </Row>
-          <Text style={title}>Welcome to the changelog!</Text>
         </Section>
 
         {/* Content */}
         <Section style={content}>
-          <Text style={paragraph}>
-            Hey there! Thanks for subscribing to the changelog.
+          <Text style={greeting}>
+            Hey there!
           </Text>
 
           <Text style={paragraph}>
-            You'll now get notified about:
+            Your rider {bandName && <>for <strong>{bandName}</strong></>} is ready for you to access and edit.
           </Text>
 
-          <ul style={list}>
-            <li style={listItem}>🚀 New features and improvements</li>
-            <li style={listItem}>🐛 Bug fixes</li>
-            <li style={listItem}>📋 Product updates</li>
-          </ul>
-
           <Text style={paragraph}>
-            I'm building Miked.live in public and your feedback helps shape the product.
-            If you have ideas or suggestions, feel free to reach out on{' '}
-            <Link href="https://twitter.com/Woesnos" style={link}>
-              X
-            </Link>
-            {' '}or{' '}
-            <Link href="https://instagram.com/woesnos" style={link}>
-              Instagram
-            </Link>
-            .
+            Click the button below to view and manage your rider:
           </Text>
 
           <Section style={ctaContainer}>
-            <Button style={button} href="https://miked.live">
-              Explore Miked.live
+            <Button style={button} href={magicLink}>
+              Access Rider
             </Button>
           </Section>
 
+          <Text style={paragraph} style={{ fontSize: '13px', color: '#94a3b8' }}>
+            This link will expire in 24 hours for security purposes.
+          </Text>
+
           <Text style={closing}>
-            Thanks for supporting the journey!<br />– Rik
+            Thanks for using Miked.live!<br />– Rik
           </Text>
         </Section>
 
@@ -87,11 +79,18 @@ export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
         {/* Footer */}
         <Section style={footer}>
           <Text style={footerText}>
-            You received this email because you subscribed to the Miked.live changelog.
+            Questions? Check out our{' '}
+            <Link href={`${baseUrl}`} style={footerLink}>
+              website
+            </Link>
+            {' '}or{' '}
+            <Link href="https://twitter.com/Woesnos" style={footerLink}>
+              reach out on X
+            </Link>
           </Text>
           <Text style={footerText}>
             <Link href={`${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}`} style={footerLink}>
-              Unsubscribe
+              Unsubscribe from emails
             </Link>
           </Text>
         </Section>
@@ -113,9 +112,9 @@ const container: React.CSSProperties = {
 
 const header: React.CSSProperties = {
   backgroundColor: '#1e293b',
-  borderRadius: '12px 12px 0 0',
   padding: '30px 20px',
   textAlign: 'center',
+  borderRadius: '12px 12px 0 0',
 }
 
 const logoContainer: React.CSSProperties = {
@@ -138,17 +137,17 @@ const logoText: React.CSSProperties = {
   margin: '0',
 }
 
-const title: React.CSSProperties = {
-  color: '#ffffff',
-  fontSize: '24px',
-  fontWeight: 'bold',
-  margin: '0',
-}
-
 const content: React.CSSProperties = {
   backgroundColor: '#1e293b',
   padding: '40px',
   borderRadius: '0 0 12px 12px',
+}
+
+const greeting: React.CSSProperties = {
+  color: '#ffffff',
+  fontSize: '18px',
+  fontWeight: '600',
+  margin: '0 0 20px 0',
 }
 
 const paragraph: React.CSSProperties = {
@@ -156,18 +155,6 @@ const paragraph: React.CSSProperties = {
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '0 0 20px 0',
-}
-
-const list: React.CSSProperties = {
-  color: '#cbd5e1',
-  fontSize: '16px',
-  lineHeight: '1.8',
-  margin: '0 0 20px 0',
-  paddingLeft: '20px',
-}
-
-const listItem: React.CSSProperties = {
-  marginBottom: '8px',
 }
 
 const ctaContainer: React.CSSProperties = {
@@ -187,7 +174,7 @@ const button: React.CSSProperties = {
 }
 
 const closing: React.CSSProperties = {
-  color: '#64748b',
+  color: '#94a3b8',
   fontSize: '16px',
   lineHeight: '1.6',
   margin: '30px 0 0 0',
@@ -208,11 +195,6 @@ const footerText: React.CSSProperties = {
   fontSize: '13px',
   lineHeight: '1.6',
   margin: '0 0 8px 0',
-}
-
-const link: React.CSSProperties = {
-  color: '#60a5fa',
-  textDecoration: 'none',
 }
 
 const footerLink: React.CSSProperties = {
