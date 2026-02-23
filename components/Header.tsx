@@ -45,6 +45,8 @@ export const Header: React.FC = () => {
               <a href={isLanding ? "#how-it-works" : "/#how-it-works"} className="hover:text-indigo-400 transition-colors">How it Works</a>
               <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
               <a href="/contact" className="hover:text-indigo-400 transition-colors">Contact</a>
+              <a href="/privacy" className="hover:text-indigo-400 transition-colors">Privacy</a>
+              <a href="/terms" className="hover:text-indigo-400 transition-colors">Terms</a>
               <button
                 onClick={handleStart}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
@@ -53,14 +55,14 @@ export const Header: React.FC = () => {
               </button>
             </div>
             {/* Mobile navigation */}
-            <div className="md:hidden flex items-center gap-4 text-sm font-medium text-slate-400">
+            <div className="md:hidden flex items-center gap-3 text-xs font-medium text-slate-400">
               <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
               <a href="/contact" className="hover:text-indigo-400 transition-colors">Contact</a>
               <button
                 onClick={handleStart}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium h-8 px-3 rounded-md transition-colors"
               >
-                Start Now
+                Start
               </button>
             </div>
           </>
