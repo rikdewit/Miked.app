@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Instagram } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { Footer } from '@/components/Footer'
+import { EmailSubscribe } from '@/components/EmailSubscribe'
 
 const XIcon = ({ size = 24 }: { size?: number }) => (
   <svg
@@ -53,6 +54,14 @@ export default function ChangelogPage() {
         />
 
         <div className="space-y-12 mb-24">
+          {/* Email Subscribe Section */}
+          <EmailSubscribe
+            title="Stay in the loop"
+            description="Subscribe to get notified about new features and updates"
+            buttonText="Subscribe"
+            placeholder="your@email.com"
+          />
+
           {/* Feedback Section */}
           <div className="relative flex gap-8">
             {/* Hidden date column for alignment - matches post layout */}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { supabaseAdmin } from '@/utils/supabaseAdmin'
 import { Resend } from 'resend'
+import { subscribeUser } from '@/utils/subscribeUser'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -160,6 +161,14 @@ export async function POST(request: NextRequest) {
       // Just log it and continue
     } else {
       console.log(`[RESEND] Email sent successfully with ID: ${emailResponse.data?.id}`)
+    }
+
+    // 7. Subscribe user to changelog (non-blocking)
+    try {
+      await subscribeUser(email, { sendWelcomeEmail: false, source: 'rider_download' })
+    } catch (err) {
+      console.error('Failed to subscribe user:', err)
+      // Don't fail the request - rider is already saved and email sent
     }
 
     return NextResponse.json(
