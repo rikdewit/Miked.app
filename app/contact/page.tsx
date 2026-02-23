@@ -1,6 +1,7 @@
 import { Instagram } from 'lucide-react'
 import { PageHeader } from '@/components/PageHeader'
 import { Footer } from '@/components/Footer'
+import { TwitterTimeline } from '@/components/TwitterTimeline'
 
 const XIcon = ({ size = 24 }: { size?: number }) => (
   <svg
@@ -28,7 +29,7 @@ export const metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="flex flex-col w-full min-h-screen bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100 relative">
+    <div className="flex flex-col w-full bg-gradient-to-b from-slate-900 via-slate-900 to-slate-950 text-slate-100 relative">
       {/* Gradient orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-20 -right-32 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl"></div>
@@ -40,18 +41,20 @@ export default function ContactPage() {
         <div className="absolute -bottom-40 left-1/2 w-96 h-96 bg-indigo-500/15 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-20">
+      <div className="w-full px-4 relative z-10 py-12">
         <PageHeader
           badge="Let's Connect"
           title="Get in Touch"
           description="Reach out with feedback, ideas, or just to say hello"
+          titleColor="indigo"
         />
+      </div>
+
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-2">
 
         {/* Contact Block */}
-        <div className="max-w-2xl mx-auto">
-          <div className="mb-16 mt-0 flex gap-8 md:gap-8 gap-0 md:flex-row flex-col">
-            <div className="hidden md:block w-24 flex-shrink-0"></div>
-            <div className="flex-1">
+        <div className="flex justify-center">
+          <div className="w-full max-w-2xl">
             <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
               <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
               <a
@@ -64,34 +67,40 @@ export default function ContactPage() {
                 <span>↗</span>
               </a>
               <p className="text-xs text-slate-400 mb-4">Share ideas, feedback, and feature requests with me directly</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-400">Or follow me:</span>
-                <a
-                  href="https://twitter.com/Woesnos"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-slate-400 hover:text-indigo-300 transition-colors"
-                  title="X"
-                >
-                  <div className="sm:hidden">
-                    <XIcon size={24} />
-                  </div>
-                  <div className="hidden sm:block">
-                    <XIcon size={28} />
-                  </div>
-                </a>
-                <a
-                  href="https://instagram.com/woesnos"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 text-slate-400 hover:text-indigo-300 transition-colors"
-                  title="Instagram"
-                >
-                  <Instagram size={24} className="sm:hidden" />
-                  <Instagram size={28} className="hidden sm:block" />
-                </a>
-              </div>
             </div>
+          </div>
+        </div>
+
+        {/* Social Media Feed Block */}
+        <div className="flex justify-center mt-8 mb-32">
+          <div className="w-full max-w-2xl">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {/* X Timeline */}
+              <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
+                <h2 className="text-lg font-semibold text-slate-100 mb-4">Latest on X</h2>
+                <div className="flex justify-center">
+                  <TwitterTimeline />
+                </div>
+              </div>
+
+              {/* Instagram Profile */}
+              <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
+                <h2 className="text-lg font-semibold text-slate-100 mb-4">Latest on Instagram</h2>
+                <div className="flex flex-col items-center">
+                  <a
+                    href="https://instagram.com/woesnos"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 text-indigo-300 hover:text-indigo-200 transition-colors mb-4"
+                  >
+                    <Instagram size={32} />
+                    <span>@woesnos</span>
+                  </a>
+                  <p className="text-sm text-slate-400 text-center">
+                    Follow me on Instagram to see my latest posts and updates
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>

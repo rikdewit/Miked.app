@@ -20,6 +20,7 @@ export const Header: React.FC = () => {
   const stepIndex = routes.indexOf(pathname)
   const isLanding = stepIndex === 0
   const isChangelog = pathname === '/changelog'
+  const isContact = pathname === '/contact'
 
   if (isHidden) {
     return null
@@ -46,7 +47,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right side */}
-        {isLanding || isChangelog ? (
+        {isLanding || isChangelog || isContact ? (
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
             <a href={isLanding ? "#features" : "/#features"} className="hover:text-indigo-400 transition-colors">Features</a>
             <a href={isLanding ? "#how-it-works" : "/#how-it-works"} className="hover:text-indigo-400 transition-colors">How it Works</a>
