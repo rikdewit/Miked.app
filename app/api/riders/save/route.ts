@@ -134,12 +134,14 @@ export async function POST(request: NextRequest) {
       from: senderEmail,
       to: email,
       subject: subjectLine,
-      react: RiderMagicLinkEmail({
-        bandName,
-        magicLink,
-        email,
-        baseUrl: appUrl,
-      }),
+      react: (
+        <RiderMagicLinkEmail
+          bandName={bandName}
+          magicLink={magicLink}
+          email={email}
+          baseUrl={appUrl}
+        />
+      ),
     })
 
     console.log(`[RESEND] Response:`, JSON.stringify(emailResponse, null, 2))
