@@ -72,7 +72,7 @@ export const WelcomeSubscriberEmail: React.FC<WelcomeSubscriberEmailProps> = ({
           </Text>
 
           <Section style={ctaContainer}>
-            <Button style={button} href="https://miked.live">
+            <Button style={button} href={baseUrl}>
               Explore Miked.live
             </Button>
           </Section>
