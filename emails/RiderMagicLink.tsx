@@ -65,7 +65,7 @@ export const RiderMagicLinkEmail: React.FC<RiderMagicLinkEmailProps> = ({
             </Button>
           </Section>
 
-          <Text style={paragraph} style={{ fontSize: '13px', color: '#94a3b8' }}>
+          <Text style={{ ...paragraph, fontSize: '13px', color: '#94a3b8' }}>
             This link will expire in 24 hours for security purposes.
           </Text>
 
