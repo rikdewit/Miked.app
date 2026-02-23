@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { Mic2 } from 'lucide-react'
 import { usePostHog } from 'posthog-js/react'
@@ -9,22 +9,12 @@ export const Header: React.FC = () => {
   const pathname = usePathname()
   const router = useRouter()
   const posthog = usePostHog()
-  const [isHidden, setIsHidden] = useState(false)
-
-  useEffect(() => {
-    const riderBuildingRoutes = ['/band', '/stage', '/details', '/rider-preview']
-    setIsHidden(riderBuildingRoutes.includes(pathname))
-  }, [pathname])
 
   const routes = ['/', '/band', '/stage', '/details', '/rider-preview']
   const stepIndex = routes.indexOf(pathname)
   const isLanding = stepIndex === 0
   const isChangelog = pathname === '/changelog'
   const isContact = pathname === '/contact'
-
-  if (isHidden) {
-    return null
-  }
 
   const handleLogoClick = () => router.push('/')
 
@@ -48,17 +38,32 @@ export const Header: React.FC = () => {
 
         {/* Right side */}
         {isLanding || isChangelog || isContact ? (
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
-            <a href={isLanding ? "#features" : "/#features"} className="hover:text-indigo-400 transition-colors">Features</a>
-            <a href={isLanding ? "#how-it-works" : "/#how-it-works"} className="hover:text-indigo-400 transition-colors">How it Works</a>
-            <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
-            <button
-              onClick={handleStart}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
-            >
-              Start Now
-            </button>
-          </div>
+          <>
+            {/* Desktop navigation */}
+            <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
+              <a href={isLanding ? "#features" : "/#features"} className="hover:text-indigo-400 transition-colors">Features</a>
+              <a href={isLanding ? "#how-it-works" : "/#how-it-works"} className="hover:text-indigo-400 transition-colors">How it Works</a>
+              <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
+              <a href="/contact" className="hover:text-indigo-400 transition-colors">Contact</a>
+              <button
+                onClick={handleStart}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
+              >
+                Start Now
+              </button>
+            </div>
+            {/* Mobile navigation */}
+            <div className="md:hidden flex items-center gap-4 text-sm font-medium text-slate-400">
+              <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
+              <a href="/contact" className="hover:text-indigo-400 transition-colors">Contact</a>
+              <button
+                onClick={handleStart}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
+              >
+                Start Now
+              </button>
+            </div>
+          </>
         ) : (
           <div className="flex-1 flex items-center justify-end gap-6 text-sm text-slate-400">
             <span className="hidden md:inline">

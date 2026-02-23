@@ -50,13 +50,13 @@ export default function ContactPage() {
         />
       </div>
 
-      <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-2">
+      <div className="flex-1 max-w-4xl mx-auto w-full px-4 relative z-10 py-0">
 
         {/* Contact Block */}
         <div className="flex justify-center">
           <div className="w-full max-w-2xl">
             <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
-              <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
+              <p className="text-lg font-extrabold text-slate-100 mb-4">I'm building this in public and I'd love your feedback!</p>
               <a
                 href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG"
                 target="_blank"
@@ -77,7 +77,7 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* X Timeline */}
               <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
-                <h2 className="text-lg font-semibold text-slate-100 mb-4">Latest on X</h2>
+                <h2 className="text-lg font-semibold text-slate-100 mb-4 text-center">Latest on X</h2>
                 <div className="flex justify-center">
                   <TwitterTimeline />
                 </div>
@@ -85,7 +85,7 @@ export default function ContactPage() {
 
               {/* Instagram Profile */}
               <div className="pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
-                <h2 className="text-lg font-semibold text-slate-100 mb-4">Latest on Instagram</h2>
+                <h2 className="text-lg font-semibold text-slate-100 mb-4 text-center">Latest on Instagram</h2>
                 <div className="flex flex-col items-center">
                   <a
                     href="https://instagram.com/woesnos"

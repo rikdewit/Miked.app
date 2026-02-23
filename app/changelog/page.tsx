@@ -59,7 +59,7 @@ export default function ChangelogPage() {
             <div className="hidden md:block w-24 flex-shrink-0"></div>
             {/* Feedback content */}
             <div className="flex-1 pt-8 border-t border-slate-800 bg-slate-900/50 backdrop-blur-sm rounded-2xl p-8 hover:border-indigo-500/30 transition-colors shadow-lg">
-              <p className="text-sm text-slate-300 mb-4">I'm building this in public and I'd love your feedback!</p>
+              <p className="text-lg font-extrabold text-slate-100 mb-4">I'm building this in public and I'd love your feedback!</p>
               <a
                 href="https://chat.whatsapp.com/JW37b8r65X1AyAGYPRt1NG"
                 target="_blank"
