@@ -9,6 +9,7 @@ const RiderContext = createContext<RiderContextType | null>(null)
 
 export function RiderProvider({ children }: { children: React.ReactNode }) {
   const riderState = useRiderState()
+
   return (
     <RiderContext.Provider value={riderState}>
       {children}

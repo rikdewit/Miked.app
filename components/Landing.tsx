@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import {
-  Mic2,
   Layout,
   FileDown,
   Zap,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { MemberPreview3D } from './MemberPreview3D';
 import { StagePlotCanvas } from './StagePlotCanvas';
+import { Footer } from './Footer';
 import type { StageItem } from '@/types';
 
 interface LandingProps {
@@ -183,8 +183,8 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const base =
       'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50';
     const variants = {
-      default: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20',
-      outline: 'border border-slate-700 bg-transparent hover:bg-slate-800 text-slate-200',
+      default: 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-lg shadow-indigo-500/20 transition-colors duration-150',
+      outline: 'border border-slate-700 bg-transparent hover:bg-slate-800 text-slate-200 transition-colors duration-150',
     };
     const sizes = {
       default: 'h-10 px-4 py-2',
@@ -239,8 +239,10 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
           <div className="relative w-full h-full pt-48 sm:pt-40 md:pt-0" style={{ background: 'transparent' }}>
             {/* Background Gradients */}
             <div className="absolute inset-0 h-100 pointer-events-none overflow-hidden">
-              <div className="absolute top-1/2 left-1/4 -translate-y-1/2 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px]" />
-              <div className="absolute top-1/3 right-1/4 -translate-y-1/2 w-[32rem] h-[32rem] bg-purple-500/15 rounded-full blur-[100px]" />
+              <div className="absolute top-1/2 -left-40 md:left-1/4 -translate-y-1/2 w-80 h-80 bg-indigo-500/20 rounded-full blur-[100px]" />
+              <div className="absolute top-1/3 -right-32 md:right-1/4 -translate-y-1/2 w-[32rem] h-[32rem] bg-purple-500/15 rounded-full blur-[100px]" />
+              <div className="absolute bottom-1/4 -right-48 md:right-1/3 w-96 h-96 bg-purple-500/20 rounded-full blur-[120px]" />
+              <div className="absolute -bottom-32 left-1/2 w-[40rem] h-[40rem] bg-purple-500/15 rounded-full blur-[120px]" />
             </div>
             {/* Canvas - Square Container */}
             <div className="flex items-center justify-center w-full aspect-square p-4 mt-12 sm:mt-20 md:mt-0 h-fit">
@@ -296,7 +298,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               >
                 Create Your Rider
               </Button>
-              <a href="https://miked.live/riders/bb5bb520-9f9f-4584-b549-da2be1fbff4d?share=f9055408-becc-4e06-a5bf-6a5a4801f0a2" target="_blank" rel="noopener noreferrer" className="pointer-events-auto">
+              <a href="/riders/bb5bb520-9f9f-4584-b549-da2be1fbff4d?share=f9055408-becc-4e06-a5bf-6a5a4801f0a2" target="_blank" rel="noopener noreferrer" className="pointer-events-auto">
                 <Button
                   size="lg"
                   className="text-base h-12 px-8 bg-slate-800 hover:bg-slate-700 text-slate-100 shadow-lg"
@@ -341,8 +343,15 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </section>
 
       {/* Band Member Previews */}
-      <section className="pt-0 sm:pt-8 md:pt-24 pb-16 md:pb-24 px-4">
-        <div className="container mx-auto">
+      <section className="pt-8 sm:pt-8 md:pt-24 pb-16 md:pb-24 px-4 relative overflow-hidden border border-slate-800">
+        {/* Background Orbs - gradient from bottom */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Left side orb - bottom */}
+          <div className="absolute -bottom-48 -left-64 md:-left-40 w-[32rem] h-[32rem] bg-purple-500/10 rounded-full blur-[120px]" />
+          {/* Right side orb - bottom */}
+          <div className="absolute -bottom-64 -right-64 md:-right-40 w-[40rem] h-[40rem] bg-indigo-500/15 rounded-full blur-[140px]" />
+        </div>
+        <div className="container mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -357,7 +366,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               {ROCK_BAND_MEMBERS.map((member) => (
                 <div
                   key={member.id}
-                  className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-lg hover:border-indigo-500/30 transition-colors group"
+                  className="rounded-xl border border-slate-800 bg-slate-900/50 backdrop-blur-sm overflow-hidden shadow-lg hover:border-indigo-500/30 transition-colors duration-150 group"
                 >
                   {/* Canvas container */}
                   <div className="aspect-square bg-slate-950 relative">
@@ -377,8 +386,14 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </section>
 
       {/* Features Grid */}
-      <section id="features" className="py-24 bg-slate-900/30 border-y border-slate-800/50">
-        <div className="container mx-auto px-4">
+      <section id="features" className="py-24 bg-slate-900/30 border border-slate-800 relative overflow-hidden">
+        {/* Background Orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 -left-48 md:-left-32 w-80 h-80 bg-indigo-500/15 rounded-full blur-[100px]" />
+          <div className="absolute top-1/2 -right-40 md:right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-40 -left-48 md:left-1/3 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px]" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Everything you need to get booked</h2>
             <p className="text-slate-400 text-lg">
@@ -423,7 +438,12 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 
       {/* How It Works */}
       <section id="how-it-works" className="py-24 relative overflow-hidden">
-        <div className="container mx-auto px-4">
+        {/* Background Orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-1/4 -right-48 md:right-1/3 w-96 h-96 bg-purple-500/15 rounded-full blur-[100px]" />
+          <div className="absolute bottom-1/3 -left-48 md:-left-32 w-80 h-80 bg-indigo-500/10 rounded-full blur-[100px]" />
+        </div>
+        <div className="container mx-auto px-4 relative z-10">
           <div className="mb-16 md:text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">From idea to rider in 5 minutes</h2>
             <p className="text-slate-400 text-lg">
@@ -460,7 +480,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-24">
+      <section className="py-24 border border-slate-800">
         <div className="container mx-auto px-4">
           <div className="relative rounded-3xl overflow-hidden bg-indigo-600 px-6 py-16 md:px-16 md:py-20 text-center">
             <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#fff_1px,transparent_1px)] [background-size:16px_16px]" />
@@ -471,7 +491,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               </p>
               <button
                 onClick={onStart}
-                className="inline-flex items-center justify-center bg-white text-indigo-600 hover:bg-indigo-50 h-14 px-8 text-lg font-semibold rounded-md shadow-xl transition-colors"
+                className="inline-flex items-center justify-center border border-slate-800 bg-white text-indigo-600 hover:bg-indigo-50 h-14 px-8 text-lg font-semibold rounded-md shadow-xl transition-colors duration-100"
               >
                 Start Building Now
               </button>
@@ -483,25 +503,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-slate-800 bg-slate-950 text-slate-400 text-sm">
-        <div className="container mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-6">
-          <div className="flex items-center gap-2">
-            <div className="bg-slate-800 p-1 rounded">
-              <Mic2 className="w-4 h-4 text-slate-200" />
-            </div>
-            <span className="font-semibold text-slate-200">
-              Miked<span className="text-indigo-500">.live</span>
-            </span>
-          </div>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-white transition-colors">Privacy</a>
-            <a href="#" className="hover:text-white transition-colors">Terms</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
-          </div>
-          <div>&copy; {new Date().getFullYear()} Miked.live. All rights reserved.</div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };
@@ -509,7 +511,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
 // --- Helper Components ---
 function FeatureCard({ icon, title, description }: { icon: React.ReactNode; title: string; description: string }) {
   return (
-    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 transition-colors group">
+    <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 transition-colors duration-150 group">
       <div className="w-12 h-12 rounded-lg bg-slate-800 flex items-center justify-center mb-4 group-hover:bg-indigo-500/10 transition-colors">
         {icon}
       </div>

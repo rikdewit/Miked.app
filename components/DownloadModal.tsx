@@ -256,7 +256,7 @@ export const DownloadModal: React.FC<DownloadModalProps> = ({
               </button>
               <button
                 onClick={handleConfirm}
-                disabled={!isValidSelection || isLoading}
+                disabled={!isValidSelection || isLoading || isGeneratingPdf}
                 className="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
                 {isGeneratingPdf ? (

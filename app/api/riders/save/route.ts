@@ -1,7 +1,10 @@
+import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { supabaseAdmin } from '@/utils/supabaseAdmin'
 import { Resend } from 'resend'
+import { subscribeUser } from '@/utils/subscribeUser'
+import { RiderMagicLinkEmail } from '@/emails/RiderMagicLink'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -122,34 +125,22 @@ export async function POST(request: NextRequest) {
     console.log(`[RESEND] API Key exists: ${!!process.env.RESEND_API_KEY}`)
 
     // 6. Send email via Resend
+    const bandName = cleanedRiderData.details?.bandName
+    const subjectLine = bandName
+      ? `Your rider for ${bandName} is saved`
+      : 'Your rider is saved'
 
     const senderEmail = process.env.SENDER_EMAIL || 'support@miked.live'
     const emailResponse = await resend.emails.send({
       from: senderEmail,
       to: email,
-      subject: 'Your rider is saved — access it anytime 🎸',
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>Your rider is saved!</h2>
-          <p>Click the link below to log in and access your rider:</p>
-          <p>
-            <a href="${magicLink}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-              Log in to your account
-            </a>
-          </p>
-          <p style="color: #666; font-size: 14px;">
-            After clicking this link, you'll be logged in to your account. You can:
-          </p>
-          <ul style="color: #666; font-size: 14px;">
-            <li>View your rider anytime (you'll stay logged in)</li>
-            <li>Share your rider with venues</li>
-            <li>Update your details (coming soon)</li>
-          </ul>
-          <p style="color: #999; font-size: 12px; margin-top: 32px;">
-            Questions? Reply to this email.
-          </p>
-        </div>
-      `,
+      subject: subjectLine,
+      react: React.createElement(RiderMagicLinkEmail, {
+        bandName,
+        magicLink,
+        email,
+        baseUrl: appUrl,
+      }),
     })
 
     console.log(`[RESEND] Response:`, JSON.stringify(emailResponse, null, 2))
@@ -160,6 +151,14 @@ export async function POST(request: NextRequest) {
       // Just log it and continue
     } else {
       console.log(`[RESEND] Email sent successfully with ID: ${emailResponse.data?.id}`)
+    }
+
+    // 7. Subscribe user to changelog (non-blocking)
+    try {
+      await subscribeUser(email, { sendWelcomeEmail: false, source: 'rider_download' })
+    } catch (err) {
+      console.error('Failed to subscribe user:', err)
+      // Don't fail the request - rider is already saved and email sent
     }
 
     return NextResponse.json(
