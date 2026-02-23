@@ -1,3 +1,4 @@
+import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { supabaseAdmin } from '@/utils/supabaseAdmin'
@@ -134,14 +135,12 @@ export async function POST(request: NextRequest) {
       from: senderEmail,
       to: email,
       subject: subjectLine,
-      react: (
-        <RiderMagicLinkEmail
-          bandName={bandName}
-          magicLink={magicLink}
-          email={email}
-          baseUrl={appUrl}
-        />
-      ),
+      react: React.createElement(RiderMagicLinkEmail, {
+        bandName,
+        magicLink,
+        email,
+        baseUrl: appUrl,
+      }),
     })
 
     console.log(`[RESEND] Response:`, JSON.stringify(emailResponse, null, 2))
