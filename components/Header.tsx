@@ -12,9 +12,8 @@ export const Header: React.FC = () => {
 
   const routes = ['/', '/band', '/stage', '/details', '/rider-preview']
   const stepIndex = routes.indexOf(pathname)
+  const isFlowPage = stepIndex !== -1
   const isLanding = stepIndex === 0
-  const isChangelog = pathname === '/changelog'
-  const isContact = pathname === '/contact'
 
   const handleLogoClick = () => router.push('/')
 
@@ -37,7 +36,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right side */}
-        {isLanding || isChangelog || isContact ? (
+        {isLanding || !isFlowPage ? (
           <>
             {/* Desktop navigation */}
             <div className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-400">
@@ -45,8 +44,6 @@ export const Header: React.FC = () => {
               <a href={isLanding ? "#how-it-works" : "/#how-it-works"} className="hover:text-indigo-400 transition-colors">How it Works</a>
               <a href="/changelog" className="hover:text-indigo-400 transition-colors">Changelog</a>
               <a href="/contact" className="hover:text-indigo-400 transition-colors">Contact</a>
-              <a href="/privacy" className="hover:text-indigo-400 transition-colors">Privacy</a>
-              <a href="/terms" className="hover:text-indigo-400 transition-colors">Terms</a>
               <button
                 onClick={handleStart}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium h-9 px-4 rounded-md transition-colors"
