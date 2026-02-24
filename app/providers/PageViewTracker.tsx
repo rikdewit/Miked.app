@@ -1,6 +1,8 @@
 'use client'
 
-import { usePageView } from 'posthog-js/react'
+import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import { usePostHog } from 'posthog-js/react'
 
 /**
  * PageViewTracker
@@ -12,6 +14,13 @@ import { usePageView } from 'posthog-js/react'
  * initialized there via PostHogProvider.
  */
 export function PageViewTracker() {
-  usePageView()
+  const pathname = usePathname()
+  const posthog = usePostHog()
+
+  useEffect(() => {
+    // PostHog's special pageview event
+    posthog?.capture('$pageview')
+  }, [pathname, posthog])
+
   return null
 }
