@@ -1,12 +1,14 @@
 'use client'
 
 import { useRef, useState, useEffect } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { useRider } from '@/providers/RiderProvider'
 import { Preview, PreviewHandle } from '@/components/Preview'
 import { FooterNav } from '@/components/FooterNav'
 import { DownloadModal } from '@/components/DownloadModal'
 
 export default function RiderPreviewPage() {
+  const posthog = usePostHog()
   const { data } = useRider()
   const previewRef = useRef<PreviewHandle>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
@@ -18,6 +20,7 @@ export default function RiderPreviewPage() {
   // Mark as mounted to prevent hydration mismatch
   useEffect(() => {
     setIsMounted(true)
+    posthog?.capture('step_viewed', { step: 'rider-preview' })
   }, [])
 
   // Reset PDF generation when rider data changes

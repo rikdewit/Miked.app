@@ -14,7 +14,7 @@ export function PHProvider({ children }: { children: React.ReactNode }) {
       posthog.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
         api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
         persistence: 'localStorage',
-        capture_pageview: true,
+        capture_pageview: false, // Manual pageview tracking via PageViewTracker component
       })
     }
   }, [])

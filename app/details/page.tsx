@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { useRider } from '@/providers/RiderProvider'
 import { StepDetails } from '@/components/StepDetails'
 import { FooterNav } from '@/components/FooterNav'
@@ -11,8 +12,13 @@ const isValidEmail = (email: string): boolean => {
 }
 
 export default function DetailsPage() {
+  const posthog = usePostHog()
   const { data, setData } = useRider()
   const [showErrors, setShowErrors] = useState(false)
+
+  useEffect(() => {
+    posthog?.capture('step_viewed', { step: 'details' })
+  }, [])
 
   const canProceed =
     data.details.bandName.trim() !== '' &&
