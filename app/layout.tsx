@@ -20,6 +20,9 @@ export const metadata: Metadata = {
   ),
   title: 'miked.live',
   description: 'Create a professional technical rider and stage plot in 5 minutes. No account needed.',
+  alternates: {
+    canonical: 'https://miked.live',
+  },
   icons: {
     icon: '/favicon.svg',
   },
@@ -30,7 +33,7 @@ export const metadata: Metadata = {
     type: 'website',
     images: [
       {
-        url: '/og-image',
+        url: '/og-image.png',
         width: 1200,
         height: 675,
         alt: 'Miked.live - Professional Stage Plot Designer',
@@ -41,7 +44,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Your Tech Rider. Done in 5 Minutes.',
     description: 'Create professional 3D stage plots and technical riders instantly.',
-    images: ['/og-image'],
+    images: ['/og-image.png'],
   },
 }
 
@@ -52,6 +55,22 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={inter.className}>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'miked.live',
+              url: 'https://miked.live',
+              description: 'Create a professional technical rider and stage plot in 5 minutes. No account needed.',
+              applicationCategory: 'MusicApplication',
+              operatingSystem: 'Web',
+            }),
+          }}
+        />
+      </head>
       <body className="bg-slate-900 text-slate-100">
         <RiderProvider>
           <PHProvider>
