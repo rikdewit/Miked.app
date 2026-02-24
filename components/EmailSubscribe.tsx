@@ -104,7 +104,6 @@ export const EmailSubscribe: React.FC<EmailSubscribeProps> = ({
         </form>
 
         {error && <p className="text-sm text-red-400 mt-2">{error}</p>}
-        <p className="text-xs text-slate-500 mt-3">We'll never spam you. Unsubscribe anytime.</p>
       </div>
     </div>
   )
