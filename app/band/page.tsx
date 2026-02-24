@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePostHog } from 'posthog-js/react'
 import { StepInstruments } from '@/components/StepInstruments'
 import { useRider } from '@/providers/RiderProvider'
 import { FooterNav } from '@/components/FooterNav'
 
 export default function BandPage() {
+  const posthog = usePostHog()
   const [isHydrated, setIsHydrated] = useState(false)
   const {
     data,
@@ -21,6 +23,7 @@ export default function BandPage() {
 
   useEffect(() => {
     setIsHydrated(true)
+    posthog?.capture('step_viewed', { step: 'band' })
   }, [])
 
   const canProceed =

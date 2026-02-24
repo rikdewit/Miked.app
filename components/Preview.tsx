@@ -75,7 +75,7 @@ export const Preview = forwardRef<PreviewHandle, PreviewProps>(({ data, onDownlo
   const handleGeneratePDF = async () => {
     setIsGeneratingPdf(true);
     onGeneratingChange?.(true);
-    posthog?.capture('generate_pdf');
+    posthog?.capture('download_initiated');
 
     // Add CSS fix before capturing
     const style = document.createElement('style');

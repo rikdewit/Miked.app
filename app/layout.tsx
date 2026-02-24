@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { PHProvider } from './providers/PostHogProvider'
+import { PageViewTracker } from './providers/PageViewTracker'
 import { RiderProvider } from '@/providers/RiderProvider'
 import { Header } from '@/components/Header'
 
@@ -74,6 +75,7 @@ export default function RootLayout({
       <body className="bg-slate-900 text-slate-100">
         <RiderProvider>
           <PHProvider>
+            <PageViewTracker />
             <div className="h-dvh overflow-hidden flex flex-col">
               <Header />
               <main className="flex-1 min-h-0 overflow-auto flex flex-col">
