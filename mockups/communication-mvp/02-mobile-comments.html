@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miked.live - Mobile Comments View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-bar {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            margin-bottom: 20px;
+        }
+
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 8px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-bar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-bar a.active {
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        .phone-frame {
+            width: 375px;
+            height: 667px;
+            border: 12px solid #000;
+            border-radius: 40px;
+            overflow: hidden;
+            margin: 40px auto;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            background: white;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .notch {
+            height: 28px;
+            background: #000;
+            border-radius: 0 0 20px 20px;
+        }
+
+        .screen-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .rider-view {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            position: relative;
+        }
+
+        .rider-section {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comment-badge {
+            background: #ef4444;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .stage-plot {
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            min-height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .input-list-item {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 8px;
+            font-size: 12px;
+        }
+
+        .input-list-item-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .input-list-item-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .value {
+            color: #333;
+        }
+
+        /* Comment Button Floating */
+        .comment-fab {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+            z-index: 100;
+        }
+
+        /* Bottom Sheet */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-radius: 20px 20px 0 0;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 500;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+        }
+
+        .bottom-sheet.show {
+            transform: translateY(0);
+        }
+
+        .sheet-header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .sheet-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .comment-item {
+            padding: 12px;
+            margin-bottom: 12px;
+            background: #f9fafb;
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
+        }
+
+        .comment-item.green {
+            border-left-color: #10b981;
+        }
+
+        .comment-item.yellow {
+            border-left-color: #f59e0b;
+        }
+
+        .comment-author {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .comment-text {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            margin-bottom: 6px;
+        }
+
+        .comment-meta {
+            font-size: 11px;
+            color: #999;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sheet-footer {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Comment Form Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            align-items: flex-end;
+            z-index: 1000;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 20px 16px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+            to {
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .form-input,
+        .form-select,
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .char-count {
+            font-size: 11px;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .modal-actions .cancel {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .modal-actions .submit {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 400;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div>
+            <a href="index.html">← Back to Hub</a>
+        </div>
+        <div style="text-align: center;">
+            <strong>Mockups:</strong>
+            <a href="01-rider-view-with-comments.html">1. Desktop</a>
+            <a href="02-mobile-comments.html" class="active">2. Mobile</a>
+            <a href="03-share-status-panel.html">3. Share</a>
+            <a href="04-notifications.html">4. Notifications</a>
+        </div>
+        <div style="text-align: right;">
+            <a href="03-share-status-panel.html">Next →</a>
+        </div>
+    </div>
+
+    <div class="phone-frame">
+        <div class="notch"></div>
+        <div class="screen-content">
+            <div class="header">
+                <div>← Riders</div>
+                <div>The Rockers</div>
+                <div>☰</div>
+            </div>
+
+            <div class="rider-view">
+                <!-- Stage Plot -->
+                <div class="rider-section">
+                    <div class="section-title">
+                        📍 Stage Plot
+                        <span class="comment-badge">2</span>
+                    </div>
+                    <div class="stage-plot">🎤 🎸 🎸 🥁</div>
+                </div>
+
+                <!-- Input List -->
+                <div class="rider-section">
+                    <div class="section-title">
+                        🎙 Input List
+                        <span class="comment-badge">1</span>
+                    </div>
+
+                    <div class="input-list-item">
+                        <div class="input-list-item-row">
+                            <span class="label">Kick Drum</span>
+                            <span class="value">D112</span>
+                        </div>
+                        <div class="input-list-item-row">
+                            <span class="label">Standard</span>
+                        </div>
+                    </div>
+
+                    <div class="input-list-item">
+                        <div class="input-list-item-row">
+                            <span class="label">Snare</span>
+                            <span class="value">SM57</span>
+                        </div>
+                        <div class="input-list-item-row">
+                            <span class="label">On top</span>
+                        </div>
+                    </div>
+
+                    <div class="input-list-item">
+                        <div class="input-list-item-row">
+                            <span class="label">Vocals</span>
+                            <span class="value">SM58</span>
+                        </div>
+                        <div class="input-list-item-row">
+                            <span class="label">High stand</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Power Section -->
+                <div class="rider-section">
+                    <div class="section-title">🔌 Power</div>
+                    <div class="input-list-item">
+                        <div class="input-list-item-row">
+                            <span class="label">Stage Right</span>
+                            <span class="value">3x outlets</span>
+                        </div>
+                    </div>
+                    <div class="input-list-item">
+                        <div class="input-list-item-row">
+                            <span class="label">Stage Left</span>
+                            <span class="value">2x outlets</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Comments FAB -->
+                <button class="comment-fab" onclick="openComments()">💬</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay" onclick="closeComments()"></div>
+
+    <!-- Comments Bottom Sheet -->
+    <div class="bottom-sheet" id="commentsSheet" style="position: absolute; bottom: 12px; left: 12px; right: 12px; max-height: 500px;">
+        <div class="sheet-header">
+            <span>💬 Comments (3)</span>
+            <button class="close-btn" onclick="closeComments()">✕</button>
+        </div>
+
+        <div class="sheet-body">
+            <div class="comment-item">
+                <div class="comment-author">🔴 Michiel (Engineer)</div>
+                <div class="comment-text">Monitor directions unclear</div>
+                <div class="comment-meta">
+                    <span>💬 2 replies</span>
+                    <span>2h ago</span>
+                </div>
+            </div>
+
+            <div class="comment-item green">
+                <div class="comment-author">🟢 Lars (Band Lead)</div>
+                <div class="comment-text">Updated the plot ✅ Resolved</div>
+                <div class="comment-meta">
+                    <span>1 reply</span>
+                    <span>1h ago</span>
+                </div>
+            </div>
+
+            <div class="comment-item yellow">
+                <div class="comment-author">🟡 Venue (Booking)</div>
+                <div class="comment-text">Need 3-phase or standard power?</div>
+                <div class="comment-meta">
+                    <span>💬 1 reply</span>
+                    <span>30min ago</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sheet-footer">
+            <button class="btn btn-secondary" onclick="closeComments()">Close</button>
+            <button class="btn btn-primary" onclick="openCommentForm()">Add</button>
+        </div>
+    </div>
+
+    <!-- Comment Form Modal -->
+    <div class="modal" id="commentForm">
+        <div class="modal-content" style="margin: 12px; border-radius: 12px;">
+            <div class="modal-header">
+                <span>Add Comment</span>
+                <button class="close-btn" onclick="closeCommentForm()">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Your Name</label>
+                <input type="text" class="form-input" placeholder="e.g., Michiel">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Your Role</label>
+                <select class="form-select">
+                    <option>Engineer</option>
+                    <option>Band Lead</option>
+                    <option>Band Member</option>
+                    <option>Venue</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-input" placeholder="optional">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Comment</label>
+                <textarea class="form-textarea" placeholder="Type your comment..." onchange="updateCharCount(this)"></textarea>
+                <div class="char-count">0/500</div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="cancel" onclick="closeCommentForm()">Cancel</button>
+                <button class="submit" onclick="submitComment()">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openComments() {
+            const sheet = document.getElementById('commentsSheet');
+            const overlay = document.getElementById('overlay');
+            sheet.classList.add('show');
+            overlay.classList.add('show');
+        }
+
+        function closeComments() {
+            const sheet = document.getElementById('commentsSheet');
+            const overlay = document.getElementById('overlay');
+            sheet.classList.remove('show');
+            overlay.classList.remove('show');
+            closeCommentForm();
+        }
+
+        function openCommentForm() {
+            document.getElementById('commentForm').classList.add('show');
+        }
+
+        function closeCommentForm() {
+            document.getElementById('commentForm').classList.remove('show');
+        }
+
+        function updateCharCount(textarea) {
+            const count = textarea.value.length;
+            textarea.parentElement.querySelector('.char-count').textContent = `${count}/500`;
+        }
+
+        function submitComment() {
+            alert('Comment submitted!');
+            closeCommentForm();
+        }
+    </script>
+</body>
+</html>

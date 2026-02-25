@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miked.live - Notifications & Email Templates</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-bar {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 8px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-bar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-bar a.active {
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        .page {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        .header {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+        }
+
+        .section {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        /* Toast Notifications */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: white;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease-out;
+            opacity: 1;
+            transition: all 0.3s;
+        }
+
+        .toast.success {
+            border-left-color: #10b981;
+        }
+
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast.error {
+            border-left-color: #ef4444;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .toast-message {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .toast-actions {
+            display: flex;
+            gap: 8px;
+            margin-left: 12px;
+            flex-shrink: 0;
+        }
+
+        .toast-action {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .toast-action:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .demo-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .demo-title:first-child {
+            margin-top: 0;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-bottom: 8px;
+        }
+
+        .btn:hover {
+            background: #2563eb;
+        }
+
+        /* Email Preview */
+        .email-preview {
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 0;
+            margin-top: 12px;
+            overflow: hidden;
+            font-size: 13px;
+        }
+
+        .email-header {
+            background: white;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .email-from-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #ef4444;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .email-from {
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .email-subject {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .email-body {
+            background: white;
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .email-greeting {
+            margin-bottom: 16px;
+        }
+
+        .email-main-text {
+            margin-bottom: 16px;
+            color: #333;
+        }
+
+        .email-quote {
+            background: #f9fafb;
+            border-left: 3px solid #ef4444;
+            padding: 12px;
+            margin: 16px 0;
+            font-style: italic;
+            color: #555;
+        }
+
+        .email-quote.green {
+            border-left-color: #10b981;
+        }
+
+        .email-quote.yellow {
+            border-left-color: #f59e0b;
+        }
+
+        .email-cta {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 500;
+            margin: 16px 0;
+        }
+
+        .email-footer {
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .email-reply-section {
+            background: #fafafa;
+            padding: 16px;
+            margin-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .reply-prompt {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .reply-box {
+            width: 100%;
+            min-height: 60px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 8px;
+            font-family: inherit;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .control-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            background: white;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .control-btn:hover {
+            background: #f9fafb;
+        }
+
+        @media (max-width: 968px) {
+            .layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div>
+            <a href="index.html">← Back to Hub</a>
+        </div>
+        <div style="text-align: center;">
+            <strong>Mockups:</strong>
+            <a href="01-rider-view-with-comments.html">1. Desktop</a>
+            <a href="02-mobile-comments.html">2. Mobile</a>
+            <a href="03-share-status-panel.html">3. Share</a>
+            <a href="04-notifications.html" class="active">4. Notifications</a>
+        </div>
+        <div style="text-align: right;">
+            <a href="01-rider-view-with-comments.html">Restart</a>
+        </div>
+    </div>
+
+    <div class="page">
+        <h1 class="header">🔔 Miked.live Notifications & Email Templates</h1>
+
+        <div class="layout">
+            <!-- Left Column: Toast Notifications -->
+            <div class="section">
+                <div class="section-title">Toast Notifications (Desktop)</div>
+
+                <div class="demo-title">1. Comment Added</div>
+                <button class="btn" onclick="showToast('comment')">Show Toast</button>
+
+                <div class="demo-title">2. Rider Viewed</div>
+                <button class="btn" onclick="showToast('viewed')">Show Toast</button>
+
+                <div class="demo-title">3. Comment Resolved</div>
+                <button class="btn" onclick="showToast('resolved')">Show Toast</button>
+
+                <div class="demo-title">4. Error State</div>
+                <button class="btn" onclick="showToast('error')">Show Toast</button>
+
+                <div style="margin-top: 32px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+                    <h4 style="font-size: 14px; font-weight: 600; margin-bottom: 12px;">Toast Specifications:</h4>
+                    <ul style="font-size: 13px; line-height: 1.6; color: #666; list-position: inside;">
+                        <li>✓ Position: top-right (fixed)</li>
+                        <li>✓ Duration: 5 seconds auto-dismiss</li>
+                        <li>✓ Max-width: 400px</li>
+                        <li>✓ Left border: 4px (role-based color)</li>
+                        <li>✓ Stacks vertically (max 3 visible)</li>
+                        <li>✓ Clickable actions: [View] [Dismiss]</li>
+                        <li>✓ Animations: slide-in + fade-out</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column: Email Templates -->
+            <div class="section">
+                <div class="section-title">Email Template: Comment Added</div>
+
+                <div class="email-preview">
+                    <div class="email-header">
+                        <div class="email-from-avatar">M</div>
+                        <div>
+                            <div class="email-from">Michiel (Engineer) &lt;michiel@engineer.com&gt;</div>
+                            <div class="email-subject">Subject: 🔴 Michiel commented on "The Rockers" rider</div>
+                        </div>
+                    </div>
+
+                    <div class="email-body">
+                        <div class="email-greeting">Hi Lars,</div>
+
+                        <div class="email-main-text">
+                            Michiel (Engineer) left a comment on your technical rider:
+                        </div>
+
+                        <div class="email-quote">
+                            "Monitor directions are unclear — which wedges face the band vs. the audience?"
+                        </div>
+
+                        <div class="email-main-text">
+                            <strong>Section:</strong> Stage Plot
+                        </div>
+
+                        <a href="#" class="email-cta">View Rider & Reply</a>
+
+                        <div class="email-reply-section">
+                            <div class="reply-prompt">Or reply directly here:</div>
+                            <textarea class="reply-box" placeholder="Your reply..."></textarea>
+                            <div class="controls">
+                                <button class="control-btn">Cancel</button>
+                                <button class="control-btn" style="background: #3b82f6; color: white; border-color: #3b82f6;">Submit Reply</button>
+                            </div>
+                        </div>
+
+                        <div class="email-footer">
+                            Questions? <a href="#" style="color: #3b82f6;">Contact support@miked.live</a><br>
+                            <a href="#" style="color: #3b82f6;">View all comments</a> on your rider
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- More Email Templates -->
+        <div style="margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+            <div class="section">
+                <div class="section-title">Email Template: Rider Viewed</div>
+
+                <div class="email-preview">
+                    <div class="email-header">
+                        <div class="email-from-avatar" style="background: #10b981;">S</div>
+                        <div>
+                            <div class="email-from">Miked.live &lt;notifications@miked.live&gt;</div>
+                            <div class="email-subject">Subject: ✅ Your rider has been viewed</div>
+                        </div>
+                    </div>
+
+                    <div class="email-body">
+                        <div class="email-greeting">Hi Lars,</div>
+
+                        <div class="email-main-text">
+                            Good news! Your rider "The Rockers" has been viewed by Michiel (Engineer).
+                        </div>
+
+                        <div class="email-main-text" style="background: #d1fae5; padding: 12px; border-radius: 4px;">
+                            <strong>✓ Viewed at:</strong> Feb 25, 2:15 PM<br>
+                            <strong>Device:</strong> Safari on Mac<br>
+                            <strong>IP Address:</strong> 192.168.1.100
+                        </div>
+
+                        <div class="email-main-text">
+                            They may ask questions soon. Make sure you're ready to respond!
+                        </div>
+
+                        <a href="#" class="email-cta">Go to Rider</a>
+
+                        <div class="email-footer">
+                            This is an automated message from Miked.live
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Email Template: Reply from Band</div>
+
+                <div class="email-preview">
+                    <div class="email-header">
+                        <div class="email-from-avatar" style="background: #10b981;">L</div>
+                        <div>
+                            <div class="email-from">Lars (Band Lead) &lt;lars@therockers.com&gt;</div>
+                            <div class="email-subject">Subject: 🟢 Lars replied to your comment</div>
+                        </div>
+                    </div>
+
+                    <div class="email-body">
+                        <div class="email-greeting">Hi Michiel,</div>
+
+                        <div class="email-main-text">
+                            Lars replied to your comment on "The Rockers" rider:
+                        </div>
+
+                        <div class="email-quote" style="border-left-color: #ef4444;">
+                            <strong>Your comment:</strong><br>
+                            "Monitor directions are unclear — which wedges face the band?"
+                        </div>
+
+                        <div class="email-quote green">
+                            <strong>Lars replied:</strong><br>
+                            "Updated the stage plot — all wedges now face the band. Check the plot above."
+                        </div>
+
+                        <div class="email-main-text">
+                            The rider has been updated with your feedback. Review the changes:
+                        </div>
+
+                        <a href="#" class="email-cta">View Updated Rider</a>
+
+                        <div class="email-footer">
+                            Questions? <a href="#" style="color: #3b82f6;">Contact support@miked.live</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Email Template Row 2 -->
+        <div style="margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;">
+            <div class="section">
+                <div class="section-title">Email Template: Share Notification</div>
+
+                <div class="email-preview">
+                    <div class="email-header">
+                        <div class="email-from-avatar" style="background: #3b82f6;">L</div>
+                        <div>
+                            <div class="email-from">Lars (Band Lead) &lt;lars@therockers.com&gt;</div>
+                            <div class="email-subject">Subject: Here's the technical rider for your gig</div>
+                        </div>
+                    </div>
+
+                    <div class="email-body">
+                        <div class="email-greeting">Hi Michiel,</div>
+
+                        <div class="email-main-text">
+                            I've created a technical rider for our upcoming performance on <strong>March 15</strong>. Here's what we'll need for sound setup:
+                        </div>
+
+                        <div class="email-main-text" style="background: #eff6ff; padding: 12px; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                            <strong>Band:</strong> The Rockers<br>
+                            <strong>Date:</strong> March 15, 2026<br>
+                            <strong>Venue:</strong> The Blue Note<br>
+                            <strong>Members:</strong> Vocals, Drums, Bass, 2x Guitar
+                        </div>
+
+                        <a href="#" class="email-cta">View Interactive Rider</a>
+
+                        <div class="email-main-text">
+                            <strong>You can:</strong>
+                        </div>
+                        <div class="email-main-text" style="font-size: 12px;">
+                            ✓ View stage plot and input list<br>
+                            ✓ Ask clarifying questions directly<br>
+                            ✓ Leave comments and suggestions<br>
+                            ✓ No account needed — just click the link above
+                        </div>
+
+                        <div class="email-footer">
+                            Thanks for working with us!<br>
+                            — Lars & The Rockers<br>
+                            <a href="#" style="color: #3b82f6;">View rider on Miked.live</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Email Template: Digest (Phase 2+)</div>
+
+                <div class="email-preview">
+                    <div class="email-header">
+                        <div class="email-from-avatar" style="background: #9ca3af;">M</div>
+                        <div>
+                            <div class="email-from">Miked.live Digest &lt;digest@miked.live&gt;</div>
+                            <div class="email-subject">Subject: Weekly Summary: 3 riders, 8 comments</div>
+                        </div>
+                    </div>
+
+                    <div class="email-body">
+                        <div class="email-greeting">Hi Lars,</div>
+
+                        <div class="email-main-text">
+                            <strong>Your weekly Miked.live summary:</strong>
+                        </div>
+
+                        <div class="email-main-text" style="background: #f9fafb; padding: 16px; border-radius: 4px;">
+                            <strong>📋 Riders:</strong> 3 total<br>
+                            <strong>👁 Views:</strong> 5 engineers viewed your riders<br>
+                            <strong>💬 Comments:</strong> 8 comments added (2 unresolved)<br>
+                            <strong>✅ Resolved:</strong> 6 comments closed<br>
+                            <strong>⏱ Avg Response Time:</strong> 45 minutes
+                        </div>
+
+                        <div class="email-main-text">
+                            <strong>Unresolved Comments:</strong>
+                        </div>
+                        <div class="email-main-text" style="font-size: 12px;">
+                            1. Michiel on "The Rockers": "Monitor directions unclear"<br>
+                            2. Venue on "Acoustic Set": "Do you need 3-phase power?"
+                        </div>
+
+                        <a href="#" class="email-cta">View All Riders</a>
+
+                        <div class="email-footer">
+                            <strong>💡 Tip:</strong> Faster responses lead to better sound checks!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        const toastTemplates = {
+            comment: {
+                icon: '💬',
+                title: 'Michiel (Engineer) left a comment',
+                message: '"Monitor directions unclear — which wedges face the band?"',
+                actions: ['View', 'Dismiss']
+            },
+            viewed: {
+                icon: '👁',
+                title: 'Your rider has been viewed',
+                message: 'Michiel viewed "The Rockers" at 2:15 PM',
+                actions: ['View Timeline', 'Dismiss']
+            },
+            resolved: {
+                icon: '✅',
+                title: 'Comment resolved',
+                message: 'Michiel marked comment as resolved',
+                actions: ['View', 'Dismiss']
+            },
+            error: {
+                icon: '❌',
+                title: 'Error sending comment',
+                message: 'Failed to post comment. Please try again.',
+                actions: ['Retry', 'Dismiss']
+            }
+        };
+
+        function showToast(type) {
+            const template = toastTemplates[type];
+            const toast = document.createElement('div');
+            toast.className = 'toast ' + type;
+            toast.innerHTML = `
+                <div class="toast-icon">${template.icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${template.title}</div>
+                    <div class="toast-message">${template.message}</div>
+                </div>
+                <div class="toast-actions">
+                    <button class="toast-action" onclick="this.parentElement.parentElement.remove()">${template.actions[0]}</button>
+                    <button class="toast-action" onclick="this.parentElement.parentElement.remove()">${template.actions[1]}</button>
+                </div>
+            `;
+
+            const container = document.getElementById('toastContainer');
+            container.appendChild(toast);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(400px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

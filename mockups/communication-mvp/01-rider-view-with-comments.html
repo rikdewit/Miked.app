@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miked.live - Rider View with Comments</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .nav-bar {
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .nav-bar a {
+            color: white;
+            text-decoration: none;
+            margin: 0 8px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .nav-bar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-bar a.active {
+            background: rgba(0, 0, 0, 0.2);
+            font-weight: 600;
+        }
+
+        .header {
+            background: white;
+            border-bottom: 1px solid #e5e5e5;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .container {
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        .rider-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+            background: white;
+        }
+
+        .rider-section {
+            margin-bottom: 32px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .comment-badge {
+            background: #fee2e2;
+            color: #dc2626;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .comment-badge.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .stage-plot {
+            background: white;
+            border: 2px solid #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+
+        .stage-plot-content {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .instrument {
+            background: #dbeafe;
+            border: 2px solid #3b82f6;
+            border-radius: 8px;
+            padding: 16px;
+            text-align: center;
+            font-size: 24px;
+        }
+
+        .input-list {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .table-header {
+            background: #f3f4f6;
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 2fr;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 13px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr 2fr;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 14px;
+            align-items: center;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .table-row:hover {
+            background: #fafafa;
+        }
+
+        .sidebar {
+            width: 360px;
+            background: white;
+            border-left: 1px solid #e5e7eb;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 60px);
+        }
+
+        .sidebar-header {
+            padding: 16px;
+            border-bottom: 1px solid #e5e7eb;
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .comment-count-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .comments-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+        }
+
+        .comment-item {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #f9fafb;
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .comment-item.green {
+            border-left-color: #10b981;
+        }
+
+        .comment-item.blue {
+            border-left-color: #3b82f6;
+        }
+
+        .comment-item.yellow {
+            border-left-color: #f59e0b;
+        }
+
+        .comment-item:hover {
+            background: #f0f0f0;
+        }
+
+        .comment-item-header {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .role-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .role-dot.engineer {
+            background: #ef4444;
+        }
+
+        .role-dot.band {
+            background: #10b981;
+        }
+
+        .role-dot.venue {
+            background: #f59e0b;
+        }
+
+        .comment-item-preview {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.4;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+
+        .comment-item-meta {
+            font-size: 11px;
+            color: #999;
+            margin-top: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .sidebar-filters {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 4px 10px;
+            background: #e5e7eb;
+            border: none;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .filter-btn:hover {
+            background: #d1d5db;
+        }
+
+        .filter-btn.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        /* Modal Overlay */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            width: 500px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+            }
+            to {
+                transform: translateX(0);
+            }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid #e5e7eb;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .comment-thread {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .comment {
+            border-left: 3px solid #ef4444;
+            padding: 12px;
+            background: #fafafa;
+            border-radius: 4px;
+        }
+
+        .comment.green {
+            border-left-color: #10b981;
+        }
+
+        .comment-header {
+            font-weight: 600;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+
+        .comment-author {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .comment-time {
+            font-size: 12px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .comment-text {
+            font-size: 14px;
+            line-height: 1.5;
+            color: #444;
+            margin-bottom: 8px;
+        }
+
+        .comment-actions {
+            display: flex;
+            gap: 12px;
+            font-size: 12px;
+        }
+
+        .comment-action {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .comment-action:hover {
+            text-decoration: underline;
+        }
+
+        .resolved-badge {
+            display: inline-block;
+            background: #d1fae5;
+            color: #065f46;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 8px;
+        }
+
+        .nested-comment {
+            margin-left: 12px;
+            margin-top: 12px;
+            border-left-color: #d1d5db !important;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .form-input,
+        .form-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 13px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .char-count {
+            font-size: 11px;
+            color: #999;
+            text-align: right;
+            margin-top: 4px;
+        }
+
+        .modal-actions {
+            padding: 12px;
+            border-top: 1px solid #e5e7eb;
+            display: flex;
+            gap: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                max-height: 40vh;
+                border-left: none;
+                border-top: 1px solid #e5e7eb;
+            }
+
+            .modal-content {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <div>
+            <a href="index.html">← Back to Hub</a>
+        </div>
+        <div style="text-align: center;">
+            <strong>Mockups:</strong>
+            <a href="01-rider-view-with-comments.html" class="active">1. Desktop</a>
+            <a href="02-mobile-comments.html">2. Mobile</a>
+            <a href="03-share-status-panel.html">3. Share</a>
+            <a href="04-notifications.html">4. Notifications</a>
+        </div>
+        <div style="text-align: right;">
+            <a href="02-mobile-comments.html">Next →</a>
+        </div>
+    </div>
+
+    <div class="header">
+        <h1>🎸 The Rockers - Technical Rider</h1>
+        <div class="header-actions">
+            <button class="btn btn-secondary">Download PDF</button>
+            <button class="btn btn-primary">Share with Engineer</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="rider-content">
+            <!-- Stage Plot Section -->
+            <div class="rider-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        📍 Stage Plot (Top-Down View)
+                        <span class="comment-badge active">2</span>
+                    </div>
+                </div>
+                <div class="stage-plot">
+                    <div class="stage-plot-content">
+                        <div class="instrument">🎤</div>
+                        <div class="instrument">🎸</div>
+                        <div class="instrument">🎸</div>
+                        <div class="instrument">🥁</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input List Section -->
+            <div class="rider-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        🎙 Input List
+                        <span class="comment-badge">1</span>
+                    </div>
+                </div>
+                <div class="input-list">
+                    <div class="table-header">
+                        <div>Instrument</div>
+                        <div>Mic/DI</div>
+                        <div>Notes</div>
+                    </div>
+                    <div class="table-row">
+                        <div>Kick Drum</div>
+                        <div>D112</div>
+                        <div>Standard setup</div>
+                    </div>
+                    <div class="table-row">
+                        <div>Snare</div>
+                        <div>SM57</div>
+                        <div>On top of snare</div>
+                    </div>
+                    <div class="table-row">
+                        <div>Vocals</div>
+                        <div>SM58</div>
+                        <div>High stand</div>
+                    </div>
+                    <div class="table-row">
+                        <div>Guitar 1</div>
+                        <div>SM57</div>
+                        <div>On amp speaker</div>
+                    </div>
+                    <div class="table-row">
+                        <div>Bass</div>
+                        <div>DI + Amp</div>
+                        <div>Both channels needed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power Section -->
+            <div class="rider-section">
+                <div class="section-header">
+                    <div class="section-title">
+                        🔌 Power Requirements
+                    </div>
+                </div>
+                <p style="margin-bottom: 8px;"><strong>Stage Right:</strong> 3x standard 220V outlets</p>
+                <p style="margin-bottom: 8px;"><strong>Stage Left:</strong> 2x standard 220V outlets</p>
+                <p><strong>Monitors:</strong> 2x additional outlets needed</p>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <span>💬 COMMENTS (3)</span>
+                <span class="comment-count-badge">1</span>
+            </div>
+
+            <div class="comments-list">
+                <div class="comment-item" onclick="openCommentDetail(0)">
+                    <div class="comment-item-header">
+                        <span class="role-dot engineer"></span>
+                        Michiel (Engineer)
+                    </div>
+                    <div class="comment-item-preview">Monitor directions unclear — which wedges face the band?</div>
+                    <div class="comment-item-meta">
+                        <span>💬 2 replies</span>
+                        <span>2h ago</span>
+                    </div>
+                </div>
+
+                <div class="comment-item green" onclick="openCommentDetail(1)">
+                    <div class="comment-item-header">
+                        <span class="role-dot band"></span>
+                        Lars (Band Lead)
+                    </div>
+                    <div class="comment-item-preview">Updated the stage plot — all wedges face the band now</div>
+                    <div class="comment-item-meta">
+                        <span>✅ Resolved</span>
+                        <span>1h ago</span>
+                    </div>
+                </div>
+
+                <div class="comment-item yellow" onclick="openCommentDetail(2)">
+                    <div class="comment-item-header">
+                        <span class="role-dot venue"></span>
+                        Venue (Booking)
+                    </div>
+                    <div class="comment-item-preview">Do you need 3-phase power or standard single-phase?</div>
+                    <div class="comment-item-meta">
+                        <span>💬 1 reply</span>
+                        <span>30min ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-filters">
+                <button class="filter-btn active">All</button>
+                <button class="filter-btn">Open Only</button>
+                <button class="filter-btn">By Role</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comment Detail Modal -->
+    <div class="modal" id="commentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Comment Thread</div>
+                <button class="close-btn" onclick="closeCommentDetail()">×</button>
+            </div>
+
+            <div class="modal-body">
+                <div class="comment-thread" id="commentThread">
+                    <!-- Comments loaded here -->
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeCommentDetail()">Close</button>
+                <button class="btn btn-primary">Reply</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const commentData = [
+            {
+                id: 0,
+                author: "Michiel",
+                role: "Engineer",
+                roleClass: "engineer",
+                text: "Monitor directions are unclear — which wedges face the band vs. the audience?",
+                time: "2 hours ago",
+                replies: [
+                    {
+                        author: "Lars",
+                        role: "Band Lead",
+                        roleClass: "band",
+                        text: "Updated the stage plot — all wedges now face the band. Check the plot above.",
+                        time: "1 hour ago"
+                    },
+                    {
+                        author: "Michiel",
+                        role: "Engineer",
+                        roleClass: "engineer",
+                        text: "Perfect! That's exactly what I need.",
+                        time: "30 minutes ago"
+                    }
+                ],
+                resolved: true
+            },
+            {
+                id: 1,
+                author: "Lars",
+                role: "Band Lead",
+                roleClass: "band",
+                text: "Updated the stage plot — all wedges face the band now",
+                time: "1 hour ago",
+                replies: [],
+                resolved: true
+            },
+            {
+                id: 2,
+                author: "Venue",
+                role: "Booking",
+                roleClass: "venue",
+                text: "Do you need 3-phase power or standard single-phase?",
+                time: "30 minutes ago",
+                replies: [
+                    {
+                        author: "Lars",
+                        role: "Band Lead",
+                        roleClass: "band",
+                        text: "Standard single-phase is fine for our setup.",
+                        time: "5 minutes ago"
+                    }
+                ],
+                resolved: false
+            }
+        ];
+
+        function openCommentDetail(index) {
+            const comment = commentData[index];
+            const threadHtml = `
+                <div class="comment ${comment.roleClass}">
+                    <div class="comment-header">
+                        <span class="comment-author">
+                            <span class="role-dot ${comment.roleClass}"></span>
+                            ${comment.author} (${comment.role})
+                        </span>
+                        <span class="comment-time">${comment.time}</span>
+                    </div>
+                    <div class="comment-text">${comment.text}</div>
+                    <div class="comment-actions">
+                        <button class="comment-action">Reply</button>
+                        <button class="comment-action">Resolve</button>
+                    </div>
+                    ${comment.resolved ? '<div class="resolved-badge">✅ RESOLVED</div>' : ''}
+                </div>
+                ${comment.replies.map(reply => `
+                    <div class="comment nested-comment ${reply.roleClass}">
+                        <div class="comment-header">
+                            <span class="comment-author">
+                                <span class="role-dot ${reply.roleClass}"></span>
+                                ${reply.author} (${reply.role})
+                            </span>
+                            <span class="comment-time">${reply.time}</span>
+                        </div>
+                        <div class="comment-text">${reply.text}</div>
+                        <div class="comment-actions">
+                            <button class="comment-action">Reply</button>
+                        </div>
+                    </div>
+                `).join('')}
+            `;
+
+            document.getElementById('commentThread').innerHTML = threadHtml;
+            document.getElementById('commentModal').classList.add('show');
+        }
+
+        function closeCommentDetail() {
+            document.getElementById('commentModal').classList.remove('show');
+        }
+
+        // Close modal when clicking outside
+        document.getElementById('commentModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeCommentDetail();
+            }
+        });
+    </script>
+</body>
+</html>

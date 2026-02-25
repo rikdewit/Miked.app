@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Miked.live MVP Communication — Mockup Index</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        .card-emoji {
+            font-size: 28px;
+            margin-right: 8px;
+        }
+
+        .card-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .card-description {
+            font-size: 13px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 16px;
+            flex: 1;
+        }
+
+        .card-features {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 16px;
+        }
+
+        .card-features li {
+            margin-bottom: 4px;
+            margin-left: 16px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .resources {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .resources h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #333;
+        }
+
+        .resource-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .resource {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .resource-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .resource-description {
+            font-size: 12px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .resource-link {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .resource-link:hover {
+            text-decoration: underline;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+
+        .quick-link {
+            background: #f0f4ff;
+            border: 1px solid #667eea;
+            border-radius: 6px;
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #667eea;
+            text-decoration: none;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-link:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .footer {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            color: #666;
+            font-size: 13px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .footer strong {
+            color: #333;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 24px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎸 Miked.live MVP Communication</h1>
+            <p>Interactive UI Mockups & Design System</p>
+            <div class="status-badge">✓ Ready for Design Review</div>
+        </div>
+
+        <!-- Mockup Cards -->
+        <div class="grid">
+            <!-- Mockup 1 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-emoji">💻</span>
+                    Desktop Rider View
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Rider with Comments Sidebar</div>
+                    <div class="card-description">
+                        Full desktop experience showing how bands see riders with the new commenting system. Includes stage plot, input list, and real-time comment updates.
+                    </div>
+                    <div class="card-features">
+                        <strong>Includes:</strong>
+                        <ul>
+                            <li>Comment badges on sections</li>
+                            <li>Comments sidebar with filtering</li>
+                            <li>Comment threads with replies</li>
+                            <li>Role-based color coding</li>
+                            <li>Resolved state indicators</li>
+                        </ul>
+                    </div>
+                    <div class="card-actions">
+                        <a href="01-rider-view-with-comments.html" class="btn btn-primary">Open Mockup</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 2 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-emoji">📱</span>
+                    Mobile Comments
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Responsive Mobile Design</div>
+                    <div class="card-description">
+                        iPhone frame showing how the commenting system adapts for mobile. Bottom sheet modals, full-screen forms, and floating action button.
+                    </div>
+                    <div class="card-features">
+                        <strong>Includes:</strong>
+                        <ul>
+                            <li>iPhone frame mockup</li>
+                            <li>Floating comment FAB</li>
+                            <li>Bottom sheet panel</li>
+                            <li>Full-screen forms</li>
+                            <li>Touch-friendly interactions</li>
+                        </ul>
+                    </div>
+                    <div class="card-actions">
+                        <a href="02-mobile-comments.html" class="btn btn-primary">Open Mockup</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 3 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-emoji">🔗</span>
+                    Share & Tracking
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Share Status Panel</div>
+                    <div class="card-description">
+                        Band coordinators manage sharing, track who viewed the rider, and handle magic link resending. Shows one-time token behavior and view confirmations.
+                    </div>
+                    <div class="card-features">
+                        <strong>Includes:</strong>
+                        <ul>
+                            <li>Share form & validation</li>
+                            <li>Recipient tracking table</li>
+                            <li>View timestamps & devices</li>
+                            <li>Activity timeline</li>
+                            <li>Resend/copy actions</li>
+                        </ul>
+                    </div>
+                    <div class="card-actions">
+                        <a href="03-share-status-panel.html" class="btn btn-primary">Open Mockup</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 4 -->
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-emoji">🔔</span>
+                    Notifications & Email
+                </div>
+                <div class="card-body">
+                    <div class="card-title">Toast & Email Templates</div>
+                    <div class="card-description">
+                        All notification patterns including toast messages, email templates for different scenarios, and a preview of the digest (phase 2).
+                    </div>
+                    <div class="card-features">
+                        <strong>Includes:</strong>
+                        <ul>
+                            <li>4 toast types</li>
+                            <li>5 email templates</li>
+                            <li>Role-based styling</li>
+                            <li>Interactive demos</li>
+                            <li>Copy-paste ready HTML</li>
+                        </ul>
+                    </div>
+                    <div class="card-actions">
+                        <a href="04-notifications.html" class="btn btn-primary">Open Mockup</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resources -->
+        <div class="resources">
+            <h2>📚 Documentation & Resources</h2>
+
+            <div style="margin-bottom: 32px;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 12px; color: #333;">Quick Navigation</h3>
+                <div class="quick-links">
+                    <a href="README.md" class="quick-link">📖 Mockup README</a>
+                    <a href="../../../docs/mvp-communication-prd.md" class="quick-link">📋 Full PRD</a>
+                    <a href="../../../docs/mvp-communication-relumio-brief.md" class="quick-link">🎨 UI Brief</a>
+                    <a href="../../../docs/miked-live-context-for-builders.md" class="quick-link">🔍 Project Context</a>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid #e5e7eb; padding-top: 24px;">
+                <h3 style="font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #333;">Key Documents</h3>
+                <div class="resource-grid">
+                    <div class="resource">
+                        <div class="resource-title">MVP Communication PRD</div>
+                        <div class="resource-description">
+                            Complete product requirements document with user stories, feature specs, API endpoints, and success metrics.
+                        </div>
+                        <a href="../../../docs/mvp-communication-prd.md" class="resource-link">Read PRD →</a>
+                    </div>
+
+                    <div class="resource">
+                        <div class="resource-title">Relumio UI Brief</div>
+                        <div class="resource-description">
+                            Design-focused brief with component specs, layout requirements, accessibility guidelines, and design system.
+                        </div>
+                        <a href="../../../docs/mvp-communication-relumio-brief.md" class="resource-link">Read Brief →</a>
+                    </div>
+
+                    <div class="resource">
+                        <div class="resource-title">Miked.live Context</div>
+                        <div class="resource-description">
+                            Comprehensive onboarding for builders new to the project. Includes project overview, user personas, and tech stack.
+                        </div>
+                        <a href="../../../docs/miked-live-context-for-builders.md" class="resource-link">Read Context →</a>
+                    </div>
+
+                    <div class="resource">
+                        <div class="resource-title">ICP & Use Cases</div>
+                        <div class="resource-description">
+                            Four ideal customer profiles with detailed scenarios showing how different users interact with the system.
+                        </div>
+                        <a href="../../../docs/icp-and-use-cases.md" class="resource-link">Read Use Cases →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Design System Preview -->
+        <div class="resources">
+            <h2>🎨 Design System Colors</h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px;">
+                <div style="text-align: center;">
+                    <div style="background: #ef4444; height: 80px; border-radius: 8px; margin-bottom: 8px;"></div>
+                    <strong style="font-size: 13px;">Engineer</strong>
+                    <p style="font-size: 11px; color: #999;">🔴 #EF4444</p>
+                </div>
+
+                <div style="text-align: center;">
+                    <div style="background: #10b981; height: 80px; border-radius: 8px; margin-bottom: 8px;"></div>
+                    <strong style="font-size: 13px;">Band Lead</strong>
+                    <p style="font-size: 11px; color: #999;">🟢 #10B981</p>
+                </div>
+
+                <div style="text-align: center;">
+                    <div style="background: #3b82f6; height: 80px; border-radius: 8px; margin-bottom: 8px;"></div>
+                    <strong style="font-size: 13px;">Band Member</strong>
+                    <p style="font-size: 11px; color: #999;">🔵 #3B82F6</p>
+                </div>
+
+                <div style="text-align: center;">
+                    <div style="background: #f59e0b; height: 80px; border-radius: 8px; margin-bottom: 8px;"></div>
+                    <strong style="font-size: 13px;">Venue</strong>
+                    <p style="font-size: 11px; color: #999;">🟡 #F59E0B</p>
+                </div>
+
+                <div style="text-align: center;">
+                    <div style="background: #6b7280; height: 80px; border-radius: 8px; margin-bottom: 8px;"></div>
+                    <strong style="font-size: 13px;">Admin</strong>
+                    <p style="font-size: 11px; color: #999;">⚫ #6B7280</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>
+                <strong>Miked.live MVP Communication System</strong><br>
+                Created February 25, 2026 • Ready for Design & Development<br>
+                <a href="README.md" style="color: #667eea;">View Mockup README</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
