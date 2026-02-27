@@ -283,7 +283,7 @@ export const Landing: React.FC<LandingProps> = ({ onStart }) => {
               No Login Required
             </div>
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-4 bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-300">
-              Your Tech Rider.
+              Your Band Rider.
               <br />
               <span className="text-indigo-400">Done in 5 Minutes.</span>
             </h1>
