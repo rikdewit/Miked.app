@@ -2,7 +2,7 @@ import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { Resend } from 'resend'
-import { WelcomeSubscriberEmail } from '@/emails/WelcomeSubscriber'
+import { WelcomeSubscriberEmail } from '@/emails/templates/WelcomeSubscriber'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 

@@ -4,7 +4,7 @@ import { supabase } from '@/utils/supabase'
 import { supabaseAdmin } from '@/utils/supabaseAdmin'
 import { Resend } from 'resend'
 import { subscribeUser } from '@/utils/subscribeUser'
-import { RiderMagicLinkEmail } from '@/emails/RiderMagicLink'
+import { RiderMagicLinkEmail } from '@/emails/templates/RiderMagicLink'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
