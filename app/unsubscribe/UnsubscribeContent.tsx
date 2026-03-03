@@ -10,14 +10,25 @@ import { Footer } from '@/components/Footer'
 export function UnsubscribeContent() {
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
+  const [token, setToken] = useState('')
   const [isLoading, setIsLoading] = useState(true)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
   const [isAlreadyUnsubscribed, setIsAlreadyUnsubscribed] = useState(false)
 
   useEffect(() => {
+    const tokenParam = searchParams.get('token')
     const emailParam = searchParams.get('email')
-    if (emailParam) {
+
+    if (tokenParam) {
+      setToken(tokenParam)
+      // Extract email from token (format: email|timestamp|hmac)
+      const decodedToken = decodeURIComponent(tokenParam)
+      const emailFromToken = decodedToken.split('|')[0]
+      setEmail(emailFromToken)
+      setIsLoading(false)
+    } else if (emailParam) {
+      // Fallback to email-based for backward compatibility
       const decodedEmail = decodeURIComponent(emailParam)
       setEmail(decodedEmail)
       checkSubscriptionStatus(decodedEmail)
@@ -45,7 +56,9 @@ export function UnsubscribeContent() {
     e.preventDefault()
     setError('')
 
-    if (!email || !email.includes('@')) {
+    // For token-based unsubscribe, no email validation needed
+    // For email-based fallback, validate email
+    if (!token && (!email || !email.includes('@'))) {
       setError('Please enter a valid email')
       return
     }
@@ -55,7 +68,9 @@ export function UnsubscribeContent() {
       const response = await fetch('/api/unsubscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(
+          token ? { token } : { email }
+        ),
       })
 
       const data = await response.json()
@@ -102,7 +117,7 @@ export function UnsubscribeContent() {
               </div>
               <p className="text-slate-300">Loading...</p>
             </div>
-          ) : !email ? (
+          ) : !email && !token ? (
             <div className="text-center space-y-4">
               <AlertCircle className="w-12 h-12 text-amber-400 mx-auto" />
               <p className="text-lg font-semibold text-slate-100">
@@ -191,10 +206,20 @@ export function UnsubscribeContent() {
                   id="email"
                   type="email"
                   value={email}
-                  disabled
-                  className="w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-slate-300 disabled:opacity-75 cursor-not-allowed"
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={!!token}
+                  placeholder="Enter your email"
+                  className={`w-full px-4 py-3 rounded-lg bg-slate-800/50 border border-slate-700 text-slate-300 placeholder-slate-500 ${
+                    token
+                      ? 'disabled:opacity-100 cursor-not-allowed'
+                      : 'focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500'
+                  }`}
                 />
-                <p className="text-xs text-slate-500">This email address is verified from your unsubscribe link.</p>
+                <p className="text-xs text-slate-500">
+                  {token
+                    ? '✓ This email address is verified from your secure unsubscribe link.'
+                    : 'This email address is verified from your unsubscribe link.'}
+                </p>
               </div>
 
               {error && (
