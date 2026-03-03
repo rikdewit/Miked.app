@@ -1,3 +1,4 @@
+import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
 import { render } from '@react-email/render'
 import { Resend } from 'resend'
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
 
         // Render email with token
         const emailHtml = await render(
-          ChangelogLaunch({
+          React.createElement(ChangelogLaunch, {
             baseUrl,
             unsubscribeToken,
           })
