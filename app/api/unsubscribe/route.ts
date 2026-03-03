@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
         success: true,
         message: 'Successfully unsubscribed from changelog',
       },
-      { status: 200 }
+      { status: 202 }
     )
   } catch (error) {
     console.error('API error:', error)
