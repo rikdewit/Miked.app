@@ -185,7 +185,14 @@ export const ChangelogLaunch: React.FC<ChangelogLaunchProps> = ({
           </Text>
 
           <Text style={footerText}>
-            <Link href={`${baseUrl}/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`} style={footerLink}>
+            <Link
+              href={
+                unsubscribeToken
+                  ? `${baseUrl}/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`
+                  : '{{{RESEND_UNSUBSCRIBE_URL}}}'
+              }
+              style={footerLink}
+            >
               Unsubscribe from emails
             </Link>
           </Text>

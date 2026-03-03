@@ -3,6 +3,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { Resend } from 'resend'
 import { WelcomeSubscriberEmail } from '@/emails/templates/WelcomeSubscriber'
+import { generateUnsubscribeToken } from '@/utils/unsubscribe-token'
+import { getSenderEmails } from '@/utils/get-sender-emails'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -86,20 +88,24 @@ export async function POST(request: NextRequest) {
       subscriber = newSubscriber
     }
 
-    // 2. Add to Resend contacts and send welcome email (non-blocking - don't fail if this fails)
+    // 2. Generate unsubscribe token and add to Resend contacts
+    const unsubscribeToken = generateUnsubscribeToken(email)
+
+    // 3. Add to Resend contacts and send welcome email (non-blocking - don't fail if this fails)
     try {
       const contactResponse = await resend.contacts.create({
         email,
         unsubscribed: false,
+        unsubscribeToken,
       })
 
       console.log(`[RESEND] Contact created for ${email}:`, contactResponse.data?.id)
 
-      // 3. Send welcome email
-      const senderEmail = process.env.SENDER_EMAIL || 'updates@miked.live'
+      // 4. Send welcome email
+      const { support: supportEmail } = getSenderEmails()
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://miked.live'
       const emailResponse = await resend.emails.send({
-        from: senderEmail,
+        from: supportEmail,
         to: email,
         subject: '🎸 Welcome to the Miked.live changelog!',
         react: React.createElement(WelcomeSubscriberEmail, { email, baseUrl }),
