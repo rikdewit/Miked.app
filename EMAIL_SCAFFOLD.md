@@ -10,24 +10,14 @@ Use this guide to create new email templates for broadcast sending.
    - Include `email` and `baseUrl` props
    - Add unsubscribe link using: `<a href={`${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}`}>`
 
-2. **Register the template**
-   - Open `/app/api/send-changelog/route.ts`
-   - Import your new component at the top
-   - Add it to the `emailTemplates` registry:
-     ```typescript
-     announcement: {
-       component: YourEmailName,
-     }
-     ```
-
-3. **Send the email**
-   - Use the API with your template name and custom subject:
+2. **Send the email**
+   - Use the API with the template filename and custom subject:
    ```bash
    curl -X POST https://miked.live/api/send-changelog \
      -H "Authorization: Bearer YOUR_RESEND_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{
-       "template": "announcement",
+       "templateFile": "AnnouncementEmail_03_03_2026.tsx",
        "subject": "Your Custom Subject Line"
      }'
    ```
@@ -36,7 +26,7 @@ Use this guide to create new email templates for broadcast sending.
 
 When calling the send-changelog endpoint:
 
-- `template` (string, required): Template name from registry (default: "changelog")
+- `templateFile` (string, required): Email template filename from `/emails/content/` (e.g., "AnnouncementEmail_03_03_2026.tsx")
 - `subject` (string, required): Email subject line
 - `recipientEmails` (array, optional): Specific emails to send to. If not provided, sends to all subscribed users (or test email on staging/localhost)
 

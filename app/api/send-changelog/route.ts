@@ -2,23 +2,34 @@ import React from 'react'
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/utils/supabase'
 import { Resend } from 'resend'
-import { ChangelogLaunch } from '@/emails/content/ChangelogLaunch_03_03_2026'
-import { AnnouncementEmail } from '@/emails/content/AnnouncementEmail_03_03_2026'
 import { getSenderEmails } from '@/utils/get-sender-emails'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-// Email template registry
-const emailTemplates: Record<string, {
-  component: React.FC<any>
-}> = {
-  changelog: {
-    component: ChangelogLaunch,
-  },
-  announcement: {
-    component: AnnouncementEmail,
-  },
-  // Add more templates here as needed
+// Helper function to dynamically load email template
+async function loadEmailTemplate(templateFile: string): Promise<React.FC<any>> {
+  try {
+    const module = await import(`@/emails/content/${templateFile}`)
+
+    // Get the component - try to find exported component matching the filename
+    // First, try the exact export name (ChangelogLaunch, AnnouncementEmail, etc.)
+    const exportName = templateFile
+      .replace(/_\d{2}_\d{2}_\d{4}\.tsx$/, '') // Remove date suffix and .tsx
+
+    if (module[exportName]) {
+      return module[exportName]
+    }
+
+    // If not found, try getting the first export
+    const exports = Object.values(module).filter((exp) => typeof exp === 'function')
+    if (exports.length > 0) {
+      return exports[0] as React.FC<any>
+    }
+
+    throw new Error(`No valid component export found in ${templateFile}`)
+  } catch (error) {
+    throw new Error(`Failed to load template: ${templateFile}. ${error instanceof Error ? error.message : 'Unknown error'}`)
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -36,15 +47,15 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const {
-      template = 'changelog',
+      templateFile,
       subject,
       recipientEmails,
     } = body
 
-    // Validate template exists
-    if (!emailTemplates[template]) {
+    // Validate templateFile is provided
+    if (!templateFile || typeof templateFile !== 'string') {
       return NextResponse.json(
-        { error: `Unknown email template: ${template}` },
+        { error: 'templateFile is required (e.g., "AnnouncementEmail_03_03_2026.tsx")' },
         { status: 400 }
       )
     }
@@ -57,7 +68,16 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const templateConfig = emailTemplates[template]
+    // Load the template dynamically
+    let component: React.FC<any>
+    try {
+      component = await loadEmailTemplate(templateFile)
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : 'Failed to load template' },
+        { status: 400 }
+      )
+    }
 
     // Get subscribers - either from explicit list or from database
     let subscribers: { email: string }[] = []
@@ -113,7 +133,7 @@ export async function POST(request: NextRequest) {
           from: `Rik from Miked.live <${rik}>`,
           to: subscriber.email,
           subject,
-          react: React.createElement(templateConfig.component, {
+          react: React.createElement(component, {
             email: subscriber.email,
             baseUrl,
           }),
@@ -139,7 +159,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        template,
+        templateFile,
         sent: successCount,
         failed: failureCount,
         total: subscribers.length,
