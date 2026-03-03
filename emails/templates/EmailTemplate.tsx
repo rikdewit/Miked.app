@@ -31,6 +31,7 @@ interface EmailTemplateProps {
   ctaHref?: string
   email?: string
   baseUrl?: string
+  unsubscribeToken?: string
   showEngagement?: boolean
 }
 
@@ -43,6 +44,7 @@ export const EmailTemplate: React.FC<EmailTemplateProps> = ({
   ctaHref = 'https://miked.live',
   email = '',
   baseUrl = 'https://miked.live',
+  unsubscribeToken = '',
   showEngagement = true,
 }) => (
   <Html>
@@ -121,7 +123,14 @@ export const EmailTemplate: React.FC<EmailTemplateProps> = ({
           </Text>
 
           <Text style={footerText}>
-            <Link href={`${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}`} style={footerLink}>
+            <Link
+              href={
+                unsubscribeToken
+                  ? `${baseUrl}/unsubscribe?token=${encodeURIComponent(unsubscribeToken)}`
+                  : `${baseUrl}/unsubscribe?email=${encodeURIComponent(email)}`
+              }
+              style={footerLink}
+            >
               Unsubscribe from emails
             </Link>
           </Text>
@@ -152,6 +161,7 @@ const header: React.CSSProperties = {
 
 const logoLink: React.CSSProperties = {
   textDecoration: 'none',
+  color: 'inherit',
 }
 
 const headerContent: React.CSSProperties = {
@@ -159,6 +169,7 @@ const headerContent: React.CSSProperties = {
   alignItems: 'center',
   justifyContent: 'center',
   gap: '10px',
+  color: '#ffffff',
 }
 
 const headerText: React.CSSProperties = {
